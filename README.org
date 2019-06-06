@@ -1,0 +1,61 @@
+* subed
+subed is an Emacs major mode for editing subtitles while playing the
+corresponding video with [[https://mpv.io/][mpv]].  At the moment, the only supported format is
+SubRip ( ~.srt~).
+
+subed is still alpha software.  Expect it to kill your Emacs session.
+
+** Features
+   - Quickly jump to next (~M-n~) and previous (~M-p~) subtitle text.
+   - Quickly jump to the beginning (~C-M-a~) and end (~C-M-e~) of the current
+     subtitle's text.
+   - Insert (~M-i~) and kill (~M-k~) subtitles.
+   - Adjust subtitle start (~M-[~ / ~M-]~) and stop (~M-{~ / ~M-}~) time stamps.
+   - When a subtitle time is adjusted, jump to its start time in mpv (~C-x /~ to
+     toggle).
+   - Sort and re-number subtitles (~M-s~).
+   - Open videos with ~C-x C-v~ or automatically when entering subed-mode if the
+     video file is named like the subtitle file but with a video extension
+     (e.g. ~.mkv~ or ~.avi~).
+   - Every time you safe (~C-x s~), the subtitles automatically sorted and
+     re-numbered and then reloaded in mpv.
+   - Synchronize point and playback position:
+     - mpv jumps automatically to the position of the subtitle on point as point
+       moves between subtitles (~C-x ,~ to toggle).
+     - Point is automatically moved as the video is playing so that point is
+       always on the relevant subtitle (~C-x .~ to toggle).
+   - Loop over the subtitle on point in mpv (~C-x l~).
+   - Automatically pause or slow down playback in mpv while you are typing (~C-x
+     p~ to toggle).
+
+** Installation
+   For now, you have to install it manually.  For example, copy ~subed/*.el~ to
+   ~~/.emacs.d/elisp/~ and add ~~/.emacs.d/elisp/~ to your ~load-path~.
+
+   #+BEGIN_SRC elisp
+   (use-package subed
+     ;; Tell emacs where to find subed
+     :load-path "~/.emacs.d/elisp/"
+     :config
+     ;; Disable automatic movement of point
+     (add-hook 'subed-mode-hook 'subed-disable-sync-point-to-player)
+     ;; Break lines automatically while typing
+     (add-hook 'subed-mode-hook 'turn-on-auto-fill))
+     ;; Break lines at 50 characters
+     (add-hook 'subed-mode-hook (lambda () (setq-local fill-column 50)))
+   #+END_SRC
+
+** License
+   subed is free software: you can redistribute it and/or modify it under the
+   terms of the GNU General Public License as published by the Free Software
+   Foundation, either version 3 of the License, or (at your option) any later
+   version.
+
+   This program is distributed in the hope that it will be useful but WITHOUT
+   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+   FOR A PARTICULAR PURPOSE.  See the [[https://www.gnu.org/licenses/gpl-3.0.txt][GNU General Public License]] for more
+   details.
+
+#+STARTUP: showeverything
+#+OPTIONS: num:nil
+#+OPTIONS: ^:{}
