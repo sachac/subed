@@ -199,26 +199,16 @@ playing subtitle."
   "If point is synced to playback position, temporarily disable
 that for `subed-point-sync-delay-after-motion' seconds."
   (if subed--point-sync-delay-after-motion-timer
-      (progn
-        (subed-debug "Cancelling old timer (should be nil: %s)" (subed-sync-point-to-player-p))
-        (cancel-timer subed--point-sync-delay-after-motion-timer))
-    (progn
-      (setq subed--point-was-synced (subed-sync-point-to-player-p))
-      (subed-debug "Remembering whether point was originally synced: %s" subed--point-was-synced)))
-
+      (cancel-timer subed--point-sync-delay-after-motion-timer)
+    (setq subed--point-was-synced (subed-sync-point-to-player-p)))
   (when subed--point-was-synced
-    (subed-debug "Temporarily disabling point-to-player syncing (should be t: %s)"
-                 (subed-sync-point-to-player-p))
     (subed-disable-sync-point-to-player))
-
   (when subed--point-was-synced
-    (subed-debug "Re-enabling point-to-player syncing in %s seconds" subed-point-sync-delay-after-motion)
     (setq subed--point-sync-delay-after-motion-timer
           (run-at-time subed-point-sync-delay-after-motion nil
                        (lambda ()
                          (setq subed--point-sync-delay-after-motion-timer nil)
-                         (subed-enable-sync-point-to-player)
-                         (subed-debug "Re-added: %s" subed-mpv-playback-position-hook))))))
+                         (subed-enable-sync-point-to-player))))))
 
 
 ;;; Sync player-to-point
