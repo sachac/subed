@@ -103,12 +103,6 @@ The first existing file is then passed to `subed-open-video'."
   :type 'boolean
   :group 'subed)
 
-
-(defvar subed-subtitle-time-adjusted-hook ()
-  "Functions to call when a subtitle's start or stop time has
-changed.")
-
-
 (defcustom subed-playback-speed-while-typing 0.3
   "Video playback speed while the user is editing the buffer.  If
 set to zero or smaller, playback is paused."
@@ -188,6 +182,10 @@ hardcoded."
 
 
 ;; Hooks
+
+(defvar subed-subtitle-time-adjusted-hook ()
+  "Functions to call when a subtitle's start or stop time has
+changed.")
 
 (defvar-local subed-point-motion-hook nil
   "Functions to call after point changed.")
