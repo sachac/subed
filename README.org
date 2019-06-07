@@ -11,22 +11,22 @@ subed is still alpha software.  Expect it to kill your Emacs session.
      subtitle's text.
    - Insert (~M-i~) and kill (~M-k~) subtitles.
    - Adjust subtitle start (~M-[~ / ~M-]~) and stop (~M-{~ / ~M-}~) time stamps.
-   - When a subtitle time is adjusted, jump to its start time in mpv (~C-x /~ to
-     toggle).
-   - Sort and re-number subtitles (~M-s~).
+   - When a subtitle time is adjusted, jump to its start time in mpv (~C-x /~).
+   - Sort and re-number subtitles and remove any extra spaces and newlines
+     (~M-s~).
    - Open videos with ~C-x C-v~ or automatically when entering subed-mode if the
      video file is named like the subtitle file but with a video extension
      (e.g. ~.mkv~ or ~.avi~).
-   - Every time you safe (~C-x s~), the subtitles automatically sorted and
-     re-numbered and then reloaded in mpv.
+   - Every time you safe (~C-x s~), the subtitles are automatically sanitized
+     and then reloaded in mpv.
    - Synchronize point and playback position:
      - mpv jumps automatically to the position of the subtitle on point as point
-       moves between subtitles (~C-x ,~ to toggle).
+       moves between subtitles (~C-x ,~).
      - Point is automatically moved as the video is playing so that point is
-       always on the relevant subtitle (~C-x .~ to toggle).
-   - Loop over the subtitle on point in mpv (~C-x l~).
+       always on the relevant subtitle (~C-x .~).
    - Automatically pause or slow down playback in mpv while you are typing (~C-x
-     p~ to toggle).
+     p~).
+   - Loop over the subtitle on point in mpv (~C-x l~).
 
 ** Installation
    For now, you have to install it manually.  For example, copy ~subed/*.el~ to
