@@ -110,7 +110,8 @@
       (insert (apply 'format (concat format-string "\n") args))
       (setq-local buffer-read-only t)
       (let ((debug-window (get-buffer-window subed-debug-buffer)))
-        (set-window-point debug-window (goto-char (point-max)))))))
+        (when debug-window
+          (set-window-point debug-window (goto-char (point-max))))))))
 
 
 ;;; Replay time-adjusted subtitle
