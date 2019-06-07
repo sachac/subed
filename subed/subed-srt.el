@@ -309,22 +309,78 @@ Return point or nil if there is no previous subtitle."
   (interactive)
   (subed-srt--adjust-subtitle-stop-relative -100))
 
-;; TODO: Write tests
-;; TODO: Implement support for prefix argument to
-;;       - insert n subtitles with C-u n M-i.
-;;       - insert 1 subtitle before the current one with C-u M-i.
-(defun subed-srt-subtitle-insert ()
-  "Insert a subtitle after the current."
-  (interactive)
-  (let ((start-time (+ (subed-srt--subtitle-msecs-stop) 100))
-        (stop-time (- (save-excursion
-                        (subed-srt-forward-subtitle-id)
-                        (subed-srt--subtitle-msecs-start)) 100)))
-    (subed-srt-forward-subtitle-id)
-    (insert (format "1\n%s --> %s\n\n\n"
-                    (subed-srt--msecs-to-timestamp start-time)
-                    (subed-srt--msecs-to-timestamp stop-time))))
-  (previous-line 2))
+(defun subed-srt-subtitle-insert (arg)
+  "Insert subtitle(s).
+`universal-argument' is used in the following manner:
+          \\[subed-subtitle-insert]   Insert 1 subtitle after the current subtitle
+    \\[universal-argument] - \\[subed-subtitle-insert]   Insert 1 subtitle before the current subtitle
+    \\[universal-argument] 5 \\[subed-subtitle-insert]   Insert 5 subtitles after the current subtitle
+  \\[universal-argument] - 5 \\[subed-subtitle-insert]   Insert 5 subtitles before the current subtitle
+      \\[universal-argument] \\[subed-subtitle-insert]   Insert 1 subtitle before the current subtitle
+  \\[universal-argument] \\[universal-argument] \\[subed-subtitle-insert]   Insert 2 subtitles before the current subtitle"
+  (interactive "P")
+  (let* ((number-of-subs (cond ((eq arg nil) 1)      ;; M-i
+                               ((integerp arg) arg)  ;; C-u N M-i  /  C-u - N M-i
+                               ;; C-u [C-u ...] M-i  /  C-u - [C-u ...] M-i
+                               ((consp arg) (* (truncate (log (abs (car arg)) 4)) ;; ([-]64) -> 3
+                                               (/ (car arg) (abs (car arg)))))    ;; Restore sign
+                               (t 1)))            ;; C-u - M-i (Is there anything else is left?)
+         (insert-before (or (< number-of-subs 0)  ;; C-u - N M-i
+                            (eq arg '-)           ;; C-u - M-i
+                            (consp arg)))         ;; C-u [C-u ...] M-i
+         ;; Ensure number-of-subs is positive, now that we figured out `insert-before'
+         (number-of-subs (abs number-of-subs)))
+    (subed-debug "Inserting %s subtitle(s) %s the current" number-of-subs (if insert-before "before" "after"))
+    (subed-srt-move-to-subtitle-id)
+    ;; Move to the ID of the subtitle we're prepending subtitles to so that we
+    ;; can do (insert "<new subtitle>")
+    (if insert-before
+        (subed-srt-move-to-subtitle-id)
+      (when (and (not (subed-srt-forward-subtitle-id)) ;; Appending after last subtitle
+                 (> (buffer-size) 0))                  ;; Buffer is not empty
+        ;; There is no ID because we're appending to the last subtitle.  We just
+        ;; have to make sure there is a subtitle delimiter ("\n\n") after the
+        ;; last subtitle and point is where the new ID will go.
+        (subed-srt-move-to-subtitle-end)
+        (forward-line)
+        (insert "\n")))
+    ;; Insert subtitles
+    (save-excursion
+      ;; Find out how much time we have per subtitle
+      (let*
+          ;; nil when there's no previous subtitle
+          ((prev-stop-msecs (save-excursion (when (subed-srt-backward-subtitle-id)
+                                                (subed-srt--subtitle-msecs-stop))))
+           ;; nil when there's no next subtitle
+           (next-start-msecs (when (looking-at "^[0-9]$")
+                               (subed-srt--subtitle-msecs-start)))
+           ;; nil when there's no next subtitle
+           (available-msecs (when next-start-msecs
+                              (- next-start-msecs (or prev-stop-msecs 0))))
+           ;; Calculate milliseconds per inserted subtitle or use default value
+           ;; if we're appending to the last subtitle
+           (sub-msecs (if available-msecs (/ available-msecs number-of-subs)
+                        (* subed-default-subtitle-length 1000))))
+        (dotimes (i number-of-subs)
+          (let* ((start-msecs (+ (or prev-stop-msecs 0) (* sub-msecs i)))
+                 (stop-msecs (+ start-msecs sub-msecs))
+                 ;; Apply `subed-subtitle-spacing'
+                 (start-msecs-spaced (if (= i 0)
+                                         (+ start-msecs subed-subtitle-spacing)
+                                       (+ start-msecs (/ subed-subtitle-spacing 2))))
+                 (stop-msecs-spaced (if (= i (1- number-of-subs))
+                                        (- stop-msecs subed-subtitle-spacing)
+                                      (- stop-msecs (/ subed-subtitle-spacing 2)))))
+            (insert (format "0\n%s --> %s\n\n\n"
+                            (subed-srt--msecs-to-timestamp start-msecs-spaced)
+                            (subed-srt--msecs-to-timestamp stop-msecs-spaced))))))
+      ;; If we're not on an ID, that means we added one or more subtitles after
+      ;; the last one and we can remove the trailing extra newline
+      (when (looking-at "^[[:space:]]*$")
+        (forward-line -1)
+        (kill-whole-line)))
+    (subed-srt--regenerate-ids)
+    (subed-srt-move-to-subtitle-text)))
 
 ;; TODO: Implement support for prefix argument to
 ;;       kill n subtitles with C-u n M-k.

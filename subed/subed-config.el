@@ -129,6 +129,16 @@ typed something.")
   "Whether the player was paused by the user or automatically.")
 
 
+(defcustom subed-subtitle-spacing 100
+  "How many milliseconds to keep between subtitles."
+  :type 'integer
+  :group 'subed)
+
+(defcustom subed-default-subtitle-length 1.0
+  "How long to make subtitles in seconds when inserted after the last subtitle."
+  :type 'float
+  :group 'subed)
+
 (defcustom subed-loop-seconds-before 0
   "When looping over a single subtitle, start the loop this many
 seconds before the subtitle starts."
