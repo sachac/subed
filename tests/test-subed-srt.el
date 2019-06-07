@@ -488,14 +488,22 @@ Baz.
                          "3\n"
                          "00:12:01,000 --> 00:01:05,123\n"
                          "Foo.\n"))))
-          (it "preserves point in the current subtitle."
-              (with-temp-buffer
-                (insert mock-srt-data)
-                (goto-char (point-min))
-                (re-search-forward "01:01")
-                (replace-match "12:01")
-                (search-forward "\n")
-                (expect (current-word) :to-equal "Foo")
-                (subed-srt-sort)
-                (expect (current-word) :to-equal "Foo")))
+          (describe "preserves point in the current subtitle"
+                    (it "when subtitle text is non-empty."
+                        (with-temp-buffer
+                          (insert mock-srt-data)
+                          (goto-char (point-min))
+                          (re-search-forward "01:01")
+                          (replace-match "12:01")
+                          (search-forward "\n")
+                          (expect (current-word) :to-equal "Foo")
+                          (subed-srt-sort)
+                          (expect (current-word) :to-equal "Foo")))
+                    (it "when subtitle text is empty."
+                        (with-temp-buffer
+                          (insert "1\n00:12:01,000 --> 00:01:05,123\n")
+                          (goto-char (point-max))
+                          (subed-srt-sort)
+                          (expect (point) :to-equal 33)))
+                    )
           )
