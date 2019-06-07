@@ -24,8 +24,8 @@ subed is still alpha software.  Expect it to kill your Emacs session.
        moves between subtitles (~C-x ,~).
      - Point is automatically moved as the video is playing so that point is
        always on the relevant subtitle (~C-x .~).
-   - Automatically pause or slow down playback in mpv while you are typing
-     (~C-x p~).
+   - Automatically pause or slow down playback in mpv while you are typing (~C-x
+     p~).
    - Loop over the subtitle on point in mpv (~C-x l~).
 
 ** Installation
