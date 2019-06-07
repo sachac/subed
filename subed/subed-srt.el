@@ -107,11 +107,12 @@ after MSECS if there is one and its start time is >= MSECS +
       (subed-srt--timestamp-to-msecs timestamp))))
 
 (defun subed-srt--subtitle-relative-point ()
-  "Point relative to subtitle's ID, i.e. point within subtitle."
+  "Point relative to subtitle's ID or nil if ID can't be found."
   (let ((start-point (save-excursion
-                       (progn (subed-srt-move-to-subtitle-id)
-                              (point)))))
-    (- (point) start-point)))
+                       (when (subed-srt-move-to-subtitle-id)
+                         (point)))))
+    (when start-point
+      (- (point) start-point))))
 
 
 ;;; Traversing
