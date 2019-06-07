@@ -90,6 +90,18 @@ Baz.
                                                 (subed-srt-move-to-subtitle-id outset-id)
                                                 (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal target-id)))))))
                     )
+          (describe "the subtitle start/stop time"
+                    (it "returns the time in milliseconds."
+                        (with-temp-buffer
+                          (insert mock-srt-data)
+                          (subed-srt-move-to-subtitle-text 2)
+                          (expect (subed-srt--subtitle-msecs-start) :to-equal (+ (* 2 60000) (* 2 1000) 234))
+                          (expect (subed-srt--subtitle-msecs-stop) :to-equal (+ (* 2 60000) (* 10 1000) 345))))
+                    (it "returns nil if time can't be found."
+                        (with-temp-buffer
+                          (expect (subed-srt--subtitle-msecs-start) :to-be nil)
+                          (expect (subed-srt--subtitle-msecs-stop) :to-be nil)))
+                    )
           )
 
 
