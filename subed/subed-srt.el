@@ -91,18 +91,20 @@ after MSECS if there is one and its start time is >= MSECS +
     (subed-srt--subtitle-id)))
 
 (defun subed-srt--subtitle-msecs-start (&optional sub-id)
-  "Subtitle start time in milliseconds."
+  "Subtitle start time in milliseconds or nil if it can't be found."
   (let ((timestamp (save-excursion
-                     (subed-srt-move-to-subtitle-time-start sub-id)
-                     (buffer-substring (point) (+ (point) subed-srt--length-timestamp)))))
-    (subed-srt--timestamp-to-msecs timestamp)))
+                     (when (subed-srt-move-to-subtitle-time-start sub-id)
+                       (buffer-substring (point) (+ (point) subed-srt--length-timestamp))))))
+    (when timestamp
+      (subed-srt--timestamp-to-msecs timestamp))))
 
 (defun subed-srt--subtitle-msecs-stop (&optional sub-id)
-  "Subtitle stop time in milliseconds."
+  "Subtitle stop time in milliseconds or nil if it can't be found."
   (let ((timestamp (save-excursion
-                     (subed-srt-move-to-subtitle-time-stop sub-id)
-                     (buffer-substring (point) (+ (point) subed-srt--length-timestamp)))))
-    (subed-srt--timestamp-to-msecs timestamp)))
+                     (when (subed-srt-move-to-subtitle-time-stop sub-id)
+                       (buffer-substring (point) (+ (point) subed-srt--length-timestamp))))))
+    (when timestamp
+      (subed-srt--timestamp-to-msecs timestamp))))
 
 (defun subed-srt--subtitle-relative-point ()
   "Point relative to subtitle's ID, i.e. point within subtitle."
