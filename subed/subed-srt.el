@@ -226,6 +226,20 @@ Return point or nil if there is no previous subtitle."
   (when (subed-srt-backward-subtitle-id)
     (subed-srt-move-to-subtitle-text)))
 
+(defun subed-srt-forward-subtitle-end ()
+  "Move point to end of next subtitle.
+Return point or nil if there is no next subtitle."
+  (interactive)
+  (when (subed-srt-forward-subtitle-id)
+    (subed-srt-move-to-subtitle-end)))
+
+(defun subed-srt-backward-subtitle-end ()
+  "Move point to end of previous subtitle.
+Return point or nil if there is no previous subtitle."
+  (interactive)
+  (when (subed-srt-backward-subtitle-id)
+    (subed-srt-move-to-subtitle-end)))
+
 (defun subed-srt-forward-subtitle-time-start ()
   "Move point to next subtitle's start time."
   (interactive)
