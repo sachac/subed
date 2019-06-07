@@ -198,16 +198,16 @@ Return point unless point did not change."
 
 (defun subed-srt-forward-subtitle-id ()
   "Move point to next subtitle's ID.
-Return new point or nil if point didn't change (e.g. if called on
-the last subtitle)."
+Return point or nil if point didn't change (e.g. if called on the
+last subtitle)."
   (interactive)
   (when (re-search-forward (concat subed-srt--regexp-separator "[[:alnum:]]") nil t)
     (subed-srt-move-to-subtitle-id)))
 
 (defun subed-srt-backward-subtitle-id ()
   "Move point to previous subtitle's ID.
-Return new point or nil if point didn't change (e.g. if called on
-the first subtitle)."
+Return point or nil if point didn't change (e.g. if called on the
+first subtitle)."
   (interactive)
   (when (re-search-backward subed-srt--regexp-separator nil t)
     (subed-srt-move-to-subtitle-id)))
