@@ -391,8 +391,7 @@ each subtitle."
    ;; Ensure single newline at end of buffer
    (goto-char (point-max))
    (when (not (looking-back "\n"))
-     (insert "\n"))
-   ))
+     (insert "\n"))))
 
 (defun subed-srt-sort ()
   "Sanitize, then sort subtitles by start time and re-number them."
