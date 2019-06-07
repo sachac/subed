@@ -214,16 +214,17 @@ first subtitle)."
 
 (defun subed-srt-forward-subtitle-text ()
   "Move point to next subtitle's text.
-Return new point"
+Return point or nil if there is no next subtitle."
   (interactive)
-  (subed-srt-forward-subtitle-id)
-  (subed-srt-move-to-subtitle-text))
+  (when (subed-srt-forward-subtitle-id)
+    (subed-srt-move-to-subtitle-text)))
 
 (defun subed-srt-backward-subtitle-text ()
-  "Move point to previous subtitle's text"
+  "Move point to previous subtitle's text.
+Return point or nil if there is no previous subtitle."
   (interactive)
-  (subed-srt-backward-subtitle-id)
-  (subed-srt-move-to-subtitle-text))
+  (when (subed-srt-backward-subtitle-id)
+    (subed-srt-move-to-subtitle-text)))
 
 (defun subed-srt-forward-subtitle-time-start ()
   "Move point to next subtitle's start time."
