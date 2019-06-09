@@ -102,6 +102,29 @@ Baz.
                           (expect (subed-srt--subtitle-msecs-start) :to-be nil)
                           (expect (subed-srt--subtitle-msecs-stop) :to-be nil)))
                     )
+          (describe "the point within the subtitle"
+                    (it "returns the relative point if we can find an ID."
+                        (with-temp-buffer
+                          (insert mock-srt-data)
+                          (subed-srt-move-to-subtitle-id 2)
+                          (expect (subed-srt--subtitle-relative-point) :to-equal 0)
+                          (forward-line)
+                          (expect (subed-srt--subtitle-relative-point) :to-equal 2)
+                          (forward-line)
+                          (expect (subed-srt--subtitle-relative-point) :to-equal 32)
+                          (forward-char)
+                          (expect (subed-srt--subtitle-relative-point) :to-equal 33)
+                          (forward-line)
+                          (expect (subed-srt--subtitle-relative-point) :to-equal 37)
+                          (forward-line)
+                          (expect (subed-srt--subtitle-relative-point) :to-equal 0)))
+                    (it "returns nil if we can't find an ID."
+                        (with-temp-buffer
+                          (insert mock-srt-data)
+                          (subed-srt-move-to-subtitle-id 1)
+                          (insert "foo")
+                          (expect (subed-srt--subtitle-relative-point) :to-equal nil)))
+                    )
           )
 
 
