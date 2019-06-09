@@ -250,9 +250,7 @@ Baz.
                           (expect (point) :to-equal (save-excursion (goto-char (point-max)) (search-backward "Bar.")))
                           (re-search-forward "\n\n")
                           (expect (subed-srt-move-to-subtitle-text) :to-equal 109)
-                          (expect (point) :to-equal (save-excursion (goto-char (point-max)) (search-backward "Baz.")))
-
-                          ))
+                          (expect (point) :to-equal (save-excursion (goto-char (point-max)) (search-backward "Baz.")))))
                     (it "returns nil if movement failed."
                         (with-temp-buffer
                           (expect (subed-srt-move-to-subtitle-time-stop) :to-equal nil)))
