@@ -180,9 +180,9 @@ Baz.
                           (insert mock-srt-data)
                           (goto-char (point-min))
                           (search-forward "Foo")
-                          (setq stored-point (point))
-                          (expect (subed-srt-move-to-subtitle-id 4) :to-equal nil)
-                          (expect stored-point :to-equal (point))))
+                          (let ((stored-point (point)))
+                            (expect (subed-srt-move-to-subtitle-id 4) :to-equal nil)
+                            (expect stored-point :to-equal (point)))))
                     )
           (describe "to subtitle ID at specific time"
                     (it "returns ID's point if point changed."
