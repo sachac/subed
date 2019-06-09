@@ -163,6 +163,21 @@ Baz.
                         (with-temp-buffer
                           (expect (buffer-string) :to-equal "")
                           (expect (subed-srt-move-to-subtitle-id) :to-equal nil)))
+                    (it "returns ID's point when buffer starts with blank lines."
+                        (with-temp-buffer
+                          (insert (concat " \n \t \n" mock-srt-data))
+                          (search-backward "Foo.")
+                          (expect (thing-at-point 'line) :to-equal "Foo.\n")
+                          (expect (subed-srt-move-to-subtitle-id) :to-equal 7)
+                          (expect (thing-at-point 'word) :to-equal "1")))
+                    (it "returns ID's point when subtitles are separated with blank lines."
+                        (with-temp-buffer
+                          (insert mock-srt-data)
+                          (goto-char (point-min))
+                          (search-forward "Foo.\n")
+                          (insert " \n \t \n")
+                          (expect (subed-srt-move-to-subtitle-id) :to-equal 1)
+                          (expect (thing-at-point 'word) :to-equal "1")))
                     )
           (describe "to specific subtitle ID"
                     (it "returns ID's point if wanted ID exists."
