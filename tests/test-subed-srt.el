@@ -128,50 +128,6 @@ Baz.
           )
 
 
-(describe "Adjusting subtitle start/stop time"
-          :var (subed-subtitle-time-adjusted-hook)
-          (it "runs the appropriate hook."
-              (let ((foo (setf (symbol-function 'foo) (lambda (sub-id msecs) ()))))
-                (spy-on 'foo)
-                (add-hook 'subed-subtitle-time-adjusted-hook 'foo)
-                (with-temp-buffer
-                  (insert mock-srt-data)
-                  (subed-srt-increase-start-time-100ms)
-                  (expect 'foo :to-have-been-called-with 3 183556)
-                  (expect 'foo :to-have-been-called-times 1)
-                  (subed-srt-move-to-subtitle-id 1)
-                  (subed-srt-increase-stop-time-100ms)
-                  (expect 'foo :to-have-been-called-with 1 65223)
-                  (expect 'foo :to-have-been-called-times 2)
-                  (subed-srt-move-to-subtitle-end 2)
-                  (subed-srt-decrease-start-time-100ms)
-                  (expect 'foo :to-have-been-called-with 2 122134)
-                  (expect 'foo :to-have-been-called-times 3)
-                  (subed-srt-move-to-subtitle-text 3)
-                  (subed-srt-decrease-stop-time-100ms)
-                  (expect 'foo :to-have-been-called-with 3 195467)
-                  (expect 'foo :to-have-been-called-times 4))))
-          (it "adjusts the start/stop time."
-              (with-temp-buffer
-                (insert mock-srt-data)
-                (subed-srt-move-to-subtitle-id 1)
-                (subed-srt-increase-start-time-100ms)
-                (expect (save-excursion (subed-srt-move-to-subtitle-time-start)
-                                        (thing-at-point 'line)) :to-equal "00:01:01,100 --> 00:01:05,123\n")
-                (subed-srt-decrease-start-time-100ms)
-                (subed-srt-decrease-start-time-100ms)
-                (expect (save-excursion (subed-srt-move-to-subtitle-time-start)
-                                        (thing-at-point 'line)) :to-equal "00:01:00,900 --> 00:01:05,123\n")
-                (subed-srt-increase-stop-time-100ms)
-                (subed-srt-increase-stop-time-100ms)
-                (expect (save-excursion (subed-srt-move-to-subtitle-time-start)
-                                        (thing-at-point 'line)) :to-equal "00:01:00,900 --> 00:01:05,323\n")
-                (subed-srt-decrease-stop-time-100ms)
-                (expect (save-excursion (subed-srt-move-to-subtitle-time-start)
-                                        (thing-at-point 'line)) :to-equal "00:01:00,900 --> 00:01:05,223\n")))
-          )
-
-
 (describe "Moving"
           (describe "to current subtitle ID"
                     (it "returns ID's point when point is already on the ID."
@@ -345,6 +301,50 @@ Baz.
                           (expect (subed-srt-forward-subtitle-id) :to-be nil)
                           (expect (thing-at-point 'word) :to-equal "Baz")))
                     )
+          )
+
+
+(describe "Adjusting subtitle start/stop time"
+          :var (subed-subtitle-time-adjusted-hook)
+          (it "runs the appropriate hook."
+              (let ((foo (setf (symbol-function 'foo) (lambda (sub-id msecs) ()))))
+                (spy-on 'foo)
+                (add-hook 'subed-subtitle-time-adjusted-hook 'foo)
+                (with-temp-buffer
+                  (insert mock-srt-data)
+                  (subed-srt-increase-start-time-100ms)
+                  (expect 'foo :to-have-been-called-with 3 183556)
+                  (expect 'foo :to-have-been-called-times 1)
+                  (subed-srt-move-to-subtitle-id 1)
+                  (subed-srt-increase-stop-time-100ms)
+                  (expect 'foo :to-have-been-called-with 1 65223)
+                  (expect 'foo :to-have-been-called-times 2)
+                  (subed-srt-move-to-subtitle-end 2)
+                  (subed-srt-decrease-start-time-100ms)
+                  (expect 'foo :to-have-been-called-with 2 122134)
+                  (expect 'foo :to-have-been-called-times 3)
+                  (subed-srt-move-to-subtitle-text 3)
+                  (subed-srt-decrease-stop-time-100ms)
+                  (expect 'foo :to-have-been-called-with 3 195467)
+                  (expect 'foo :to-have-been-called-times 4))))
+          (it "adjusts the start/stop time."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (subed-srt-move-to-subtitle-id 1)
+                (subed-srt-increase-start-time-100ms)
+                (expect (save-excursion (subed-srt-move-to-subtitle-time-start)
+                                        (thing-at-point 'line)) :to-equal "00:01:01,100 --> 00:01:05,123\n")
+                (subed-srt-decrease-start-time-100ms)
+                (subed-srt-decrease-start-time-100ms)
+                (expect (save-excursion (subed-srt-move-to-subtitle-time-start)
+                                        (thing-at-point 'line)) :to-equal "00:01:00,900 --> 00:01:05,123\n")
+                (subed-srt-increase-stop-time-100ms)
+                (subed-srt-increase-stop-time-100ms)
+                (expect (save-excursion (subed-srt-move-to-subtitle-time-start)
+                                        (thing-at-point 'line)) :to-equal "00:01:00,900 --> 00:01:05,323\n")
+                (subed-srt-decrease-stop-time-100ms)
+                (expect (save-excursion (subed-srt-move-to-subtitle-time-start)
+                                        (thing-at-point 'line)) :to-equal "00:01:00,900 --> 00:01:05,223\n")))
           )
 
 
