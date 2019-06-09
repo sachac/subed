@@ -151,7 +151,7 @@ Baz.
                           (expect (thing-at-point 'word) :to-equal "Baz")
                           (expect (subed-srt-move-to-subtitle-id) :to-equal 77)
                           (expect (thing-at-point 'word) :to-equal "3")))
-                    (it "returns ID's point when point is after the text."
+                    (it "returns ID's point when point is between subtitles."
                         (with-temp-buffer
                           (insert mock-srt-data)
                           (goto-char (point-min))
