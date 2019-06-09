@@ -124,26 +124,27 @@ Return point or nil if no subtitle ID could be found."
   (interactive)
   (if sub-id
       (progn
-        ;; Start on the first ID and search forward for a line that contains
-        ;; only the ID, preceded by one or more blank lines.
-        (save-excursion
-          (goto-char (point-min))
-          (setq regex (format "\\(\\([[:blank:]]*\n\\)+[[:blank:]]*\n\\|\\`\\)%d$" sub-id))
-          (setq match-found (re-search-forward regex nil t)))
-        (when match-found
-          (goto-char (match-end 0))
-          (beginning-of-line)
-          (point)))
+        ;; Look for a line that contains only the ID, preceded by one or more
+        ;; blank lines or the beginning of the buffer.
+        (let* ((orig-point (point))
+               (regex (format "\\(%s\\|\\`\\)\\(%d\\)$" subed-srt--regexp-separator sub-id))
+               (match-found (progn (goto-char (point-min))
+                                   (re-search-forward regex nil t))))
+          (goto-char orig-point)
+          (when match-found
+              (goto-char (match-beginning 3)))))
     (progn
       ;; Find one or more blank lines.
       (re-search-forward "\\([[:blank:]]*\n\\)+" nil t)
       ;; Find two or more blank lines or the beginning of the buffer, followed
       ;; by line composed of only digits.
-      (re-search-backward (concat "\\(" subed-srt--regexp-separator "\\|\\`\\)[0-9]+$") nil t)
-      (goto-char (match-end 0))
-      (beginning-of-line)
-      (when (looking-at "^\\([0-9]+\\)$")
-        (point)))))
+      (let* ((regex (concat "\\(" subed-srt--regexp-separator "\\|\\`\\)\\([0-9]+\\)$"))
+             (match-found (re-search-backward regex nil t)))
+        (when match-found
+          (goto-char (match-beginning 3))))))
+  ;; Make extra sure we're on an ID, return nil if we're not
+  (when (looking-at "^\\([0-9]+\\)$")
+    (point)))
 
 (defun subed-srt-move-to-subtitle-id-at-msecs (msecs)
   "Move point to the ID of the subtitle that is playing at MSECS.
