@@ -145,6 +145,15 @@ Return point or nil if no subtitle ID could be found."
       (when (looking-at "^\\([0-9]+\\)$")
         (point)))))
 
+(defun subed-srt-move-to-subtitle-id-at-msecs (msecs)
+  "Move point to the ID of the subtitle that is playing at MSECS.
+Return point or nil if point is still on the same subtitle.
+See also `subed-srt--subtitle-id-at-msecs'."
+  (let ((current-sub-id (subed-srt--subtitle-id))
+        (target-sub-id (subed-srt--subtitle-id-at-msecs msecs)))
+    (when (and target-sub-id current-sub-id (not (= target-sub-id current-sub-id)))
+      (subed-srt-move-to-subtitle-id target-sub-id))))
+
 (defun subed-srt-move-to-subtitle-time-start (&optional sub-id)
   "Move point to subtitle's start time.
 Return point or nil if no start time could be found."
@@ -170,15 +179,6 @@ Return point."
   (when (subed-srt-move-to-subtitle-id sub-id)
     (forward-line 2)
     (point)))
-
-(defun subed-srt-move-to-subtitle-id-at-msecs (msecs)
-  "Move point to the ID of the subtitle that is playing at MSECS.
-Return point or nil if point is still on the same subtitle.
-See also `subed-srt--subtitle-id-at-msecs'."
-  (let ((current-sub-id (subed-srt--subtitle-id))
-        (target-sub-id (subed-srt--subtitle-id-at-msecs msecs)))
-    (when (and target-sub-id current-sub-id (not (= target-sub-id current-sub-id)))
-      (subed-srt-move-to-subtitle-id target-sub-id))))
 
 (defun subed-srt-move-to-subtitle-text-at-msecs (msecs)
   "Move point to the text of the subtitle that is playing at MSECS.
