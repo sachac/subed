@@ -243,26 +243,26 @@ Return point or nil if there is no previous subtitle."
 (defun subed-srt-forward-subtitle-time-start ()
   "Move point to next subtitle's start time."
   (interactive)
-  (subed-srt-forward-subtitle-id)
-  (subed-srt-move-to-subtitle-time-start))
+  (when (subed-srt-forward-subtitle-id)
+    (subed-srt-move-to-subtitle-time-start)))
 
 (defun subed-srt-backward-subtitle-time-start ()
   "Move point to previous subtitle's start time."
   (interactive)
-  (subed-srt-backward-subtitle-id)
-  (subed-srt-move-to-subtitle-time-start))
+  (when (subed-srt-backward-subtitle-id)
+    (subed-srt-move-to-subtitle-time-start)))
 
 (defun subed-srt-forward-subtitle-time-stop ()
   "Move point to next subtitle's stop time."
   (interactive)
-  (subed-srt-forward-subtitle-id)
-  (subed-srt-move-to-subtitle-time-stop))
+  (when (subed-srt-forward-subtitle-id)
+    (subed-srt-move-to-subtitle-time-stop)))
 
 (defun subed-srt-backward-subtitle-time-stop ()
   "Move point to previous subtitle's stop time."
   (interactive)
-  (subed-srt-backward-subtitle-id)
-  (subed-srt-move-to-subtitle-time-stop))
+  (when (subed-srt-backward-subtitle-id)
+    (subed-srt-move-to-subtitle-time-stop)))
 
 
 ;;; Manipulation
