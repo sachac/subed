@@ -1,4 +1,4 @@
-;;; subed-srt.el --- SubRip/srt implementation for subed
+;;; subed-srt.el --- SubRip/srt implementation for subed  -*- lexical-binding: t; -*-
 
 ;;; License:
 ;;

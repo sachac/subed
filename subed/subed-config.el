@@ -1,4 +1,4 @@
-;;; subed-config.el --- Customization variables and hooks for subed
+;;; subed-config.el --- Customization variables and hooks for subed  -*- lexical-binding: t; -*-
 
 ;;; License:
 ;;

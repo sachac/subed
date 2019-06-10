@@ -1,4 +1,4 @@
-;;; subed.el --- A major mode for editing SubRip (srt) subtitles
+;;; subed.el --- A major mode for editing SubRip (srt) subtitles  -*- lexical-binding: t; -*-
 
 ;;; License:
 ;;

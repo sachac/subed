@@ -1,4 +1,4 @@
-;;; subed-mpv.el --- mpv integration for subed
+;;; subed-mpv.el --- mpv integration for subed  -*- lexical-binding: t; -*-
 
 ;;; License:
 ;;
