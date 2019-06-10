@@ -383,8 +383,6 @@ Return point or nil if there is no previous subtitle."
     (subed-srt--regenerate-ids)
     (subed-srt-move-to-subtitle-text)))
 
-;; TODO: Implement support for prefix argument to
-;;       kill n subtitles with C-u n M-k.
 (defun subed-srt-subtitle-kill ()
   "Remove subtitle at point."
   (interactive)
