@@ -206,9 +206,9 @@ that for `subed-point-sync-delay-after-motion' seconds."
   (when subed--point-was-synced
     (setq subed--point-sync-delay-after-motion-timer
           (run-at-time subed-point-sync-delay-after-motion nil
-                       (lambda ()
-                         (setq subed--point-sync-delay-after-motion-timer nil)
-                         (subed-enable-sync-point-to-player))))))
+                       '(lambda ()
+                          (setq subed--point-sync-delay-after-motion-timer nil)
+                          (subed-enable-sync-point-to-player))))))
 
 
 ;;; Sync player-to-point

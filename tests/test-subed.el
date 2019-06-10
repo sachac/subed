@@ -79,9 +79,9 @@
                         (subed-disable-sync-point-to-player-temporarily)
                         (expect 'run-at-time :to-have-been-called-with
                                 subed-point-sync-delay-after-motion nil
-                                (lambda ()
-                                  (setq subed--point-sync-delay-after-motion-timer nil)
-                                  (subed-enable-sync-point-to-player))))
+                                '(lambda ()
+                                   (setq subed--point-sync-delay-after-motion-timer nil)
+                                   (subed-enable-sync-point-to-player))))
                     (it "cancels previously scheduled re-enabling of point-to-player syncing."
                         (subed-disable-sync-point-to-player-temporarily)
                         (expect 'cancel-timer :not :to-have-been-called-with "mock timer")
