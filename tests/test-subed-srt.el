@@ -17,7 +17,7 @@ Baz.
 
 (describe "Getting"
           (describe "the subtitle ID"
-                    (it "returns the subtitle ID if possible."
+                    (it "returns the subtitle ID if it can be found."
                         (with-temp-buffer
                           (insert mock-srt-data)
                           (subed-srt-move-to-subtitle-text 2)
@@ -74,7 +74,7 @@ Baz.
                                      (progn
                                        (subed-srt-move-to-subtitle-id outset-id)
                                        (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal 3))))))
-                    (it "returns previous subtitle ID when time is between subtitles"
+                    (it "returns previous subtitle ID when time is between subtitles."
                         (with-temp-buffer
                           (insert mock-srt-data)
                           (cl-loop for target-id from 1 to 2 do
@@ -83,7 +83,6 @@ Baz.
                                               (progn
                                                 (subed-srt-move-to-subtitle-id outset-id)
                                                 (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal target-id))))
-
                                    (let ((msecs (- (subed-srt--subtitle-msecs-start (+ target-id 1)) 1)))
                                      (cl-loop for outset-id from 1 to 3 do
                                               (progn
@@ -126,7 +125,6 @@ Baz.
                           (expect (subed-srt--subtitle-relative-point) :to-equal nil)))
                     )
           )
-
 
 (describe "Moving"
           (describe "to current subtitle ID"
@@ -271,7 +269,7 @@ Baz.
                           (expect (subed-srt-move-to-subtitle-time-stop) :to-equal nil)))
                     )
           (describe "to end of subtitle text"
-                    (it "returns end of subtitle text's point if movement was successful."
+                    (it "returns point if movement was successful."
                         (with-temp-buffer
                           (insert mock-srt-data)
                           (goto-char (point-min))
@@ -397,7 +395,7 @@ Baz.
                           (expect (subed-srt-backward-subtitle-text) :to-be nil)
                           (expect (thing-at-point 'word) :to-equal "1")))
                     )
-          (describe "to next subtitle's start time"
+          (describe "to next subtitle start time"
                     (it "returns point when there is a next subtitle."
                         (with-temp-buffer
                           (insert mock-srt-data)
@@ -413,7 +411,7 @@ Baz.
                           (expect (subed-srt-forward-subtitle-time-start) :to-be nil)
                           (expect (thing-at-point 'word) :to-equal "3")))
                     )
-          (describe "to previous subtitle's start time"
+          (describe "to previous subtitle start time"
                     (it "returns point when there is a previous subtitle."
                         (with-temp-buffer
                           (insert mock-srt-data)
@@ -429,7 +427,7 @@ Baz.
                           (expect (subed-srt-backward-subtitle-time-start) :to-be nil)
                           (expect (thing-at-point 'word) :to-equal "1")))
                     )
-          (describe "to next subtitle's stop time"
+          (describe "to next subtitle stop time"
                     (it "returns point when there is a next subtitle."
                         (with-temp-buffer
                           (insert mock-srt-data)
@@ -445,7 +443,7 @@ Baz.
                           (expect (subed-srt-forward-subtitle-time-stop) :to-be nil)
                           (expect (thing-at-point 'word) :to-equal "3")))
                     )
-          (describe "to previous subtitle's stop time"
+          (describe "to previous subtitle stop time"
                     (it "returns point when there is a previous subtitle."
                         (with-temp-buffer
                           (insert mock-srt-data)
@@ -462,7 +460,6 @@ Baz.
                           (expect (thing-at-point 'word) :to-equal "1")))
                     )
           )
-
 
 (describe "Adjusting subtitle start/stop time"
           :var (subed-subtitle-time-adjusted-hook)
@@ -506,7 +503,6 @@ Baz.
                 (expect (save-excursion (subed-srt-move-to-subtitle-time-start)
                                         (thing-at-point 'line)) :to-equal "00:01:00,900 --> 00:01:05,223\n")))
           )
-
 
 (describe "Killing a subtitle"
           (it "removes it when it is the first one."
@@ -598,7 +594,6 @@ Baz.
                                                                                        "00:00:01,050 --> 00:00:01,900\n\n"))
                                              (expect (point) :to-equal 33)))))
                     )
-
           (describe "in a non-empty buffer"
                     (describe "before the current subtitle"
                               (it "a single subtitle."
@@ -686,8 +681,6 @@ Baz.
                                                                                        "Baz.\n"))
                                              (expect (point) :to-equal 71))))
                               )
-
-
                     (describe "before the first subtitle"
                               (it "a single subtitle."
                                   (cl-loop for arg in (list '- -1 (list 4)) do
@@ -731,8 +724,6 @@ Baz.
                                                                                        "Baz.\n"))
                                              (expect (point) :to-equal 33))))
                               )
-
-
                     (describe "after the last subtitle"
                               (it "a single subtitle."
                                   (cl-loop for arg in (list nil 1) do
