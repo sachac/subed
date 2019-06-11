@@ -369,16 +369,17 @@ buffer."
   "Restore relative point within current subtitle after executing BODY.
 This also works if the buffer changes as long the subtitle IDs
 don't change."
-  `(let ((sub-id (subed--subtitle-id))
-         (sub-pos (subed--subtitle-relative-point)))
-     (progn ,@body)
-     (subed-move-to-subtitle-id sub-id)
-     ;; Subtitle text may have changed and we may not be able to move to the
-     ;; exact original position
-     (condition-case nil
-         (forward-char sub-pos)
-       ('beginning-of-buffer nil)
-       ('end-of-buffer nil))))
+  (save-excursion
+    `(let ((sub-id (subed--subtitle-id))
+           (sub-pos (subed--subtitle-relative-point)))
+       (progn ,@body)
+       (subed-move-to-subtitle-id sub-id)
+       ;; Subtitle text may have changed and we may not be able to move to the
+       ;; exact original position
+       (condition-case nil
+           (forward-char sub-pos)
+         ('beginning-of-buffer nil)
+         ('end-of-buffer nil)))))
 
 (defun subed-guess-video-file ()
   "Return path to video if replacing the buffer file name's
