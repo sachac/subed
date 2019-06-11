@@ -43,15 +43,16 @@
 (defun subed-srt--timestamp-to-msecs (time-string)
   "Find HH:MM:SS,MS pattern in TIME-STRING and convert it to milliseconds.
 Return nil if TIME-STRING doesn't match the pattern."
-  (when (string-match subed-srt--regexp-timestamp time-string)
-    (let ((hours (string-to-number (match-string 1 time-string)))
-          (mins  (string-to-number (match-string 2 time-string)))
-          (secs  (string-to-number (match-string 3 time-string)))
-          (msecs (string-to-number (match-string 4 time-string))))
-      (+ (* (truncate hours) 3600000)
-         (* (truncate mins) 60000)
-         (* (truncate secs) 1000)
-         (truncate msecs)))))
+  (save-match-data
+    (when (string-match subed-srt--regexp-timestamp time-string)
+      (let ((hours (string-to-number (match-string 1 time-string)))
+            (mins  (string-to-number (match-string 2 time-string)))
+            (secs  (string-to-number (match-string 3 time-string)))
+            (msecs (string-to-number (match-string 4 time-string))))
+        (+ (* (truncate hours) 3600000)
+           (* (truncate mins) 60000)
+           (* (truncate secs) 1000)
+           (truncate msecs))))))
 
 (defun subed-srt--msecs-to-timestamp (msecs)
   "Convert MSECS to string in the format HH:MM:SS,MS."
@@ -69,26 +70,27 @@ Return nil if TIME-STRING doesn't match the pattern."
 If MSECS is between subtitles, return the subtitle that starts
 after MSECS if there is one and its start time is >= MSECS +
 1000.  Otherwise return the closest subtitle before MSECS."
-  (save-excursion
-    (goto-char (point-min))
-    (let* ((secs       (/ msecs 1000))
-           (only-hours (truncate (/ secs 3600)))
-           (only-mins  (truncate (/ (- secs (* only-hours 3600)) 60))))
-      ;; Move to first subtitle in the relevant hour
-      (when (re-search-forward (format "\\(\n\n\\|\\`\\)[0-9]+\n%02d:" only-hours) nil t)
-        (beginning-of-line)
-        ;; Move to first subtitle in the relevant hour and minute
-        (re-search-forward (format "\\(\n\n\\|\\`\\)[0-9]+\n%02d:%02d" only-hours only-mins) nil t)))
-    ;; Move to first subtitle that starts at or after MSECS
-    (catch 'last-subtitle-reached
-      (while (<= (subed-srt--subtitle-msecs-start) msecs)
-        (unless (subed-srt-forward-subtitle-id)
-          (throw 'last-subtitle-reached nil))))
-    ;; Move back to previous subtitle if start of current subtitle is in the
-    ;; future (i.e. MSECS is between subtitles)
-    (when (> (subed-srt--subtitle-msecs-start) msecs)
-      (subed-srt-backward-subtitle-id))
-    (subed-srt--subtitle-id)))
+  (save-match-data
+    (save-excursion
+      (goto-char (point-min))
+      (let* ((secs       (/ msecs 1000))
+             (only-hours (truncate (/ secs 3600)))
+             (only-mins  (truncate (/ (- secs (* only-hours 3600)) 60))))
+        ;; Move to first subtitle in the relevant hour
+        (when (re-search-forward (format "\\(%s\\|\\`\\)[0-9]+\n%02d:" subed-srt--regexp-separator only-hours) nil t)
+          (beginning-of-line)
+          ;; Move to first subtitle in the relevant hour and minute
+          (re-search-forward (format "\\(\n\n\\|\\`\\)[0-9]+\n%02d:%02d" only-hours only-mins) nil t)))
+      ;; Move to first subtitle that starts at or after MSECS
+      (catch 'last-subtitle-reached
+        (while (<= (subed-srt--subtitle-msecs-start) msecs)
+          (unless (subed-srt-forward-subtitle-id)
+            (throw 'last-subtitle-reached nil))))
+      ;; Move back to previous subtitle if start of current subtitle is in the
+      ;; future (i.e. MSECS is between subtitles)
+      (when (> (subed-srt--subtitle-msecs-start) msecs)
+        (subed-srt-backward-subtitle-id))
+      (subed-srt--subtitle-id))))
 
 (defun subed-srt--subtitle-msecs-start (&optional sub-id)
   "Subtitle start time in milliseconds or nil if it can't be found."
@@ -167,27 +169,30 @@ See also `subed-srt--subtitle-id-at-msecs'."
   "Move point to subtitle's start time.
 Return point or nil if no start time could be found."
   (interactive)
-  (when (subed-srt-move-to-subtitle-id sub-id)
-    (forward-line)
-    (when (looking-at subed-srt--regexp-timestamp)
-      (point))))
+  (save-match-data
+    (when (subed-srt-move-to-subtitle-id sub-id)
+      (forward-line)
+      (when (looking-at subed-srt--regexp-timestamp)
+        (point)))))
 
 (defun subed-srt-move-to-subtitle-time-stop (&optional sub-id)
   "Move point to subtitle's stop time.
 Return point or nil if no stop time could be found."
   (interactive)
-  (when (subed-srt-move-to-subtitle-id sub-id)
-    (search-forward " --> " nil t)
-    (when (looking-at subed-srt--regexp-timestamp)
-      (point))))
+  (save-match-data
+    (when (subed-srt-move-to-subtitle-id sub-id)
+      (search-forward " --> " nil t)
+      (when (looking-at subed-srt--regexp-timestamp)
+        (point)))))
 
 (defun subed-srt-move-to-subtitle-text (&optional sub-id)
   "Move point on the first character of subtitle's text.
 Return point."
   (interactive)
   (when (subed-srt-move-to-subtitle-id sub-id)
-    (forward-line 2)
-    (point)))
+    (save-match-data
+      (when (re-search-forward (concat subed-srt--regexp-duration "[[:blank:]]*\n") nil t)
+        (point)))))
 
 (defun subed-srt-move-to-subtitle-text-at-msecs (msecs)
   "Move point to the text of the subtitle that is playing at MSECS.
@@ -210,8 +215,9 @@ Return point unless point did not change."
 Return point or nil if point didn't change (e.g. if called on the
 last subtitle)."
   (interactive)
-  (when (re-search-forward (concat subed-srt--regexp-separator "[[:alnum:]]") nil t)
-    (subed-srt-move-to-subtitle-id)))
+  (save-match-data
+    (when (re-search-forward (concat subed-srt--regexp-separator "[0-9]+\n") nil t)
+      (subed-srt-move-to-subtitle-id))))
 
 (defun subed-srt-backward-subtitle-id ()
   "Move point to previous subtitle's ID.
@@ -420,14 +426,15 @@ Return point or nil if there is no previous subtitle."
 (defun subed-srt--regenerate-ids ()
   "Ensure subtitle IDs start at 1 and are incremented by 1 for
 each subtitle."
-  (save-excursion
-    (goto-char (point-min))
-    (let ((id 1))
-      (while (looking-at "^[0-9]+$")
-        (kill-word 1)
-        (insert (format "%d" id))
-        (setq id (1+ id))
-        (subed-srt-forward-subtitle-id)))))
+  (save-match-data
+    (save-excursion
+      (goto-char (point-min))
+      (let ((id 1))
+        (while (looking-at "^[0-9]+$")
+          (kill-word 1)
+          (insert (format "%d" id))
+          (setq id (1+ id))
+          (subed-srt-forward-subtitle-id))))))
 
 (defun subed-srt-sanitize ()
   "Remove surplus newlines and whitespace"
