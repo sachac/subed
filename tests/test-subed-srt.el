@@ -101,6 +101,53 @@ Baz.
                           (expect (subed-srt--subtitle-msecs-start) :to-be nil)
                           (expect (subed-srt--subtitle-msecs-stop) :to-be nil)))
                     )
+          (describe "the subtitle text"
+                    (describe "when text is empty"
+                              (it "and at the beginning with a trailing newline."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-srt-move-to-subtitle-text 1)
+                                    (kill-line)
+                                    (expect (subed-srt--subtitle-text) :to-equal "")))
+                              (it "and at the beginning without a trailing newline."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-srt-move-to-subtitle-text 1)
+                                    (kill-whole-line)
+                                    (expect (subed-srt--subtitle-text) :to-equal "")))
+                              (it "and in the middle."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-srt-move-to-subtitle-text 2)
+                                    (kill-line)
+                                    (expect (subed-srt--subtitle-text) :to-equal "")))
+                              (it "and at the end with a trailing newline."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-srt-move-to-subtitle-text 3)
+                                    (kill-line)
+                                    (expect (subed-srt--subtitle-text) :to-equal "")))
+                              (it "and at the end without a trailing newline."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-srt-move-to-subtitle-text 3)
+                                    (kill-whole-line)
+                                    (expect (subed-srt--subtitle-text) :to-equal "")))
+                              )
+                    (describe "when text is not empty"
+                              (it "and has no linebreaks."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-srt-move-to-subtitle-text 2)
+                                    (expect (subed-srt--subtitle-text) :to-equal "Bar.")))
+                              (it "and has linebreaks."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-srt-move-to-subtitle-text 2)
+                                    (insert "Bar.\n")
+                                    (expect (subed-srt--subtitle-text) :to-equal "Bar.\nBar.")))
+                              )
+                    )
           (describe "the point within the subtitle"
                     (it "returns the relative point if we can find an ID."
                         (with-temp-buffer
@@ -284,15 +331,38 @@ Baz.
                           (goto-char (point-max))
                           (backward-char 2)
                           (expect (subed-srt-move-to-subtitle-end) :to-be 113)
-                          (expect (looking-back "^Baz.$") :to-be t)
-                          ))
+                          (expect (looking-back "^Baz.$") :to-be t)))
+                    (it "returns point if subtitle text is empty with trailing newline."
+                        (with-temp-buffer
+                          (insert mock-srt-data)
+                          (subed-srt-move-to-subtitle-text 1)
+                          (kill-line)
+                          (expect (subed-srt-move-to-subtitle-end) :to-be nil)
+                          (expect (looking-at "^$") :to-be t)
+                          (subed-srt-move-to-subtitle-text 2)
+                          (kill-line)
+                          (expect (subed-srt-move-to-subtitle-end) :to-be nil)
+                          (expect (looking-at "^$") :to-be t)
+                          (subed-srt-move-to-subtitle-text 3)
+                          (kill-line)
+                          (expect (subed-srt-move-to-subtitle-end) :to-be nil)
+                          (expect (looking-at "^$") :to-be t)))
+                    (it "returns point if subtitle text is empty without trailing newline."
+                        (with-temp-buffer
+                          (insert mock-srt-data)
+                          (subed-srt-move-to-subtitle-text 1)
+                          (kill-whole-line)
+                          (expect (subed-srt-move-to-subtitle-end) :to-be nil)
+                          (expect (looking-at "^$") :to-be t)
+                          (goto-char (point-min))
+                          (expect (subed-srt-move-to-subtitle-end) :to-be 33)
+                          (expect (looking-at "^$") :to-be t)))
                     (it "returns nil if movement failed."
                         (with-temp-buffer
                           (insert mock-srt-data)
                           (goto-char (point-max))
-                          (expect (subed-srt-move-to-subtitle-end) :to-be nil)
-                          (expect (looking-back "^Baz.$") :to-be nil)
-                          (backward-char 1)
+                          (expect (subed-srt-move-to-subtitle-end) :to-be 113)
+                          (expect (looking-back "^Baz.$") :to-be t)
                           (expect (subed-srt-move-to-subtitle-end) :to-be nil)
                           (expect (looking-back "^Baz.$") :to-be t)))
                     )
@@ -804,17 +874,40 @@ Baz.
                   (replace-match "\n\t"))
                 (expect (buffer-string) :not :to-equal mock-srt-data)
                 (subed-srt-sanitize)
-                (expect (buffer-string) :to-equal mock-srt-data))
-              )
-          (it "removes excessive newlines between subtitles."
+                (expect (buffer-string) :to-equal mock-srt-data)))
+          (it "removes excessive empty lines between subtitles."
               (with-temp-buffer
                 (insert mock-srt-data)
                 (goto-char (point-min))
                 (while (re-search-forward "\n\n" nil t)
-                  (replace-match "\n \n  \t  \t\t  \n\n   \n \n \t\n"))
+                  (replace-match "\n \n  \t  \t\t  \n\n  \t\n"))
                 (expect (buffer-string) :not :to-equal mock-srt-data)
                 (subed-srt-sanitize)
                 (expect (buffer-string) :to-equal mock-srt-data)))
+          (it "ensures double newline between subtitles if text of previous subtitle is empty."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (subed-srt-move-to-subtitle-text 1)
+                (kill-whole-line)
+                (expect (buffer-string) :to-equal (concat "1\n"
+                                                          "00:01:01,000 --> 00:01:05,123\n"
+                                                          "\n"
+                                                          "2\n"
+                                                          "00:02:02,234 --> 00:02:10,345\n"
+                                                          "Bar.\n\n"
+                                                          "3\n"
+                                                          "00:03:03,456 --> 00:03:15,567\n"
+                                                          "Baz.\n"))
+                (subed-srt-sanitize)
+                (expect (buffer-string) :to-equal (concat "1\n"
+                                                          "00:01:01,000 --> 00:01:05,123\n"
+                                                          "\n\n"
+                                                          "2\n"
+                                                          "00:02:02,234 --> 00:02:10,345\n"
+                                                          "Bar.\n\n"
+                                                          "3\n"
+                                                          "00:03:03,456 --> 00:03:15,567\n"
+                                                          "Baz.\n"))))
           (it "removes empty lines from beginning of buffer."
               (with-temp-buffer
                 (insert mock-srt-data)
@@ -835,10 +928,35 @@ Baz.
               (with-temp-buffer
                 (insert mock-srt-data)
                 (goto-char (point-max))
-                (delete-backward-char 1)
+                (while (eq (char-before (point-max)) ?\n)
+                  (delete-backward-char 1))
                 (expect (buffer-string) :not :to-equal mock-srt-data)
                 (subed-srt-sanitize)
                 (expect (buffer-string) :to-equal mock-srt-data)))
+          (it "ensures single newline after last subtitle if text is empty."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (subed-srt-move-to-subtitle-text 3)
+                (kill-whole-line)
+                (expect (buffer-string) :to-equal (concat "1\n"
+                                                          "00:01:01,000 --> 00:01:05,123\n"
+                                                          "Foo.\n\n"
+                                                          "2\n"
+                                                          "00:02:02,234 --> 00:02:10,345\n"
+                                                          "Bar.\n\n"
+                                                          "3\n"
+                                                          "00:03:03,456 --> 00:03:15,567\n"
+                                                          ""))
+                (subed-srt-sanitize)
+                (expect (buffer-string) :to-equal (concat "1\n"
+                                                          "00:01:01,000 --> 00:01:05,123\n"
+                                                          "Foo.\n\n"
+                                                          "2\n"
+                                                          "00:02:02,234 --> 00:02:10,345\n"
+                                                          "Bar.\n\n"
+                                                          "3\n"
+                                                          "00:03:03,456 --> 00:03:15,567\n"
+                                                          "\n"))))
           )
 
 (describe "Renumbering"
