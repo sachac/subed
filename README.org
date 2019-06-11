@@ -10,8 +10,7 @@ subed is still alpha software.  Expect it to kill your Emacs session.
    - Quickly jump to the beginning (~C-M-a~) and end (~C-M-e~) of the current
      subtitle's text.
    - Insert (~M-i~) and kill (~M-k~) subtitles.
-   - Adjust subtitle start (~M-[~ / ~M-]~) and stop (~M-{~ / ~M-}~) time stamps.
-   - When a subtitle time is adjusted, jump to its start time in mpv (~C-x /~).
+   - Adjust subtitle start (~M-[~ / ~M-]~) and stop (~M-{~ / ~M-}~) time.
    - Sort and re-number subtitles and remove any extra spaces and newlines
      (~M-s~).
    - Open videos with ~C-x C-v~ or automatically when entering subed-mode if the
@@ -19,14 +18,15 @@ subed is still alpha software.  Expect it to kill your Emacs session.
      (e.g. ~.mkv~ or ~.avi~).
    - Every time you safe (~C-x s~), the subtitles are automatically sanitized
      and then reloaded in mpv.
-   - Synchronize point and playback position:
-     - mpv jumps automatically to the position of the subtitle on point as point
-       moves between subtitles (~C-x ,~).
-     - Point is automatically moved as the video is playing so that point is
-       always on the relevant subtitle (~C-x .~).
-   - Automatically pause or slow down playback in mpv while you are typing (~C-x
-     p~).
-   - Loop over the subtitle on point in mpv (~C-x l~).
+   - Synchronize cursor and playback position:
+     - Playback in mpv seeks automatically to the position of the current
+       subtitle as the cursor moves between subtitles (~C-x ,~).
+     - The cursor is automatically moved as the video is playing so that it is
+       always on the currently relevant subtitle (~C-x .~).
+   - Automatically pause or slow down playback while you are typing (~C-x p~).
+   - Loop over the current subtitle in mpv (~C-x l~).
+   - When a subtitle's start or stop time is adjusted, jump to its start time in
+     mpv (~C-x /~).
 
 ** Installation
    For now, you have to install it manually.  For example, copy ~subed/*.el~ to
@@ -37,7 +37,7 @@ subed is still alpha software.  Expect it to kill your Emacs session.
      ;; Tell emacs where to find subed
      :load-path "~/.emacs.d/elisp/"
      :config
-     ;; Disable automatic movement of point
+     ;; Disable automatic movement of point by default
      (add-hook 'subed-mode-hook 'subed-disable-sync-point-to-player)
      ;; Break lines automatically while typing
      (add-hook 'subed-mode-hook 'turn-on-auto-fill))
