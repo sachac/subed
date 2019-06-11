@@ -37,7 +37,7 @@
 (defconst subed-srt--regexp-timestamp "\\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\),\\([0-9]+\\)")
 (defconst subed-srt--regexp-duration (concat subed-srt--regexp-timestamp "[ ]+\\(-->\\)[ ]+"
                                              subed-srt--regexp-timestamp))
-(defconst subed-srt--regexp-separator "\\([[:blank:]]*\n\\)+[[:blank:]]*\n")
+(defconst subed-srt--regexp-separator "\\([[:blank:]]*\n\\)*[[:blank:]]*\n")
 (defconst subed-srt--length-timestamp 12)  ;; String length of "01:45:32,091"
 
 (defun subed-srt--timestamp-to-msecs (time-string)
@@ -132,29 +132,30 @@ after MSECS if there is one and its start time is >= MSECS +
 If SUBTITLE-ID is not given, focus the current subtitle's ID.
 Return point or nil if no subtitle ID could be found."
   (interactive)
-  (if sub-id
-      (progn
-        ;; Look for a line that contains only the ID, preceded by one or more
-        ;; blank lines or the beginning of the buffer.
-        (let* ((orig-point (point))
-               (regex (format "\\(%s\\|\\`\\)\\(%d\\)$" subed-srt--regexp-separator sub-id))
-               (match-found (progn (goto-char (point-min))
-                                   (re-search-forward regex nil t))))
-          (goto-char orig-point)
-          (when match-found
+  (save-match-data
+    (if sub-id
+        (progn
+          ;; Look for a line that contains only the ID, preceded by one or more
+          ;; blank lines or the beginning of the buffer.
+          (let* ((orig-point (point))
+                 (regex (format "\\(%s\\|\\`\\)\\(%d\\)$" subed-srt--regexp-separator sub-id))
+                 (match-found (progn (goto-char (point-min))
+                                     (re-search-forward regex nil t))))
+            (goto-char orig-point)
+            (when match-found
               (goto-char (match-beginning 3)))))
-    (progn
-      ;; Find one or more blank lines.
-      (re-search-forward "\\([[:blank:]]*\n\\)+" nil t)
-      ;; Find two or more blank lines or the beginning of the buffer, followed
-      ;; by line composed of only digits.
-      (let* ((regex (concat "\\(" subed-srt--regexp-separator "\\|\\`\\)\\([0-9]+\\)$"))
-             (match-found (re-search-backward regex nil t)))
-        (when match-found
-          (goto-char (match-beginning 3))))))
-  ;; Make extra sure we're on an ID, return nil if we're not
-  (when (looking-at "^\\([0-9]+\\)$")
-    (point)))
+      (progn
+        ;; Find one or more blank lines.
+        (re-search-forward "\\([[:blank:]]*\n\\)+" nil t)
+        ;; Find two or more blank lines or the beginning of the buffer, followed
+        ;; by line composed of only digits.
+        (let* ((regex (concat "\\(" subed-srt--regexp-separator "\\|\\`\\)\\([0-9]+\\)$"))
+               (match-found (re-search-backward regex nil t)))
+          (when match-found
+            (goto-char (match-beginning 3))))))
+    ;; Make extra sure we're on an ID, return nil if we're not
+    (when (looking-at "^\\([0-9]+\\)$")
+      (point))))
 
 (defun subed-srt-move-to-subtitle-id-at-msecs (msecs)
   "Move point to the ID of the subtitle that is playing at MSECS.
@@ -203,12 +204,17 @@ See also `subed-srt--subtitle-id-at-msecs'."
 
 (defun subed-srt-move-to-subtitle-end (&optional sub-id)
   "Move point after the last character of the subtitle's text.
-Return point unless point did not change."
+Return point or nil if point unless point did not change."
   (interactive)
-  (when (not (looking-at "\\([[:blank:]]*\n\\)*\\'"))
-    (subed-srt-move-to-subtitle-text sub-id)
-    (re-search-forward (concat "\\(" subed-srt--regexp-separator "\\|\\([[:blank:]]*\n\\)+\\'\\)") nil t)
-    (goto-char (match-beginning 0))))
+  (save-match-data
+    (let ((orig-point (point)))
+      (subed-srt-move-to-subtitle-text sub-id)
+      ;; Look for next separator or end of buffer
+      (let ((regex (concat "\\(" subed-srt--regexp-separator "[0-9]+\n\\|\\([[:blank:]]*\n*\\)\\'\\)")))
+        (when (re-search-forward regex nil t)
+          (goto-char (match-beginning 0))))
+      (when (not (= (point) orig-point))
+        (point)))))
 
 (defun subed-srt-forward-subtitle-id ()
   "Move point to next subtitle's ID.
@@ -224,8 +230,11 @@ last subtitle)."
 Return point or nil if point didn't change (e.g. if called on the
 first subtitle)."
   (interactive)
-  (when (re-search-backward subed-srt--regexp-separator nil t)
-    (subed-srt-move-to-subtitle-id)))
+  (when (subed-srt-move-to-subtitle-id)
+    (let ((orig-point (point)))
+      (forward-line -1)
+      (when (not (= (point) orig-point))
+        (subed-srt-move-to-subtitle-id)))))
 
 (defun subed-srt-forward-subtitle-text ()
   "Move point to next subtitle's text.
@@ -334,68 +343,75 @@ Return point or nil if there is no previous subtitle."
       \\[universal-argument] \\[subed-subtitle-insert]   Insert 1 subtitle before the current subtitle
   \\[universal-argument] \\[universal-argument] \\[subed-subtitle-insert]   Insert 2 subtitles before the current subtitle"
   (interactive "P")
-  (let* ((number-of-subs (cond ((eq arg nil) 1)      ;; M-i
-                               ((integerp arg) arg)  ;; C-u N M-i  /  C-u - N M-i
-                               ;; C-u [C-u ...] M-i  /  C-u - [C-u ...] M-i
-                               ((consp arg) (* (truncate (log (abs (car arg)) 4)) ;; ([-]64) -> 3
-                                               (/ (car arg) (abs (car arg)))))    ;; Restore sign
-                               (t 1)))            ;; C-u - M-i (Is there anything else is left?)
-         (insert-before (or (< number-of-subs 0)  ;; C-u - N M-i
-                            (eq arg '-)           ;; C-u - M-i
-                            (consp arg)))         ;; C-u [C-u ...] M-i
-         ;; Ensure number-of-subs is positive, now that we figured out `insert-before'
-         (number-of-subs (abs number-of-subs)))
-    (subed-debug "Inserting %s subtitle(s) %s the current" number-of-subs (if insert-before "before" "after"))
-    (subed-srt-move-to-subtitle-id)
-    ;; Move to the ID of the subtitle we're prepending subtitles to so that we
-    ;; can do (insert "<new subtitle>")
-    (if insert-before
-        (subed-srt-move-to-subtitle-id)
-      (when (and (not (subed-srt-forward-subtitle-id)) ;; Appending after last subtitle
-                 (> (buffer-size) 0))                  ;; Buffer is not empty
-        ;; There is no ID because we're appending to the last subtitle.  We just
-        ;; have to make sure there is a subtitle delimiter ("\n\n") after the
-        ;; last subtitle and point is where the new ID will go.
-        (subed-srt-move-to-subtitle-end)
-        (forward-line)
-        (insert "\n")))
-    ;; Insert subtitles
-    (save-excursion
-      ;; Find out how much time we have per subtitle
-      (let*
-          ;; nil when there's no previous subtitle
-          ((prev-stop-msecs (save-excursion (when (subed-srt-backward-subtitle-id)
-                                                (subed-srt--subtitle-msecs-stop))))
-           ;; nil when there's no next subtitle
-           (next-start-msecs (when (looking-at "^[0-9]$")
-                               (subed-srt--subtitle-msecs-start)))
-           ;; nil when there's no next subtitle
-           (available-msecs (when next-start-msecs
-                              (- next-start-msecs (or prev-stop-msecs 0))))
-           ;; Calculate milliseconds per inserted subtitle or use default value
-           ;; if we're appending to the last subtitle
-           (sub-msecs (if available-msecs (/ available-msecs number-of-subs)
-                        (* subed-default-subtitle-length 1000))))
-        (dotimes (i number-of-subs)
-          (let* ((start-msecs (+ (or prev-stop-msecs 0) (* sub-msecs i)))
-                 (stop-msecs (+ start-msecs sub-msecs))
-                 ;; Apply `subed-subtitle-spacing'
-                 (start-msecs-spaced (if (= i 0)
-                                         (+ start-msecs subed-subtitle-spacing)
-                                       (+ start-msecs (/ subed-subtitle-spacing 2))))
-                 (stop-msecs-spaced (if (= i (1- number-of-subs))
-                                        (- stop-msecs subed-subtitle-spacing)
-                                      (- stop-msecs (/ subed-subtitle-spacing 2)))))
-            (insert (format "0\n%s --> %s\n\n\n"
-                            (subed-srt--msecs-to-timestamp start-msecs-spaced)
-                            (subed-srt--msecs-to-timestamp stop-msecs-spaced))))))
-      ;; If we're not on an ID, that means we added one or more subtitles after
-      ;; the last one and we can remove the trailing extra newline
-      (when (looking-at "^[[:space:]]*$")
-        (forward-line -1)
-        (kill-whole-line)))
-    (subed-srt--regenerate-ids)
-    (subed-srt-move-to-subtitle-text)))
+  (save-match-data
+    (let* ((number-of-subs (cond ((eq arg nil) 1)      ;; M-i
+                                 ((integerp arg) arg)  ;; C-u N M-i  /  C-u - N M-i
+                                 ;; C-u [C-u ...] M-i  /  C-u - [C-u ...] M-i
+                                 ((consp arg) (* (truncate (log (abs (car arg)) 4)) ;; ([-]64) -> 3
+                                                 (/ (car arg) (abs (car arg)))))    ;; Restore sign
+                                 (t 1)))            ;; C-u - M-i (Is there anything else is left?)
+           (insert-before (or (< number-of-subs 0)  ;; C-u - N M-i
+                              (eq arg '-)           ;; C-u - M-i
+                              (consp arg)))         ;; C-u [C-u ...] M-i
+           ;; Ensure number-of-subs is positive, now that we figured out `insert-before'
+           (number-of-subs (abs number-of-subs)))
+      (subed-debug "Inserting %s subtitle(s) %s the current" number-of-subs (if insert-before "before" "after"))
+      (subed-srt-move-to-subtitle-id)
+      ;; Move to the ID of the subtitle we're prepending subtitles to so that we
+      ;; can do (insert "<new subtitle>")
+      (if insert-before
+          (subed-srt-move-to-subtitle-id)
+        (when (and (not (subed-srt-forward-subtitle-id)) ;; Appending after last subtitle
+                   (> (buffer-size) 0))                  ;; Buffer is not empty
+          ;; There is no ID because we're appending to the last subtitle.  We just
+          ;; have to make sure there is a subtitle delimiter ("\n\n") after the
+          ;; last subtitle and point is where the new ID will go.
+          (subed-srt-move-to-subtitle-end)
+          (forward-line)
+          (insert "\n")))
+      ;; Insert subtitles
+      (save-excursion
+        ;; Find out how much time we have per subtitle
+        (let*
+            ;; nil when there's no previous subtitle
+            ((prev-stop-msecs (save-excursion
+                                (if (looking-at "^[0-9]$")
+                                    ;; We're inserting between subtitles or
+                                    ;; before the first one
+                                    (when (subed-srt-backward-subtitle-id)
+                                           (subed-srt--subtitle-msecs-stop))
+                                  ;; We're append after the last subtitle
+                                  (subed-srt--subtitle-msecs-stop))))
+             ;; nil when there's no next subtitle
+             (next-start-msecs (when (looking-at "^[0-9]$")
+                                 (subed-srt--subtitle-msecs-start)))
+             ;; nil when there's no next subtitle
+             (available-msecs (when next-start-msecs
+                                (- next-start-msecs (or prev-stop-msecs 0))))
+             ;; Calculate milliseconds per inserted subtitle or use default value
+             ;; if we're appending to the last subtitle
+             (sub-msecs (if available-msecs (/ available-msecs number-of-subs)
+                          (* subed-default-subtitle-length 1000))))
+          (dotimes (i number-of-subs)
+            (let* ((start-msecs (+ (or prev-stop-msecs 0) (* sub-msecs i)))
+                   (stop-msecs (+ start-msecs sub-msecs))
+                   ;; Apply `subed-subtitle-spacing'
+                   (start-msecs-spaced (if (= i 0)
+                                           (+ start-msecs subed-subtitle-spacing)
+                                         (+ start-msecs (/ subed-subtitle-spacing 2))))
+                   (stop-msecs-spaced (if (= i (1- number-of-subs))
+                                          (- stop-msecs subed-subtitle-spacing)
+                                        (- stop-msecs (/ subed-subtitle-spacing 2)))))
+              (insert (format "0\n%s --> %s\n\n\n"
+                              (subed-srt--msecs-to-timestamp start-msecs-spaced)
+                              (subed-srt--msecs-to-timestamp stop-msecs-spaced))))))
+        ;; If we're not on an ID, that means we added one or more subtitles after
+        ;; the last one and we can remove the trailing extra newline
+        (when (looking-at "^[[:blank:]]*$")
+          (forward-line -1)
+          (kill-whole-line)))
+      (subed-srt--regenerate-ids)
+      (subed-srt-move-to-subtitle-text))))
 
 (defun subed-srt-subtitle-kill ()
   "Remove subtitle at point."
@@ -439,29 +455,35 @@ each subtitle."
 (defun subed-srt-sanitize ()
   "Remove surplus newlines and whitespace"
   (interactive)
-  (subed--save-excursion
-   ;; Remove trailing whitespace from lines and empty lines from end of buffer
-   (delete-trailing-whitespace (point-min) nil)
+  (save-match-data
+    (subed--save-excursion
+     ;; Remove trailing whitespace from each line and empty lines from end of buffer
+     (delete-trailing-whitespace (point-min) nil)
 
-   ;; Remove leading whitespace lines
-   (goto-char (point-min))
-   (while (re-search-forward "^[[:blank:]]+" nil t)
-     (replace-match ""))
+     ;; Remove leading spaces and tabs from each line
+     (goto-char (point-min))
+     (while (re-search-forward "^[[:blank:]]+" nil t)
+       (replace-match ""))
 
-   ;; Remove excessive newlines between subtitles
-   (goto-char (point-min))
-   (while (re-search-forward subed-srt--regexp-separator nil t)
-     (replace-match "\n\n"))
+     ;; Remove leading newlines
+     (goto-char (point-min))
+     (while (looking-at "\\`\n+")
+       (replace-match ""))
 
-   ;; Remove any newlines from beginning of buffer
-   (goto-char (point-min))
-   (while (re-search-forward "\\`\n+" nil t)
-     (replace-match ""))
+     ;; Replace separators between subtitles with double newlines
+     (goto-char (point-min))
+     (while (subed-srt-forward-subtitle-id)
+       (let ((prev-sub-end (save-excursion (when (subed-srt-backward-subtitle-end)
+                                             (point)))))
+         (when prev-sub-end
+           (delete-region prev-sub-end (point))
+           (insert "\n\n"))))
 
-   ;; Ensure single newline at end of buffer
-   (goto-char (point-max))
-   (when (not (looking-back "\n"))
-     (insert "\n"))))
+     ;; Remove trailing newlines
+     (goto-char (point-max))
+     (subed-srt-move-to-subtitle-end)
+     (when (looking-at "\n*")
+       (replace-match "\n")))))
 
 (defun subed-srt-sort ()
   "Sanitize, then sort subtitles by start time and re-number them."
