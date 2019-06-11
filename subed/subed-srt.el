@@ -106,6 +106,14 @@ after MSECS if there is one and its start time is >= MSECS +
     (when timestamp
       (subed-srt--timestamp-to-msecs timestamp))))
 
+(defun subed-srt--subtitle-text (&optional sub-id)
+  "Return subtitle's text."
+  (or (save-excursion
+        (let ((beg (subed-srt-move-to-subtitle-text sub-id))
+              (end (subed-srt-move-to-subtitle-end sub-id)))
+          (when (and beg end)
+            (buffer-substring beg end)))) ""))
+
 (defun subed-srt--subtitle-relative-point ()
   "Point relative to subtitle's ID or nil if ID can't be found."
   (let ((start-point (save-excursion
