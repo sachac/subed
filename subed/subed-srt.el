@@ -495,19 +495,21 @@ each subtitle."
 (defun subed-srt-sort ()
   "Sanitize, then sort subtitles by start time and re-number them."
   (interactive)
-  (subed-srt-sanitize)
-  (subed--save-excursion
-   (goto-char (point-min))
-   (sort-subr nil
-              ;; nextrecfun (move to next record/subtitle or to end-of-buffer
-              ;; if there are no more records)
-              (lambda () (unless (subed-srt-forward-subtitle-id)
-                           (goto-char (point-max))))
-              ;; endrecfun (move to end of current record/subtitle)
-              'subed-srt-move-to-subtitle-end
-              ;; startkeyfun (return sort value of current record/subtitle)
-              'subed-srt--subtitle-msecs-start))
-  (subed-srt--regenerate-ids))
+  (atomic-change-group
+    (subed-srt-validate)
+    (subed-srt-sanitize)
+    (subed--save-excursion
+     (goto-char (point-min))
+     (sort-subr nil
+                ;; nextrecfun (move to next record/subtitle or to end-of-buffer
+                ;; if there are no more records)
+                (lambda () (unless (subed-srt-forward-subtitle-id)
+                             (goto-char (point-max))))
+                ;; endrecfun (move to end of current record/subtitle)
+                'subed-srt-move-to-subtitle-end
+                ;; startkeyfun (return sort value of current record/subtitle)
+                'subed-srt--subtitle-msecs-start))
+  (subed-srt-regenerate-ids)))
 
 (provide 'subed-srt)
 ;;; subed-srt.el ends here
