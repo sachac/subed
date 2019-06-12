@@ -229,13 +229,15 @@ Return point or nil if there is no next subtitle."
 
 (defun subed-srt-backward-subtitle-id ()
   "Move point to previous subtitle's ID.
-Return point or nil if point didn't change (e.g. if called on the
-first subtitle)."
+Return point or nil if there is no previous subtitle."
   (interactive)
-  (when (subed-srt-move-to-subtitle-id)
-    (let ((orig-point (point)))
+  (let ((orig-point (point))
+        (orig-sub-id (subed-srt--subtitle-id)))
+    (when (subed-srt-move-to-subtitle-id)
       (forward-line -1)
-      (unless (= (point) orig-point)
+      (if (= (subed-srt--subtitle-id) orig-sub-id)
+          (progn (goto-char orig-point)
+                 nil)
         (subed-srt-move-to-subtitle-id)))))
 
 (defun subed-srt-forward-subtitle-text ()
