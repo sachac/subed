@@ -445,15 +445,18 @@ Return point or nil if there is no previous subtitle."
 (defun subed-srt--regenerate-ids ()
   "Ensure subtitle IDs start at 1 and are incremented by 1 for
 each subtitle."
-  (save-match-data
-    (save-excursion
-      (goto-char (point-min))
-      (let ((id 1))
-        (while (looking-at "^[0-9]+$")
-          (kill-word 1)
-          (insert (format "%d" id))
-          (setq id (1+ id))
-          (subed-srt-forward-subtitle-id))))))
+  (interactive)
+  (atomic-change-group
+    (save-match-data
+      (save-excursion
+        (goto-char (point-min))
+        (kill-word 1)
+        (insert "1")
+        (let ((id 2))
+          (while (subed-srt-forward-subtitle-id)
+            (kill-word 1)
+            (insert (format "%d" id))
+            (setq id (1+ id))))))))
 
 (defun subed-srt-sanitize ()
   "Remove surplus newlines and whitespace"
