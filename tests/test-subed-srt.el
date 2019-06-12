@@ -975,7 +975,7 @@ Baz.
                 (expect (buffer-string) :to-equal mock-srt-data))))
 
 (describe "Sorting"
-          (it "ensures subtitles are ordered by start time."
+          (it "orders subtitles by start time."
               (with-temp-buffer
                 (insert mock-srt-data)
                 (goto-char (point-min))
