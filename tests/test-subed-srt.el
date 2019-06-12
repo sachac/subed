@@ -844,6 +844,54 @@ Baz.
                     )
           )
 
+(describe "Validating"
+          (it "works in empty buffer."
+              (with-temp-buffer
+                (expect (subed-srt-validate) :to-throw
+                        'error '("Found invalid subtitle ID: \"\""))))
+          (it "reports invalid IDs."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (subed-srt-move-to-subtitle-id 1)
+                (insert "x")
+                (expect (subed-srt-validate) :to-throw
+                        'error '("Found invalid subtitle ID: \"x1\""))
+                (expect (point) :to-equal 1)))
+          (it "reports invalid start time."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (subed-srt-move-to-subtitle-time-start 1)
+                (forward-char 5)
+                (delete-char 1)
+                (expect (subed-srt-validate) :to-throw
+                        'error '("Found invalid start time: \"00:0101,000 --> 00:01:05,123\""))
+                (expect (point) :to-equal 3)))
+          (it "reports invalid stop time."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (subed-srt-move-to-subtitle-time-stop 1)
+                (forward-char 10)
+                (insert "3")
+                (expect (subed-srt-validate) :to-throw
+                        'error '("Found invalid stop time: \"00:01:01,000 --> 00:01:05,1323\""))
+                (expect (point) :to-equal 20)))
+          (it "reports invalid time separator."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (subed-srt-move-to-subtitle-time-stop 1)
+                (delete-char -1)
+                (expect (subed-srt-validate) :to-throw
+                        'error '("Found invalid separator between start and stop time: \"00:01:01,000 -->00:01:05,123\""))
+                (expect (point) :to-equal 15)))
+          (it "preserves point if there is no error."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (subed-srt-move-to-subtitle-text 2)
+                (forward-char 2)
+                (subed-srt-validate)
+                (expect (point) :to-equal 73)))
+          )
+
 (describe "Sanitizing"
           (it "removes trailing tabs and spaces from all lines."
               (with-temp-buffer

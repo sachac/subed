@@ -492,6 +492,33 @@ each subtitle."
        (when (looking-at "\n*")
          (replace-match "\n"))))))
 
+(defun subed-srt-validate ()
+  "Move point to the first invalid subtitle and report an error."
+  (interactive)
+  (atomic-change-group
+    (save-match-data
+      (let ((orig-point (point)))
+        (goto-char (point-min))
+        (while (re-search-forward (format "\\(%s\\|\\`\\)" subed-srt--regexp-separator) nil t)
+          (unless (looking-at "^[0-9]+$")
+            (error "Found invalid subtitle ID: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
+          (forward-line)
+          ;; This regex is stricter than `subed-srt--regexp-timestamp'
+          (unless (looking-at "^[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\},[0-9]\\{3\\}")
+            (error "Found invalid start time: %S"  (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
+          (condition-case nil
+              (forward-char subed-srt--length-timestamp)
+            (error nil))
+          (unless (looking-at " --> ")
+            (error "Found invalid separator between start and stop time: %S"
+                   (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
+          (condition-case nil
+              (forward-char 5)
+            (error nil))
+          (unless (looking-at "[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\},[0-9]\\{3\\}$")
+            (error "Found invalid stop time: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1))))
+        (goto-char orig-point)))))
+
 (defun subed-srt-sort ()
   "Sanitize, then sort subtitles by start time and re-number them."
   (interactive)
