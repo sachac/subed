@@ -209,8 +209,11 @@ Return point or nil if point unless point did not change."
   (save-match-data
     (let ((orig-point (point)))
       (subed-srt-move-to-subtitle-text sub-id)
-      ;; Look for next separator or end of buffer
-      (let ((regex (concat "\\(" subed-srt--regexp-separator "[0-9]+\n\\|\\([[:blank:]]*\n*\\)\\'\\)")))
+      ;; Look for next separator or end of buffer.  We can't use
+      ;; `subed-srt--regexp-separator' here because if subtitle text is empty,
+      ;; it may be the only empty line in the separator, i.e. there's only one
+      ;; "\n".
+      (let ((regex (concat "\\([[:blank:]]*\n+[0-9]+\n\\|\\([[:blank:]]*\n*\\)\\'\\)")))
         (when (re-search-forward regex nil t)
           (goto-char (match-beginning 0))))
       (unless (= (point) orig-point)
