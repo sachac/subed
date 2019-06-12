@@ -204,7 +204,7 @@ See also `subed-srt--subtitle-id-at-msecs'."
 
 (defun subed-srt-move-to-subtitle-end (&optional sub-id)
   "Move point after the last character of the subtitle's text.
-Return point or nil if point unless point did not change."
+Return point or nil if point did not change."
   (interactive)
   (save-match-data
     (let ((orig-point (point)))
@@ -221,8 +221,7 @@ Return point or nil if point unless point did not change."
 
 (defun subed-srt-forward-subtitle-id ()
   "Move point to next subtitle's ID.
-Return point or nil if point didn't change (e.g. if called on the
-last subtitle)."
+Return point or nil if there is no next subtitle."
   (interactive)
   (save-match-data
     (when (re-search-forward (concat subed-srt--regexp-separator "[0-9]+\n") nil t)
