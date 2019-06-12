@@ -413,7 +413,7 @@ Return point or nil if there is no previous subtitle."
         (when (looking-at "^[[:blank:]]*$")
           (forward-line -1)
           (kill-whole-line)))
-      (subed-srt--regenerate-ids)
+      (subed-srt-regenerate-ids)
       (subed-srt-move-to-subtitle-text))))
 
 (defun subed-srt-subtitle-kill ()
@@ -442,7 +442,7 @@ Return point or nil if there is no previous subtitle."
 
 ;;; Maintenance
 
-(defun subed-srt--regenerate-ids ()
+(defun subed-srt-regenerate-ids ()
   "Ensure subtitle IDs start at 1 and are incremented by 1 for
 each subtitle."
   (interactive)

@@ -971,7 +971,7 @@ Baz.
                 (while (looking-at "^[0-9]$")
                   (replace-match "123"))
                 (expect (buffer-string) :not :to-equal mock-srt-data)
-                (subed-srt--regenerate-ids)
+                (subed-srt-regenerate-ids)
                 (expect (buffer-string) :to-equal mock-srt-data))))
 
 (describe "Sorting"
