@@ -35,7 +35,7 @@
 ;;; Parsing
 
 (defconst subed-srt--regexp-timestamp "\\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\),\\([0-9]+\\)")
-(defconst subed-srt--regexp-duration (concat subed-srt--regexp-timestamp "[ ]+\\(-->\\)[ ]+"
+(defconst subed-srt--regexp-duration (concat subed-srt--regexp-timestamp " +--> +"
                                              subed-srt--regexp-timestamp))
 (defconst subed-srt--regexp-separator "\\([[:blank:]]*\n\\)+[[:blank:]]*\n")
 (defconst subed-srt--length-timestamp 12)  ;; String length of "01:45:32,091"
