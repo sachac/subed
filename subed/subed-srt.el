@@ -213,7 +213,7 @@ Return point or nil if point unless point did not change."
       (let ((regex (concat "\\(" subed-srt--regexp-separator "[0-9]+\n\\|\\([[:blank:]]*\n*\\)\\'\\)")))
         (when (re-search-forward regex nil t)
           (goto-char (match-beginning 0))))
-      (when (not (= (point) orig-point))
+      (unless (= (point) orig-point)
         (point)))))
 
 (defun subed-srt-forward-subtitle-id ()
@@ -233,7 +233,7 @@ first subtitle)."
   (when (subed-srt-move-to-subtitle-id)
     (let ((orig-point (point)))
       (forward-line -1)
-      (when (not (= (point) orig-point))
+      (unless (= (point) orig-point)
         (subed-srt-move-to-subtitle-id)))))
 
 (defun subed-srt-forward-subtitle-text ()
