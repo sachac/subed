@@ -451,12 +451,16 @@ each subtitle."
     (save-match-data
       (save-excursion
         (goto-char (point-min))
-        (kill-word 1)
-        (insert "1")
+        (subed-srt-move-to-subtitle-id)
+        (unless (string= (current-word) "1")
+          (kill-word 1)
+          (insert "1"))
         (let ((id 2))
           (while (subed-srt-forward-subtitle-id)
-            (kill-word 1)
-            (insert (format "%d" id))
+            (let ((id-str (number-to-string id)))
+              (unless (string= (current-word) id-str)
+                (kill-word 1)
+                (insert id-str)))
             (setq id (1+ id))))))))
 
 (defun subed-srt-sanitize ()
