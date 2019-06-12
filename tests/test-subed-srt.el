@@ -316,7 +316,7 @@ Baz.
                           (expect (subed-srt-move-to-subtitle-time-stop) :to-equal nil)))
                     )
           (describe "to end of subtitle text"
-                    (it "returns point if movement was successful."
+                    (it "returns point if subtitle end can be found."
                         (with-temp-buffer
                           (insert mock-srt-data)
                           (goto-char (point-min))
@@ -332,22 +332,34 @@ Baz.
                           (backward-char 2)
                           (expect (subed-srt-move-to-subtitle-end) :to-be 113)
                           (expect (looking-back "^Baz.$") :to-be t)))
-                    (it "returns point if subtitle text is empty with trailing newline."
+                    (it "returns nil if subtitle end cannot be found."
+                        (with-temp-buffer
+                          (expect (subed-srt-move-to-subtitle-end) :to-be nil)))
+                    (it "returns nil if point did not move."
                         (with-temp-buffer
                           (insert mock-srt-data)
                           (subed-srt-move-to-subtitle-text 1)
                           (kill-line)
-                          (expect (subed-srt-move-to-subtitle-end) :to-be nil)
+                          (expect (subed-srt-move-to-subtitle-end) :to-be nil)))
+                    (it "works if text is empty with trailing newline."
+                        (with-temp-buffer
+                          (insert mock-srt-data)
+                          (subed-srt-move-to-subtitle-text 1)
+                          (kill-line)
+                          (backward-char)
+                          (expect (subed-srt-move-to-subtitle-end) :to-be 33)
                           (expect (looking-at "^$") :to-be t)
                           (subed-srt-move-to-subtitle-text 2)
                           (kill-line)
-                          (expect (subed-srt-move-to-subtitle-end) :to-be nil)
+                          (backward-char)
+                          (expect (subed-srt-move-to-subtitle-end) :to-be 67)
                           (expect (looking-at "^$") :to-be t)
                           (subed-srt-move-to-subtitle-text 3)
                           (kill-line)
-                          (expect (subed-srt-move-to-subtitle-end) :to-be nil)
+                          (backward-char)
+                          (expect (subed-srt-move-to-subtitle-end) :to-be 101)
                           (expect (looking-at "^$") :to-be t)))
-                    (it "returns point if subtitle text is empty without trailing newline."
+                    (it "works if text is empty without trailing newline."
                         (with-temp-buffer
                           (insert mock-srt-data)
                           (subed-srt-move-to-subtitle-text 1)
@@ -357,14 +369,6 @@ Baz.
                           (goto-char (point-min))
                           (expect (subed-srt-move-to-subtitle-end) :to-be 33)
                           (expect (looking-at "^$") :to-be t)))
-                    (it "returns nil if movement failed."
-                        (with-temp-buffer
-                          (insert mock-srt-data)
-                          (goto-char (point-max))
-                          (expect (subed-srt-move-to-subtitle-end) :to-be 113)
-                          (expect (looking-back "^Baz.$") :to-be t)
-                          (expect (subed-srt-move-to-subtitle-end) :to-be nil)
-                          (expect (looking-back "^Baz.$") :to-be t)))
                     )
           (describe "to next subtitle ID"
                     (it "returns point when there is a next subtitle."
