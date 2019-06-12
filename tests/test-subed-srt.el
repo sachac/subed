@@ -390,18 +390,29 @@ Baz.
                     (it "returns point when there is a previous subtitle."
                         (with-temp-buffer
                           (insert mock-srt-data)
-                          (subed-srt-move-to-subtitle-id 2)
-                          (expect (thing-at-point 'word) :to-equal "2")
+                          (subed-srt-move-to-subtitle-text 2)
+                          (expect (thing-at-point 'word) :to-equal "Bar")
                           (expect (subed-srt-backward-subtitle-id) :to-be 1)
-                          (expect (thing-at-point 'word) :to-equal "1")))
+                          (expect (thing-at-point 'word) :to-equal "1")
+                          (subed-srt-move-to-subtitle-time-stop 3)
+                          (expect (thing-at-point 'word) :to-equal "00")
+                          (expect (subed-srt-backward-subtitle-id) :to-be 39)
+                          (expect (thing-at-point 'word) :to-equal "2")))
                     (it "returns nil and doesn't move when there is no previous subtitle."
                         (with-temp-buffer
-                          (goto-char (point-min))
-                          (insert (concat mock-srt-data "\n\n"))
+                          (expect (subed-srt-backward-subtitle-id) :to-be nil))
+                        (with-temp-buffer
+                          (insert (concat mock-srt-data))
                           (subed-srt-move-to-subtitle-id 1)
                           (expect (thing-at-point 'word) :to-equal "1")
                           (expect (subed-srt-backward-subtitle-id) :to-be nil)
-                          (expect (thing-at-point 'word) :to-equal "1")))
+                          (expect (thing-at-point 'word) :to-equal "1"))
+                        (with-temp-buffer
+                          (insert (concat mock-srt-data))
+                          (subed-srt-move-to-subtitle-text 1)
+                          (expect (thing-at-point 'word) :to-equal "Foo")
+                          (expect (subed-srt-backward-subtitle-id) :to-be nil)
+                          (expect (thing-at-point 'word) :to-equal "Foo")))
                     )
           (describe "to next subtitle text"
                     (it "returns point when there is a next subtitle."

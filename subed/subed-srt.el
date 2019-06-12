@@ -191,9 +191,8 @@ Return point or nil if no stop time could be found."
 Return point."
   (interactive)
   (when (subed-srt-move-to-subtitle-id sub-id)
-    (save-match-data
-      (when (re-search-forward (concat subed-srt--regexp-duration "[[:blank:]]*\n") nil t)
-        (point)))))
+    (forward-line 2)
+    (point)))
 
 (defun subed-srt-move-to-subtitle-text-at-msecs (msecs)
   "Move point to the text of the subtitle that is playing at MSECS.
