@@ -461,35 +461,36 @@ each subtitle."
 (defun subed-srt-sanitize ()
   "Remove surplus newlines and whitespace"
   (interactive)
-  (save-match-data
-    (subed--save-excursion
-     ;; Remove trailing whitespace from each line and empty lines from end of buffer
-     (delete-trailing-whitespace (point-min) nil)
+  (atomic-change-group
+    (save-match-data
+      (subed--save-excursion
+       ;; Remove trailing whitespace from each line and empty lines from end of buffer
+       (delete-trailing-whitespace (point-min) nil)
 
-     ;; Remove leading spaces and tabs from each line
-     (goto-char (point-min))
-     (while (re-search-forward "^[[:blank:]]+" nil t)
-       (replace-match ""))
+       ;; Remove leading spaces and tabs from each line
+       (goto-char (point-min))
+       (while (re-search-forward "^[[:blank:]]+" nil t)
+         (replace-match ""))
 
-     ;; Remove leading newlines
-     (goto-char (point-min))
-     (while (looking-at "\\`\n+")
-       (replace-match ""))
+       ;; Remove leading newlines
+       (goto-char (point-min))
+       (while (looking-at "\\`\n+")
+         (replace-match ""))
 
-     ;; Replace separators between subtitles with double newlines
-     (goto-char (point-min))
-     (while (subed-srt-forward-subtitle-id)
-       (let ((prev-sub-end (save-excursion (when (subed-srt-backward-subtitle-end)
-                                             (point)))))
-         (when prev-sub-end
-           (delete-region prev-sub-end (point))
-           (insert "\n\n"))))
+       ;; Replace separators between subtitles with double newlines
+       (goto-char (point-min))
+       (while (subed-srt-forward-subtitle-id)
+         (let ((prev-sub-end (save-excursion (when (subed-srt-backward-subtitle-end)
+                                               (point)))))
+           (when prev-sub-end
+             (delete-region prev-sub-end (point))
+             (insert "\n\n"))))
 
-     ;; Remove trailing newlines
-     (goto-char (point-max))
-     (subed-srt-move-to-subtitle-end)
-     (when (looking-at "\n*")
-       (replace-match "\n")))))
+       ;; Remove trailing newlines
+       (goto-char (point-max))
+       (subed-srt-move-to-subtitle-end)
+       (when (looking-at "\n*")
+         (replace-match "\n"))))))
 
 (defun subed-srt-sort ()
   "Sanitize, then sort subtitles by start time and re-number them."
