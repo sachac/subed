@@ -182,7 +182,8 @@ Return point or nil if no stop time could be found."
   (interactive)
   (save-match-data
     (when (subed-srt-move-to-subtitle-id sub-id)
-      (search-forward " --> " nil t)
+      (forward-line 1)
+      (re-search-forward " +--> +" (point-at-eol) t)
       (when (looking-at subed-srt--regexp-timestamp)
         (point)))))
 
