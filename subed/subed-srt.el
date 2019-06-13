@@ -464,7 +464,7 @@ each subtitle."
             (setq id (1+ id))))))))
 
 (defun subed-srt-sanitize ()
-  "Remove surplus newlines and whitespace"
+  "Remove surplus newlines and whitespace."
   (interactive)
   (atomic-change-group
     (save-match-data
