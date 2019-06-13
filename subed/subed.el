@@ -25,7 +25,7 @@
 ;;
 ;;; Code:
 
-(add-to-list 'auto-mode-alist '("\\.srt$" . subed-mode))
+(add-to-list 'auto-mode-alist '("\\.srt$" . subed-mode-enable))
 
 (require 'subed-config)
 (require 'subed-srt)
@@ -383,47 +383,67 @@ existing file."
             (throw 'found-videofile file-video)))))))
 
 
-(defun subed-mode ()
-  "Major mode for editing subtitles.
-
-Key bindings:
-\\{subed-mode-map}"
+(defun subed-mode-enable ()
+  "Enable subed mode."
+  (message "enabling subed-mode")
   (interactive)
-
-  ;; Buffer-local variables
   (kill-all-local-variables)
   (setq-local font-lock-defaults '(subed-font-lock-keywords))
   (setq-local paragraph-start "^[[:alnum:]\n]+")
   (setq-local paragraph-separate "\n\n")
-
-  ;; Keybindings
   (use-local-map subed-mode-map)
-
-  ;; Provide point-motion and subtitle-motion hooks
   (add-hook 'post-command-hook 'subed--post-command-handler :append :local)
-
-  ;; Sort and reload subtitles in player on C-x C-s
   (add-hook 'before-save-hook 'subed-sort :append :local)
   (add-hook 'after-save-hook 'subed-mpv-reload-subtitles :append :local)
-
-  ;; Close player when buffer is killed
   (add-hook 'kill-buffer-hook 'subed-mpv-kill :append :local)
-
-  ;; Auto-open relevant video file
   (when subed-auto-find-video
     (let ((video-file (subed-guess-video-file)))
       (when video-file
         (subed-debug "Auto-discovered video file: %s" video-file)
         (subed-mpv-find-video video-file))))
-
   (subed-enable-pause-while-typing)
   (subed-enable-sync-point-to-player)
   (subed-enable-sync-player-to-point)
   (subed-enable-replay-adjusted-subtitle)
-
   (setq major-mode 'subed-mode
         mode-name "SubEd")
+  (setq subed--mode-enabled t)
   (run-mode-hooks 'subed-mode-hook))
+
+(defun subed-mode-disable ()
+  "Disable subed mode."
+  (interactive)
+  (message "disabling subed-mode")
+  (subed-disable-pause-while-typing)
+  (subed-disable-sync-point-to-player)
+  (subed-disable-sync-player-to-point)
+  (subed-disable-replay-adjusted-subtitle)
+  (subed-mpv-kill)
+  (subed-disable-debugging)
+  (kill-all-local-variables)
+  (remove-hook 'post-command-hook 'subed--post-command-handler :local)
+  (remove-hook 'before-save-hook 'subed-sort :local)
+  (remove-hook 'after-save-hook 'subed-mpv-reload-subtitles :local)
+  (remove-hook 'kill-buffer-hook 'subed-mpv-kill :local)
+  (setq subed--mode-enabled nil)
+  (message "post-command-hook: %s" post-command-hook)
+  (message "before-save-hook: %s" before-save-hook)
+  (message "after-save-hook: %s" after-save-hook)
+  (message "kill-buffer-hook: %s" kill-buffer-hook))
+
+(defun subed-mode ()
+  "Major mode for editing subtitles.
+
+This function enables or disables subed-mode.  See also
+`subed-mode-enable' and `subed-mode-disable'.
+
+Key bindings:
+\\{subed-mode-map}"
+  (interactive)
+  ;; Use 'enabled property of this function to store enabled/disabled status
+  (if subed--mode-enabled
+      (subed-mode-disable)
+    (subed-mode-enable)))
 
 (provide 'subed)
 ;;; subed.el ends here

@@ -77,6 +77,10 @@
   :group 'hypermedia
   :prefix "subed-")
 
+(defvar-local subed--mode-enabled nil
+  "Whether `subed-mode' is enabled.
+This is automatically set by `subed-mode-enable' and `subed-mode-disable'.")
+
 (defvar-local subed--debug-enabled nil
   "Whether `subed-debug' prints to `subed-debugging-buffer'.")
 
