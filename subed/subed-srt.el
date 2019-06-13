@@ -495,7 +495,14 @@ each subtitle."
        (goto-char (point-max))
        (subed-srt-move-to-subtitle-end)
        (when (looking-at "\n*")
-         (replace-match "\n"))))))
+         (replace-match "\n"))
+
+       ;; Ensure there is one space before and after " --> "
+       (goto-char (point-min))
+       (while (re-search-forward (format "^%s" subed-srt--regexp-timestamp) nil t)
+         (when (looking-at "[[:blank:]]*-->[[:blank:]]*")
+           (unless (= (length (match-string 0)) 5)
+             (replace-match " --> "))))))))
 
 (defun subed-srt-validate ()
   "Move point to the first invalid subtitle and report an error."
