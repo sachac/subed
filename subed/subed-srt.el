@@ -487,14 +487,15 @@ each subtitle."
        (while (subed-srt-forward-subtitle-id)
          (let ((prev-sub-end (save-excursion (when (subed-srt-backward-subtitle-end)
                                                (point)))))
-           (when prev-sub-end
+           (when (and prev-sub-end
+                      (not (string= (buffer-substring prev-sub-end (point)) "\n\n")))
              (delete-region prev-sub-end (point))
              (insert "\n\n"))))
 
        ;; Remove trailing newlines
        (goto-char (point-max))
        (subed-srt-move-to-subtitle-end)
-       (when (looking-at "\n*")
+       (when (looking-at "\n\\{2,\\}")
          (replace-match "\n"))
 
        ;; Ensure there is one space before and after " --> "
