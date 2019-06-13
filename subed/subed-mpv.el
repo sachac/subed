@@ -227,7 +227,7 @@ See \"List of events\" in mpv(1)."
     (pcase event
       ("property-change"
        (when (string= (alist-get 'name json-data) "time-pos")
-         (let ((pos-msecs (* 1000 (alist-get 'data json-data))))
+         (let ((pos-msecs (* 1000 (or (alist-get 'data json-data) 0))))
            (setq subed-mpv-playback-position pos-msecs)
            (run-hook-with-args 'subed-mpv-playback-position-hook pos-msecs))))
       ((or "unpause" "file-loaded")
