@@ -83,12 +83,12 @@ after MSECS if there is one and its start time is >= MSECS +
           (re-search-forward (format "\\(\n\n\\|\\`\\)[0-9]+\n%02d:%02d" only-hours only-mins) nil t)))
       ;; Move to first subtitle that starts at or after MSECS
       (catch 'last-subtitle-reached
-        (while (<= (subed-srt--subtitle-msecs-start) msecs)
+        (while (<= (or (subed-srt--subtitle-msecs-start) -1) msecs)
           (unless (subed-srt-forward-subtitle-id)
             (throw 'last-subtitle-reached nil))))
       ;; Move back to previous subtitle if start of current subtitle is in the
       ;; future (i.e. MSECS is between subtitles)
-      (when (> (subed-srt--subtitle-msecs-start) msecs)
+      (when (> (or (subed-srt--subtitle-msecs-start) -1) msecs)
         (subed-srt-backward-subtitle-id))
       (subed-srt--subtitle-id))))
 

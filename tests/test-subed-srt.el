@@ -88,6 +88,14 @@ Baz.
                                               (progn
                                                 (subed-srt-move-to-subtitle-id outset-id)
                                                 (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal target-id)))))))
+                    (it "doesn't fail when start time is invalid."
+                        (with-temp-buffer
+                          (insert mock-srt-data)
+                          (subed-srt-move-to-subtitle-id 2)
+                          (let ((msecs (- (subed-srt--subtitle-msecs-start) 1)))
+                            (subed-srt-move-to-subtitle-time-start)
+                            (forward-char 8) (delete-char 1)
+                            (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal 2))))
                     )
           (describe "the subtitle start/stop time"
                     (it "returns the time in milliseconds."
