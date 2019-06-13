@@ -73,7 +73,8 @@
     (setq subed--debug-enabled t
           debug-on-error t)
     (let ((debug-buffer (get-buffer-create subed-debug-buffer))
-          (debug-window (split-window-right 50)))
+          (debug-window (or (get-buffer-window subed-debug-buffer)
+                            (split-window-sensibly))))
       (set-window-buffer debug-window debug-buffer)
       (with-current-buffer debug-buffer
         (buffer-disable-undo)
