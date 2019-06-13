@@ -177,7 +177,7 @@ was moved by the user."
 remembers whether it was originally enabled by the user.")
 
 
-(defcustom subed-mpv-socket "/tmp/mpv-socket"
+(defcustom subed-mpv-socket-base "/tmp/subed-mpv-socket"
   "Path to Unix IPC socket that is passed to mpv --input-ipc-server."
   :type 'file
   :group 'subed)

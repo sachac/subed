@@ -4,10 +4,11 @@
 (describe "Starting mpv"
           (it "passes arguments to make-process."
               (spy-on 'make-process)
+              (spy-on 'subed-mpv--socket :and-return-value "/mock/path/to/socket")
               (subed-mpv--server-start "foo" "--bar")
               (expect 'make-process :to-have-been-called-with
                       :command (list subed-mpv-executable
-                                     (format "--input-ipc-server=%s" subed-mpv-socket)
+                                     "--input-ipc-server=/mock/path/to/socket"
                                      "--idle" "foo" "--bar")
                       :name "subed-mpv-server" :buffer nil :noquery t))
           (it "sets subed-mpv--server-proc on success."
@@ -51,13 +52,14 @@
           (it "correctly calls make-network-process."
               (spy-on 'make-network-process)
               (spy-on 'process-send-string)
+              (spy-on 'subed-mpv--socket :and-return-value "/mock/path/to/socket")
               (subed-mpv--client-connect '(0 0 0))
               (expect 'make-network-process :to-have-been-called-with
                       :name "subed-mpv-client"
                       :family 'local
-                      :service subed-mpv-socket
+                      :service (subed-mpv--socket)
                       :coding '(utf-8 . utf-8)
-					  :buffer (get-buffer-create subed-mpv--client-buffer)
+					  :buffer (subed-mpv--client-buffer)
                       :filter #'subed-mpv--client-filter
                       :noquery t
                       :nowait t))

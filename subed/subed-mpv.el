@@ -45,10 +45,7 @@
   "Running mpv process.")
 
 (defvar-local subed-mpv--client-proc nil
-  "IPC socket process that communicates over `subed-mpv-socket'.")
-
-(defvar-local subed-mpv--client-buffer " *subed-mpv-buffer*"
-  "Buffer for JSON responses from server.")
+  "IPC socket process that communicates over `subed-mpv--socket'.")
 
 (defconst subed-mpv--client-test-request
   (json-encode (list :command '(get_property mpv-version)))
@@ -57,19 +54,26 @@
 (defconst subed-mpv--retry-delays
   ;; Sums up to 5 seconds in total before failing
   '(0.1 0.1 0.1 0.1 0.2 0.2 0.3 0.4 0.5 0.5 0.5 0.5 0.5 0.5 0.5)
-  "List of delays between attemps to connect to `subed-mpv-socket'.")
+  "List of delays between attemps to connect to `subed-mpv--socket'.")
 
 (defvar-local subed-mpv--client-command-queue nil
-  "Commands to call when connection to `subed-mpv-socket' is established.")
+  "Commands to call when connection to `subed-mpv--socket' is established.")
 
 
 ;;; Server (mpv process that provides an IPC socket)
+
+(defun subed-mpv--socket ()
+  "Path to mpv's RPC socket for a particular buffer.
+See also `subed-mpv-socket-base'."
+  (format "/tmp/subed-mpv-socket:%s-%s"
+          (file-name-base (or (buffer-file-name) "unnamed"))
+          (buffer-hash)))
 
 (defun subed-mpv--server-start (&rest args)
   "Run mpv in JSON IPC mode."
   (subed-mpv--server-stop)
   (let ((argv (append (list subed-mpv-executable
-                            (format "--input-ipc-server=%s" subed-mpv-socket)
+                            (format "--input-ipc-server=%s" (subed-mpv--socket))
                             "--idle")
                       args)))
     (subed-debug "Running %s" argv)
@@ -95,18 +99,28 @@
 
 ;;; Client (elisp process that connects to server's IPC socket)
 
+(defun subed-mpv--client-buffer ()
+  "Unique name of buffer that stores RPC responses."
+  (if subed--debug-enabled
+      (format "*subed-mpv-buffer:%s-%s*"
+              (file-name-base (or (buffer-file-name) "unnamed"))
+              (buffer-hash))
+      (format " *subed-mpv-buffer:%s-%s*"
+              (file-name-base (or (buffer-file-name) "unnamed"))
+              (buffer-hash))))
+
 (defun subed-mpv--client-connect (delays)
-  "Try to connect to `subed-mpv-socket'.
+  "Try to connect to `subed-mpv--socket'.
 If a connection attempt fails, wait (car delays) seconds and try
 again, passing (cdr delays)."
-  (subed-debug "Attempting to connect to IPC socket: %s" subed-mpv-socket)
+  (subed-debug "Attempting to connect to IPC socket: %s" (subed-mpv--socket))
   (subed-mpv--client-disconnect)
   ;; NOTE: make-network-process doesn't fail when the socket file doesn't exist
   (let ((proc (make-network-process :name "subed-mpv-client"
                                     :family 'local
-                                    :service subed-mpv-socket
+                                    :service (subed-mpv--socket)
                                     :coding '(utf-8 . utf-8)
-					                :buffer (get-buffer-create subed-mpv--client-buffer)
+					                :buffer (subed-mpv--client-buffer)
                                     :filter #'subed-mpv--client-filter
                                     :noquery t
                                     :nowait t)))
@@ -155,7 +169,7 @@ CMD to `subed-mpv--client-command-queue' which is evaluated by
             (process-send-string subed-mpv--client-proc (concat request-data "\n"))
           (error
            (subed-mpv-kill)
-           (error "Unable to send commands via %s: %s" subed-mpv-socket (cdr err))))
+           (error "Unable to send commands via %s: %s" (subed-mpv--socket) (cdr err))))
         t)
     (when (subed-mpv--server-started-p)
       (subed-debug "Queueing command: %s" cmd)
