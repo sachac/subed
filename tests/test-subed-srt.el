@@ -895,8 +895,7 @@ Baz.
 (describe "Validating"
           (it "works in empty buffer."
               (with-temp-buffer
-                (expect (subed-srt-validate) :to-throw
-                        'error '("Found invalid subtitle ID: \"\""))))
+                (expect (subed-srt-validate) :to-be nil)))
           (it "reports invalid IDs."
               (with-temp-buffer
                 (insert mock-srt-data)
@@ -931,6 +930,14 @@ Baz.
                 (expect (subed-srt-validate) :to-throw
                         'error '("Found invalid separator between start and stop time: \"00:01:01,000 -->00:01:05,123\""))
                 (expect (point) :to-equal 15)))
+          (it "does not report error when last subtitle text is empty."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (subed-srt-move-to-subtitle-text 3)
+                (kill-whole-line)
+                (forward-char -2)
+                (subed-srt-validate)
+                (expect (point) :to-equal 107)))
           (it "preserves point if there is no error."
               (with-temp-buffer
                 (insert mock-srt-data)
@@ -1057,6 +1064,19 @@ Baz.
                                                           "3\n"
                                                           "00:03:03,456 --> 00:03:15,567\n"
                                                           "\n"))))
+          (it "ensures single space before and after time separators."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (goto-char (point-min))
+                (re-search-forward " --> ")
+                (replace-match "  --> ")
+                (re-search-forward " --> ")
+                (replace-match " -->  ")
+                (re-search-forward " --> ")
+                (replace-match "-->")
+                (expect (buffer-string) :not :to-equal mock-srt-data)
+                (subed-srt-sanitize)
+                (expect (buffer-string) :to-equal mock-srt-data)))
           )
 
 (describe "Renumbering"
