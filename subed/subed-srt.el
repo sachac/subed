@@ -550,7 +550,7 @@ each subtitle."
                 'subed-srt-move-to-subtitle-end
                 ;; startkeyfun (return sort value of current record/subtitle)
                 'subed-srt--subtitle-msecs-start))
-  (subed-srt-regenerate-ids)))
+    (subed-srt-regenerate-ids)))
 
 (provide 'subed-srt)
 ;;; subed-srt.el ends here
