@@ -536,8 +536,8 @@ each subtitle."
   "Sanitize, then sort subtitles by start time and re-number them."
   (interactive)
   (atomic-change-group
-    (subed-srt-validate)
     (subed-srt-sanitize)
+    (subed-srt-validate)
     (subed--save-excursion
      (goto-char (point-min))
      (sort-subr nil
