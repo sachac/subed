@@ -78,10 +78,7 @@
       (with-current-buffer debug-buffer
         (buffer-disable-undo)
         (setq-local buffer-read-only t)))
-    (add-hook 'kill-buffer-hook (lambda ()
-                                  (kill-buffer subed-debug-buffer)
-                                  (delete-window (get-buffer-window subed-debug-buffer)))
-              :append :local)))
+    (add-hook 'kill-buffer-hook 'subed-disable-debugging :append :local)))
 
 (defun subed-disable-debugging ()
   "Display debugging messages in separate window and set
@@ -90,7 +87,11 @@
   (when subed--debug-enabled
     (setq subed--debug-enabled nil
           debug-on-error nil)
-    (delete-window (get-buffer-window subed-debug-buffer))))
+    (let ((debug-window (get-buffer-window subed-debug-buffer)))
+      (when debug-window
+        (delete-window debug-window)))
+    (kill-buffer subed-debug-buffer)
+    (remove-hook 'kill-buffer-hook 'subed-disable-debugging :local)))
 
 (defun subed-toggle-debugging ()
   "Display or hide debugging messages in separate window and set
