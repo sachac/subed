@@ -199,8 +199,10 @@ CMD to `subed-mpv--client-command-queue' which is evaluated by
   (let* ((json-data (condition-case err
                         (json-read-from-string json-string)
                       (error
-                       (subed-debug "Unable to parse JSON response:\n%S" json-string))))
-         (event (alist-get 'event json-data)))
+                       (subed-debug "Unable to parse JSON response:\n%S" json-string)
+                       nil)))
+         (event (when json-data
+                  (alist-get 'event json-data))))
     (when event
       (subed-mpv--handle-event json-data))))
 
