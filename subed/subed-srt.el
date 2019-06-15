@@ -500,8 +500,8 @@ each subtitle."
   (atomic-change-group
     (save-match-data
       (subed--save-excursion
-       ;; Remove trailing whitespace from each line and empty lines from end of buffer
-       (delete-trailing-whitespace (point-min) nil)
+       ;; Remove trailing whitespace from each line
+       (delete-trailing-whitespace (point-min) (point-max))
 
        ;; Remove leading spaces and tabs from each line
        (goto-char (point-min))
@@ -523,11 +523,13 @@ each subtitle."
              (delete-region prev-sub-end (point))
              (insert "\n\n"))))
 
-       ;; Remove trailing newlines
+       ;; Two trailing newline if last subtitle text is empty,
+       ;; one trailing newline otherwise
        (goto-char (point-max))
        (subed-srt-move-to-subtitle-end)
-       (when (looking-at "\n\\{2,\\}")
-         (replace-match "\n"))
+       (unless (looking-at "\n\\'")
+         (delete-region (point) (point-max))
+         (insert "\n"))
 
        ;; Ensure there is one space before and after " --> "
        (goto-char (point-min))
