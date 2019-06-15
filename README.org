@@ -20,7 +20,7 @@ subed is still alpha software.  Expect it to kill your Emacs session.
    - Open videos with ~C-x C-v~ or automatically when entering subed-mode if the
      video file is named like the subtitle file but with a video extension
      (e.g. ~.mkv~ or ~.avi~).
-   - Every time the buffer is safed, the subtitles are sanitized, sorted, etc
+   - Every time the buffer is saved, the subtitles are sanitized, sorted, etc
      and then reloaded in mpv.
    - Cursor and playback position are synchronized:
      - Playback in mpv seeks to the position of the current subtitle as the
