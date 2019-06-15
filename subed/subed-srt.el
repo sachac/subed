@@ -368,7 +368,7 @@ See also `subed-increase-start-time'."
   (interactive "P")
   (subed-srt--adjust-subtitle-stop-relative (* -1 (subed-srt--get-adjust-time arg))))
 
-(defun subed-srt-subtitle-insert (arg)
+(defun subed-srt-subtitle-insert (&optional arg)
   "Insert subtitle(s).
 `universal-argument' is used in the following manner:
           \\[subed-subtitle-insert]   Insert 1 subtitle after the current subtitle
