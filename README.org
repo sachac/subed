@@ -1,3 +1,5 @@
+[[file:https://raw.githubusercontent.com/rndusr/subed/master/screenshot.png]]
+
 * subed
 subed is an Emacs major mode for editing subtitles while playing the
 corresponding video with [[https://mpv.io/][mpv]].  At the moment, the only supported format is
