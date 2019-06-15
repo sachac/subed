@@ -53,10 +53,10 @@
 (fset 'subed-forward-subtitle-time-stop 'subed-srt-forward-subtitle-time-stop)
 (fset 'subed-backward-subtitle-time-stop 'subed-srt-backward-subtitle-time-stop)
 
-(fset 'subed-increase-start-time-100ms 'subed-srt-increase-start-time-100ms)
-(fset 'subed-decrease-start-time-100ms 'subed-srt-decrease-start-time-100ms)
-(fset 'subed-increase-stop-time-100ms 'subed-srt-increase-stop-time-100ms)
-(fset 'subed-decrease-stop-time-100ms 'subed-srt-decrease-stop-time-100ms)
+(fset 'subed-increase-start-time 'subed-srt-increase-start-time)
+(fset 'subed-decrease-start-time 'subed-srt-decrease-start-time)
+(fset 'subed-increase-stop-time 'subed-srt-increase-stop-time)
+(fset 'subed-decrease-stop-time 'subed-srt-decrease-stop-time)
 
 (fset 'subed-subtitle-insert 'subed-srt-subtitle-insert)
 (fset 'subed-subtitle-kill 'subed-srt-subtitle-kill)

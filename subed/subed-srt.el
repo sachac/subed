@@ -317,25 +317,56 @@ Return point or nil if there is no previous subtitle."
       (let ((sub-id (subed-srt--subtitle-id)))
         (run-hook-with-args 'subed-subtitle-time-adjusted-hook sub-id msecs-new)))))
 
-(defun subed-srt-increase-start-time-100ms ()
-  "Add 100 milliseconds to start time of current subtitle."
-  (interactive)
-  (subed-srt--adjust-subtitle-start-relative 100))
+(defun subed-srt--get-adjust-time (arg)
+  "Set `subed-seconds-adjust' to `arg' if it's a number.  If
+`arg' is non-nil, reset `subed-seconds-adjust' to its default."
+  (subed-debug "arg: %S (%S)" arg (type-of arg))
+  (cond ((integerp arg)
+          (setq subed-seconds-adjust arg))                    ;; Custom adjustment
+        ((not (eq nil arg))
+         (custom-reevaluate-setting 'subed-seconds-adjust)))  ;; Reset to default
+  subed-seconds-adjust)
 
-(defun subed-srt-decrease-start-time-100ms ()
-  "Subtract 100 milliseconds from start time of current subtitle."
-  (interactive)
-  (subed-srt--adjust-subtitle-start-relative -100))
+(defun subed-srt-increase-start-time (&optional arg)
+  "Add `subed-seconds-adjust' milliseconds to start time of current subtitle.
 
-(defun subed-srt-increase-stop-time-100ms ()
-  "Add 100 milliseconds to stop time of current subtitle."
-  (interactive)
-  (subed-srt--adjust-subtitle-stop-relative 100))
+`subed-seconds-adjust' is set to the value of a numerical prefix
+argument if provided.  If the prefix argument is not numerical,
+`subed-seconds-adjust' is reset to it's default value.
 
-(defun subed-srt-decrease-stop-time-100ms ()
-  "Subtract 100 milliseconds from stop time of current subtitle."
-  (interactive)
-  (subed-srt--adjust-subtitle-stop-relative -100))
+Example usage:
+  \\[universal-argument] 1000 \\[subed-increase-start-time]  Increase start time by 1000ms
+           \\[subed-increase-start-time]  Increase start time by 1000ms again
+         [...]  [...]
+   \\[universal-argument] 500 \\[subed-increase-start-time]  Increase start time by 500ms
+           \\[subed-increase-start-time]  Increase start time by 500ms again
+         [...]  [...]
+       \\[universal-argument] \\[subed-increase-start-time]  Increase start time by 100ms
+           \\[subed-increase-start-time]  Increase start time by 100ms again
+         [...]  [...]"
+  (interactive "P")
+  (subed-srt--adjust-subtitle-start-relative (subed-srt--get-adjust-time arg)))
+
+(defun subed-srt-decrease-start-time (&optional arg)
+  "Subtract `subed-seconds-adjust' milliseconds from start time of current subtitle.
+
+See also `subed-increase-start-time'."
+  (interactive "P")
+  (subed-srt--adjust-subtitle-start-relative (* -1 (subed-srt--get-adjust-time arg))))
+
+(defun subed-srt-increase-stop-time (&optional arg)
+  "Add `subed-seconds-adjust' milliseconds to stop time of current subtitle.
+
+See also `subed-increase-start-time'."
+  (interactive "P")
+  (subed-srt--adjust-subtitle-stop-relative (subed-srt--get-adjust-time arg)))
+
+(defun subed-srt-decrease-stop-time (&optional arg)
+  "Subtract `subed-seconds-adjust' milliseconds from stop time of current subtitle.
+
+See also `subed-increase-start-time'."
+  (interactive "P")
+  (subed-srt--adjust-subtitle-stop-relative (* -1 (subed-srt--get-adjust-time arg))))
 
 (defun subed-srt-subtitle-insert (arg)
   "Insert subtitle(s).

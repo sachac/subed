@@ -29,10 +29,10 @@
     (define-key subed-mode-map (kbd "M-p") 'subed-backward-subtitle-text)
     (define-key subed-mode-map (kbd "C-M-a") 'subed-move-to-subtitle-text)
     (define-key subed-mode-map (kbd "C-M-e") 'subed-move-to-subtitle-end)
-    (define-key subed-mode-map (kbd "M-[") 'subed-decrease-start-time-100ms)
-    (define-key subed-mode-map (kbd "M-]") 'subed-increase-start-time-100ms)
-    (define-key subed-mode-map (kbd "M-{") 'subed-decrease-stop-time-100ms)
-    (define-key subed-mode-map (kbd "M-}") 'subed-increase-stop-time-100ms)
+    (define-key subed-mode-map (kbd "M-[") 'subed-decrease-start-time)
+    (define-key subed-mode-map (kbd "M-]") 'subed-increase-start-time)
+    (define-key subed-mode-map (kbd "M-{") 'subed-decrease-stop-time)
+    (define-key subed-mode-map (kbd "M-}") 'subed-increase-stop-time)
     (define-key subed-mode-map (kbd "M-i") 'subed-subtitle-insert)
     (define-key subed-mode-map (kbd "M-k") 'subed-subtitle-kill)
     (define-key subed-mode-map (kbd "M-s") 'subed-sort)
@@ -105,6 +105,17 @@ The corresponding video is found by replacing the file extension
 of `buffer-file-name' with those in `subed-video-extensions'.
 The first existing file is then passed to `subed-open-video'."
   :type 'boolean
+  :group 'subed)
+
+(defcustom subed-seconds-adjust 100
+  "Number of milliseconds to add/subtract to subtitle start/stop
+time with `subed-increase-start-time',
+`subed-decrease-start-time', `subed-increase-stop-time' and
+`subed-decrease-stop-time'.
+
+This variable is set if these functions are called with a prefix
+argument.  See `subed-increase-start-time'."
+  :type 'float
   :group 'subed)
 
 (defcustom subed-playback-speed-while-typing 0.3
