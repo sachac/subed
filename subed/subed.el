@@ -385,7 +385,6 @@ existing file."
 
 (defun subed-mode-enable ()
   "Enable subed mode."
-  (message "enabling subed-mode")
   (interactive)
   (kill-all-local-variables)
   (setq-local font-lock-defaults '(subed-font-lock-keywords))
@@ -413,7 +412,6 @@ existing file."
 (defun subed-mode-disable ()
   "Disable subed mode."
   (interactive)
-  (message "disabling subed-mode")
   (subed-disable-pause-while-typing)
   (subed-disable-sync-point-to-player)
   (subed-disable-sync-player-to-point)
@@ -425,11 +423,7 @@ existing file."
   (remove-hook 'before-save-hook 'subed-sort :local)
   (remove-hook 'after-save-hook 'subed-mpv-reload-subtitles :local)
   (remove-hook 'kill-buffer-hook 'subed-mpv-kill :local)
-  (setq subed--mode-enabled nil)
-  (message "post-command-hook: %s" post-command-hook)
-  (message "before-save-hook: %s" before-save-hook)
-  (message "after-save-hook: %s" after-save-hook)
-  (message "kill-buffer-hook: %s" kill-buffer-hook))
+  (setq subed--mode-enabled nil))
 
 (defun subed-mode ()
   "Major mode for editing subtitles.
