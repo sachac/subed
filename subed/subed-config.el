@@ -94,7 +94,7 @@ This is automatically set by `subed-mode-enable' and `subed-mode-disable'.")
   :type 'hook
   :group 'subed)
 
-(defcustom subed-video-extensions '("mkv" "mp4" "webm" "avi" "ts")
+(defcustom subed-video-extensions '("mkv" "mp4" "webm" "avi" "ts" "ogv")
   "Video file name extensions."
   :type 'list
   :group 'subed)
