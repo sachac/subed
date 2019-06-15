@@ -1,4 +1,4 @@
-[[file:https://raw.githubusercontent.com/rndusr/subed/master/screenshot.png]]
+[[file:https://raw.githubusercontent.com/rndusr/subed/master/screenshot.jpg]]
 
 * subed
 subed is an Emacs major mode for editing subtitles while playing the
