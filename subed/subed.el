@@ -399,7 +399,10 @@ existing file."
     (let ((video-file (subed-guess-video-file)))
       (when video-file
         (subed-debug "Auto-discovered video file: %s" video-file)
-        (subed-mpv-find-video video-file))))
+        (condition-case err
+            (subed-mpv-find-video video-file)
+          (error (message "%s -- Set subed-auto-find-video to nil to suppress this message."
+                          (car (cdr err))))))))
   (subed-enable-pause-while-typing)
   (subed-enable-sync-point-to-player)
   (subed-enable-sync-player-to-point)
