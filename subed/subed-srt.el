@@ -318,16 +318,6 @@ Return point or nil if there is no previous subtitle."
       (let ((sub-id (subed-srt--subtitle-id)))
         (run-hook-with-args 'subed-subtitle-time-adjusted-hook sub-id msecs-new)))))
 
-(defun subed-srt--get-seconds-adjust (arg)
-  "Set `subed-seconds-adjust' to `arg' if it's a number.  If
-`arg' is non-nil, reset `subed-seconds-adjust' to its default."
-  (subed-debug "arg: %S (%S)" arg (type-of arg))
-  (cond ((integerp arg)
-          (setq subed-seconds-adjust arg))                    ;; Custom adjustment
-        ((not (eq nil arg))
-         (custom-reevaluate-setting 'subed-seconds-adjust)))  ;; Reset to default
-  subed-seconds-adjust)
-
 (defun subed-srt-increase-start-time (&optional arg)
   "Add `subed-seconds-adjust' milliseconds to start time of current subtitle.
 
@@ -346,28 +336,28 @@ Example usage:
            \\[subed-increase-start-time]  Increase start time by 100ms again
          [...]  [...]"
   (interactive "P")
-  (subed-srt--adjust-subtitle-start-relative (subed-srt--get-seconds-adjust arg)))
+  (subed-srt--adjust-subtitle-start-relative (subed--get-seconds-adjust arg)))
 
 (defun subed-srt-decrease-start-time (&optional arg)
   "Subtract `subed-seconds-adjust' milliseconds from start time of current subtitle.
 
 See also `subed-increase-start-time'."
   (interactive "P")
-  (subed-srt--adjust-subtitle-start-relative (* -1 (subed-srt--get-seconds-adjust arg))))
+  (subed-srt--adjust-subtitle-start-relative (* -1 (subed--get-seconds-adjust arg))))
 
 (defun subed-srt-increase-stop-time (&optional arg)
   "Add `subed-seconds-adjust' milliseconds to stop time of current subtitle.
 
 See also `subed-increase-start-time'."
   (interactive "P")
-  (subed-srt--adjust-subtitle-stop-relative (subed-srt--get-seconds-adjust arg)))
+  (subed-srt--adjust-subtitle-stop-relative (subed--get-seconds-adjust arg)))
 
 (defun subed-srt-decrease-stop-time (&optional arg)
   "Subtract `subed-seconds-adjust' milliseconds from stop time of current subtitle.
 
 See also `subed-increase-start-time'."
   (interactive "P")
-  (subed-srt--adjust-subtitle-stop-relative (* -1 (subed-srt--get-seconds-adjust arg))))
+  (subed-srt--adjust-subtitle-stop-relative (* -1 (subed--get-seconds-adjust arg))))
 
 (defun subed-srt-subtitle-insert (&optional arg)
   "Insert subtitle(s).

@@ -107,6 +107,7 @@ The first existing file is then passed to `subed-open-video'."
   :type 'boolean
   :group 'subed)
 
+
 (defcustom subed-seconds-adjust 100
   "Number of milliseconds to add/subtract to subtitle start/stop
 time with `subed-increase-start-time',
@@ -117,6 +118,37 @@ This variable is set if these functions are called with a prefix
 argument.  See `subed-increase-start-time'."
   :type 'float
   :group 'subed)
+
+(defun subed--get-seconds-adjust (arg)
+  "Set `subed-seconds-adjust' to `arg' if it's a number.  If
+`arg' is non-nil, reset `subed-seconds-adjust' to its default.
+Return (new) `subed-seconds-adjust' value."
+  (cond ((integerp arg)
+          (setq subed-seconds-adjust arg))                    ;; Custom adjustment
+        ((not (eq nil arg))
+         (custom-reevaluate-setting 'subed-seconds-adjust)))  ;; Reset to default
+  subed-seconds-adjust)
+
+(defcustom subed-seconds-move 100
+  "Number of milliseconds to provide to
+`subed-move-subtitle-forward' and `subed-move-subtitle-backward'
+by default.
+
+This variable is set if these functions are called with a prefix
+argument.  See `subed-move-subtitle-forward'."
+  :type 'float
+  :group 'subed)
+
+(defun subed--get-seconds-move (arg)
+  "Set `subed-seconds-move' to `arg' if it's a number.  If `arg'
+is non-nil, reset `subed-seconds-move' to its default.
+Return (new) `subed-seconds-move' value."
+  (cond ((integerp arg)
+          (setq subed-seconds-move arg))                    ;; Custom movement
+        ((not (eq nil arg))
+         (custom-reevaluate-setting 'subed-seconds-move)))  ;; Reset to default
+  subed-seconds-move)
+
 
 (defcustom subed-playback-speed-while-typing 0.3
   "Video playback speed while the user is editing the buffer.  If
