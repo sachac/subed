@@ -39,10 +39,10 @@
 (fset 'subed--subtitle-msecs-stop 'subed-srt--subtitle-msecs-stop)
 (fset 'subed--subtitle-relative-point 'subed-srt--subtitle-relative-point)
 
-(fset 'subed-move-to-subtitle-id 'subed-srt-move-to-subtitle-id)
-(fset 'subed-move-to-subtitle-text-at-msecs 'subed-srt-move-to-subtitle-text-at-msecs)
-(fset 'subed-move-to-subtitle-text 'subed-srt-move-to-subtitle-text)
-(fset 'subed-move-to-subtitle-end 'subed-srt-move-to-subtitle-end)
+(fset 'subed-jump-to-subtitle-id 'subed-srt-jump-to-subtitle-id)
+(fset 'subed-jump-to-subtitle-text-at-msecs 'subed-srt-jump-to-subtitle-text-at-msecs)
+(fset 'subed-jump-to-subtitle-text 'subed-srt-jump-to-subtitle-text)
+(fset 'subed-jump-to-subtitle-end 'subed-srt-jump-to-subtitle-end)
 
 (fset 'subed-forward-subtitle-id 'subed-srt-forward-subtitle-id)
 (fset 'subed-backward-subtitle-id 'subed-srt-backward-subtitle-id)
@@ -179,7 +179,7 @@ playing subtitle."
 
 (defun subed--sync-point-to-player (msecs)
   "Move point to currently playing subtitle."
-  (when (subed-move-to-subtitle-text-at-msecs msecs)
+  (when (subed-jump-to-subtitle-text-at-msecs msecs)
     (subed-debug "Synchronized point to playback position: %s -> #%s"
                  (subed-srt--msecs-to-timestamp msecs) (subed--subtitle-id))
     ;; post-command-hook is not triggered because we didn't move interactively.
@@ -363,7 +363,7 @@ don't change."
     `(let ((sub-id (subed--subtitle-id))
            (sub-pos (subed--subtitle-relative-point)))
        (progn ,@body)
-       (subed-move-to-subtitle-id sub-id)
+       (subed-jump-to-subtitle-id sub-id)
        ;; Subtitle text may have changed and we may not be able to move to the
        ;; exact original position
        (condition-case nil
