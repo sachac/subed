@@ -376,6 +376,26 @@ subtitles) as long the subtitle IDs don't change."
          ('beginning-of-buffer nil)
          ('end-of-buffer nil)))))
 
+(defmacro subed--for-each-subtitle (&optional beg end &rest body)
+  "Run BODY for each subtitle between the region specified by BEG and END.
+If END is nil, it defaults to `point-max'.
+If BEG and END are both nil, run BODY only on the subtitle at point.
+Before BODY is run, point is placed on the subtitle's ID."
+  (declare (indent defun))
+  `(if (not ,beg)
+       ;; Run body on subtitle at point
+       (progn (save-excursion (subed-jump-to-subtitle-id)
+                              ,@body))
+     (progn
+       ;; Run body on multiple subtitles
+       (save-excursion
+         (goto-char ,beg)
+         (subed-jump-to-subtitle-id)
+         (progn ,@body)
+         (while (and (<= (point) (or ,end (point-max)))
+                     (subed-forward-subtitle-id))
+           (progn ,@body))))))
+
 (defun subed-guess-video-file ()
   "Return path to video if replacing the buffer file name's
 extension with members of `subed-video-extensions' yields an

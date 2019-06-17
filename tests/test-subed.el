@@ -1,5 +1,56 @@
 (add-to-list 'load-path "./subed")
 (require 'subed)
+(require 'subed-srt)
+
+(describe "Iterating over subtitles"
+          (it "without beginning and end."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (subed-jump-to-subtitle-time-stop 1)
+                (subed--for-each-subtitle nil nil
+                  (forward-line 2)
+                  (kill-line)
+                  (insert "Hello."))
+                (expect (point) :to-equal 20)
+                (expect (subed--subtitle-text 1) :to-equal "Hello.")
+                (subed-jump-to-subtitle-time-stop 2)
+                (subed--for-each-subtitle nil nil
+                  (forward-line 2)
+                  (kill-line)
+                  (insert "HEllo."))
+                (expect (point) :to-equal 60)
+                (expect (subed--subtitle-text 2) :to-equal "HEllo.")
+                (subed-jump-to-subtitle-time-stop 3)
+                (subed--for-each-subtitle nil nil
+                  (forward-line 2)
+                  (kill-line)
+                  (insert "HELlo."))
+                (expect (point) :to-equal 100)
+                (expect (subed--subtitle-text 3) :to-equal "HELlo.")))
+          (it "with only the beginning."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (subed-jump-to-subtitle-time-start 1)
+                (expect (point) :to-equal 3)
+                (subed--for-each-subtitle 71 nil
+                  (forward-line 2)
+                  (kill-line)
+                  (insert "Hello."))
+                (expect (point) :to-equal 3)
+                (expect (subed--subtitle-text 2) :to-equal "Hello.")
+                (expect (subed--subtitle-text 3) :to-equal "Hello.")))
+          (it "with beginning and end."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (subed-jump-to-subtitle-time-stop 1)
+                (subed--for-each-subtitle 71 79
+                  (forward-line 2)
+                  (kill-line)
+                  (insert "Hello."))
+                (expect (point) :to-equal 20)
+                (expect (subed--subtitle-text 2) :to-equal "Hello.")
+                (expect (subed--subtitle-text 3) :to-equal "Hello.")))
+          )
 
 (describe "Syncing player to point"
           :var (subed-mpv-playback-position)
