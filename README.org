@@ -36,7 +36,7 @@ subed is still alpha software.  Expect it to kill your Emacs session.
 
 ** Installation
    For now, you have to install it manually.  For example, copy ~subed/*.el~ to
-   ~~/.emacs.d/elisp/~ and add ~~/.emacs.d/elisp/~ to your ~load-path~.
+   ~$HOME/.emacs.d/elisp/~ and add ~$HOME/.emacs.d/elisp/~ to your ~load-path~.
 
    #+BEGIN_SRC elisp
    (use-package subed
