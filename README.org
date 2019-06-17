@@ -28,8 +28,8 @@ subed is still alpha software.  Expect it to kill your Emacs session.
        cursor moves between subtitles (~C-x ,~).
      - The cursor is moved to the currently relevant subtitle as the video is
        playing (~C-x .~).
-   - Playback is paused or slowed down when you a subtitle's text is edited
-     (~C-x p~).
+   - Playback is paused or slowed down when a subtitle's text is edited (~C-x
+     p~).
    - Loop over the current subtitle in mpv (~C-x l~).
    - When a subtitle's start or stop time changes, mpv seeks to the subtitle's
      start time (~C-x /~).
