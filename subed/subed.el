@@ -357,8 +357,8 @@ buffer."
 
 (defmacro subed--save-excursion (&rest body)
   "Restore relative point within current subtitle after executing BODY.
-This also works if the buffer changes as long the subtitle IDs
-don't change."
+This also works if the buffer changes (e.g. when sorting
+subtitles) as long the subtitle IDs don't change."
   (save-excursion
     `(let ((sub-id (subed--subtitle-id))
            (sub-pos (subed--subtitle-relative-point)))

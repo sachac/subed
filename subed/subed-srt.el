@@ -321,20 +321,18 @@ Return point or nil if there is no previous subtitle."
 (defun subed-srt-increase-start-time (&optional arg)
   "Add `subed-seconds-adjust' milliseconds to start time of current subtitle.
 
-`subed-seconds-adjust' is set to the value of a numerical prefix
-argument if provided.  If the prefix argument is not numerical,
-`subed-seconds-adjust' is reset to it's default value.
+The first step is to set `subed-seconds-adjust' to the value of
+the prefix argument if it is provided and if it is a number.  If
+the prefix argument is provided but not numerical,
+`subed-seconds-adjust' is reset to its default value.
 
 Example usage:
   \\[universal-argument] 1000 \\[subed-increase-start-time]  Increase start time by 1000ms
            \\[subed-increase-start-time]  Increase start time by 1000ms again
-         [...]  [...]
    \\[universal-argument] 500 \\[subed-increase-start-time]  Increase start time by 500ms
            \\[subed-increase-start-time]  Increase start time by 500ms again
-         [...]  [...]
-       \\[universal-argument] \\[subed-increase-start-time]  Increase start time by 100ms
-           \\[subed-increase-start-time]  Increase start time by 100ms again
-         [...]  [...]"
+       \\[universal-argument] \\[subed-increase-start-time]  Increase start time by 100ms (the default)
+           \\[subed-increase-start-time]  Increase start time by 100ms (the default) again"
   (interactive "P")
   (subed-srt--adjust-subtitle-start-relative (subed--get-seconds-adjust arg)))
 
