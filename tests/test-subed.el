@@ -52,6 +52,47 @@
                 (expect (subed--subtitle-text 3) :to-equal "Hello.")))
           )
 
+(describe "Moving"
+          (it "adjusts start and stop time by the same amount."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (cl-loop for sub-id in '(1 2 3) do
+                         (subed-jump-to-subtitle-id sub-id)
+                         (let ((orig-start (subed--subtitle-msecs-start))
+                               (orig-stop (subed--subtitle-msecs-stop)))
+                           (subed-move-subtitle-forward 100)
+                           (expect (subed--subtitle-msecs-start) :to-equal (+ orig-start 100))
+                           (expect (subed--subtitle-msecs-stop) :to-equal (+ orig-stop 100))
+                           (subed-move-subtitle-backward 100)
+                           (expect (subed--subtitle-msecs-start) :to-equal orig-start)
+                           (expect (subed--subtitle-msecs-stop) :to-equal orig-stop)))))
+          (it "adjusts subtitles in the active region."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (let ((beg (subed-jump-to-subtitle-text 2))
+                      (end (subed-jump-to-subtitle-time-start 3))
+                      (orig-start-1 (subed--subtitle-msecs-start 1))
+                      (orig-stop-1 (subed--subtitle-msecs-stop 1))
+                      (orig-start-2 (subed--subtitle-msecs-start 2))
+                      (orig-stop-2 (subed--subtitle-msecs-stop 2))
+                      (orig-start-3 (subed--subtitle-msecs-start 3))
+                      (orig-stop-3 (subed--subtitle-msecs-stop 3)))
+                  (subed-move-subtitle-forward 100 beg end)
+                  (expect (subed--subtitle-msecs-start 1) :to-equal orig-start-1)
+                  (expect (subed--subtitle-msecs-stop 1) :to-equal orig-stop-1)
+                  (expect (subed--subtitle-msecs-start 2) :to-equal (+ orig-start-2 100))
+                  (expect (subed--subtitle-msecs-stop 2) :to-equal (+ orig-stop-2 100))
+                  (expect (subed--subtitle-msecs-start 3) :to-equal (+ orig-start-3 100))
+                  (expect (subed--subtitle-msecs-stop 3) :to-equal (+ orig-stop-3 100))
+                  (subed-move-subtitle-backward 100 beg end)
+                  (expect (subed--subtitle-msecs-start 1) :to-equal orig-start-1)
+                  (expect (subed--subtitle-msecs-stop 1) :to-equal orig-stop-1)
+                  (expect (subed--subtitle-msecs-start 2) :to-equal orig-start-2)
+                  (expect (subed--subtitle-msecs-stop 2) :to-equal orig-stop-2)
+                  (expect (subed--subtitle-msecs-start 3) :to-equal orig-start-3)
+                  (expect (subed--subtitle-msecs-stop 3) :to-equal orig-stop-3))))
+          )
+
 (describe "Syncing player to point"
           :var (subed-mpv-playback-position)
           (before-each

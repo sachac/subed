@@ -119,6 +119,47 @@
           (set-window-point debug-window (goto-char (point-max))))))))
 
 
+;;; Moving subtitles
+
+(defun subed-move-subtitle-forward (&optional arg beg end)
+  "Move subtitle `subed-seconds-move' forward in time while
+preserving its duration, i.e. increase start and stop time by the
+same amount.
+
+If the region is active, all subtitles that are fully or
+partially in it are moved.
+
+The first step is to set `subed-seconds-move' to the value of the
+prefix argument if it is provided and if it is a number.  If the
+prefix argument is provided but not numerical,
+`subed-seconds-move' is reset to its default value.
+
+Example usage:
+  \\[universal-argument] 1000 \\[subed-move-subtitle-forward]  Move subtitle 1000ms forward in time
+           \\[subed-move-subtitle-forward]  Move subtitle 1000ms forward in time again
+   \\[universal-argument] 500 \\[subed-move-subtitle-forward]  Move subtitle 500ms forward in time
+           \\[subed-move-subtitle-forward]  Move subtitle 500ms forward in time again
+       \\[universal-argument] \\[subed-move-subtitle-forward]  Move subtitle 100ms (the default) forward in time
+           \\[subed-move-subtitle-forward]  Move subtitle 100ms (the default) forward in time again"
+  (interactive "P" (if (use-region-p) (list (region-beginning) (region-end))))
+  (let ((secs (subed--get-seconds-move arg)))
+    (subed--for-each-subtitle beg end
+      (subed--adjust-subtitle-start-relative secs)
+      (subed--adjust-subtitle-stop-relative secs))))
+
+(defun subed-move-subtitle-backward (&optional arg beg end)
+  "Move subtitle `subed-seconds-move' backward in time while
+preserving its duration, i.e. decrease start and stop time by the
+same amount.
+
+See `subed-move-subtitle-forward'."
+  (interactive "P" (if (use-region-p) (list (region-beginning) (region-end))))
+  (let ((secs (* -1 (subed--get-seconds-move arg))))
+    (subed--for-each-subtitle beg end
+      (subed--adjust-subtitle-start-relative secs)
+      (subed--adjust-subtitle-stop-relative secs))))
+
+
 ;;; Replay time-adjusted subtitle
 (defun subed-replay-adjusted-subtitle-p ()
   "Whether adjusting a subtitle's start/stop time causes the
