@@ -119,6 +119,45 @@
           (set-window-point debug-window (goto-char (point-max))))))))
 
 
+;;; Utilities
+
+(defmacro subed--save-excursion (&rest body)
+  "Restore relative point within current subtitle after executing BODY.
+This also works if the buffer changes (e.g. when sorting
+subtitles) as long the subtitle IDs don't change."
+  (save-excursion
+    `(let ((sub-id (subed--subtitle-id))
+           (sub-pos (subed--subtitle-relative-point)))
+       (progn ,@body)
+       (subed-jump-to-subtitle-id sub-id)
+       ;; Subtitle text may have changed and we may not be able to move to the
+       ;; exact original position
+       (condition-case nil
+           (forward-char sub-pos)
+         ('beginning-of-buffer nil)
+         ('end-of-buffer nil)))))
+
+(defmacro subed--for-each-subtitle (&optional beg end &rest body)
+  "Run BODY for each subtitle between the region specified by BEG and END.
+If END is nil, it defaults to `point-max'.
+If BEG and END are both nil, run BODY only on the subtitle at point.
+Before BODY is run, point is placed on the subtitle's ID."
+  (declare (indent defun))
+  `(if (not ,beg)
+       ;; Run body on subtitle at point
+       (progn (save-excursion (subed-jump-to-subtitle-id)
+                              ,@body))
+     (progn
+       ;; Run body on multiple subtitles
+       (save-excursion
+         (goto-char ,beg)
+         (subed-jump-to-subtitle-id)
+         (progn ,@body)
+         (while (and (<= (point) (or ,end (point-max)))
+                     (subed-forward-subtitle-id))
+           (progn ,@body))))))
+
+
 ;;; Moving subtitles
 
 (defun subed-move-subtitle-forward (&optional arg beg end)
@@ -398,44 +437,6 @@ buffer."
                              (setq subed--player-is-auto-paused nil)
                              (subed-mpv-playback-speed subed-playback-speed-while-not-typing))))))))
 
-
-;;; Stuff
-
-(defmacro subed--save-excursion (&rest body)
-  "Restore relative point within current subtitle after executing BODY.
-This also works if the buffer changes (e.g. when sorting
-subtitles) as long the subtitle IDs don't change."
-  (save-excursion
-    `(let ((sub-id (subed--subtitle-id))
-           (sub-pos (subed--subtitle-relative-point)))
-       (progn ,@body)
-       (subed-jump-to-subtitle-id sub-id)
-       ;; Subtitle text may have changed and we may not be able to move to the
-       ;; exact original position
-       (condition-case nil
-           (forward-char sub-pos)
-         ('beginning-of-buffer nil)
-         ('end-of-buffer nil)))))
-
-(defmacro subed--for-each-subtitle (&optional beg end &rest body)
-  "Run BODY for each subtitle between the region specified by BEG and END.
-If END is nil, it defaults to `point-max'.
-If BEG and END are both nil, run BODY only on the subtitle at point.
-Before BODY is run, point is placed on the subtitle's ID."
-  (declare (indent defun))
-  `(if (not ,beg)
-       ;; Run body on subtitle at point
-       (progn (save-excursion (subed-jump-to-subtitle-id)
-                              ,@body))
-     (progn
-       ;; Run body on multiple subtitles
-       (save-excursion
-         (goto-char ,beg)
-         (subed-jump-to-subtitle-id)
-         (progn ,@body)
-         (while (and (<= (point) (or ,end (point-max)))
-                     (subed-forward-subtitle-id))
-           (progn ,@body))))))
 
 (defun subed-guess-video-file ()
   "Return path to video if replacing the buffer file name's
