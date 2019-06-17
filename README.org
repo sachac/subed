@@ -12,7 +12,8 @@ subed is still alpha software.  Expect it to kill your Emacs session.
    - Quickly jump to the beginning (~C-M-a~) and end (~C-M-e~) of the current
      subtitle's text.
    - Insert (~M-i~) and kill (~M-k~) subtitles.
-   - Adjust subtitle start (~M-[~ / ~M-]~) and stop (~M-{~ / ~M-}~) time.
+   - Freely adjust subtitle start (~M-[~ / ~M-]~) and stop (~M-{~ / ~M-}~) time.
+   - Freely move subtitle without changing its length (~C-M-n~ / ~C-M-p~).
    - Sort and re-number subtitles and remove any extra spaces and newlines
      (~M-s~).
 
@@ -27,11 +28,11 @@ subed is still alpha software.  Expect it to kill your Emacs session.
        cursor moves between subtitles (~C-x ,~).
      - The cursor is moved to the currently relevant subtitle as the video is
        playing (~C-x .~).
-   - Playback is paused or slowed down when you edit a subtitle's text (~C-x
-     p~).
+   - Playback is paused or slowed down when you a subtitle's text is edited
+     (~C-x p~).
    - Loop over the current subtitle in mpv (~C-x l~).
-   - When a subtitle's start or stop time is adjusted, jump to its start time in
-     mpv (~C-x /~).
+   - When a subtitle's start or stop time changes, mpv seeks to the subtitle's
+     start time (~C-x /~).
 
 ** Installation
    For now, you have to install it manually.  For example, copy ~subed/*.el~ to
