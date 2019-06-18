@@ -157,6 +157,10 @@ Before BODY is run, point is placed on the subtitle's ID."
                      (subed-forward-subtitle-id))
            (progn ,@body))))))
 
+(defun subed--right-pad (string length fillchar)
+  "Use FILLCHAR to make STRING LENGTH characters long."
+  (concat string (make-string (- length (length string)) fillchar)))
+
 
 ;;; Moving subtitles
 
