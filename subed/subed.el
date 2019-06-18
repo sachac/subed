@@ -165,17 +165,17 @@ Before BODY is run, point is placed on the subtitle's ID."
 ;;; Moving subtitles
 
 (defun subed-move-subtitle-forward (&optional arg beg end)
-  "Move subtitle `subed-seconds-move' forward in time while
+  "Move subtitle `subed-milliseconds-move' forward in time while
 preserving its duration, i.e. increase start and stop time by the
 same amount.
 
 If the region is active, all subtitles that are fully or
 partially in it are moved.
 
-The first step is to set `subed-seconds-move' to the value of the
+The first step is to set `subed-milliseconds-move' to the value of the
 prefix argument if it is provided and if it is a number.  If the
 prefix argument is provided but not numerical,
-`subed-seconds-move' is reset to its default value.
+`subed-milliseconds-move' is reset to its default value.
 
 Example usage:
   \\[universal-argument] 1000 \\[subed-move-subtitle-forward]  Move subtitle 1000ms forward in time

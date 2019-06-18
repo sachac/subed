@@ -110,7 +110,7 @@ The first existing file is then passed to `subed-open-video'."
   :group 'subed)
 
 
-(defcustom subed-seconds-adjust 100
+(defcustom subed-milliseconds-adjust 100
   "Number of milliseconds to add/subtract to subtitle start/stop
 time with `subed-increase-start-time',
 `subed-decrease-start-time', `subed-increase-stop-time' and
@@ -121,17 +121,17 @@ argument.  See `subed-increase-start-time'."
   :type 'float
   :group 'subed)
 
-(defun subed--get-seconds-adjust (arg)
-  "Set `subed-seconds-adjust' to `arg' if it's a number.  If
-`arg' is non-nil, reset `subed-seconds-adjust' to its default.
-Return (new) `subed-seconds-adjust' value."
+(defun subed--get-milliseconds-adjust (arg)
+  "Set `subed-milliseconds-adjust' to `arg' if it's a number.  If
+`arg' is non-nil, reset `subed-milliseconds-adjust' to its
+default.  Return (new) `subed-milliseconds-adjust' value."
   (cond ((integerp arg)
-          (setq subed-seconds-adjust arg))                    ;; Custom adjustment
+          (setq subed-milliseconds-adjust arg))                    ;; Custom adjustment
         ((not (eq nil arg))
-         (custom-reevaluate-setting 'subed-seconds-adjust)))  ;; Reset to default
-  subed-seconds-adjust)
+         (custom-reevaluate-setting 'subed-milliseconds-adjust)))  ;; Reset to default
+  subed-milliseconds-adjust)
 
-(defcustom subed-seconds-move 100
+(defcustom subed-milliseconds-move 100
   "Number of milliseconds to provide to
 `subed-move-subtitle-forward' and `subed-move-subtitle-backward'
 by default.
@@ -141,15 +141,15 @@ argument.  See `subed-move-subtitle-forward'."
   :type 'float
   :group 'subed)
 
-(defun subed--get-seconds-move (arg)
-  "Set `subed-seconds-move' to `arg' if it's a number.  If `arg'
-is non-nil, reset `subed-seconds-move' to its default.
-Return (new) `subed-seconds-move' value."
+(defun subed--get-milliseconds-move (arg)
+  "Set `subed-milliseconds-move' to `arg' if it's a number.  If `arg'
+is non-nil, reset `subed-milliseconds-move' to its default.
+Return (new) `subed-milliseconds-move' value."
   (cond ((integerp arg)
-          (setq subed-seconds-move arg))                    ;; Custom movement
+          (setq subed-milliseconds-move arg))                    ;; Custom movement
         ((not (eq nil arg))
-         (custom-reevaluate-setting 'subed-seconds-move)))  ;; Reset to default
-  subed-seconds-move)
+         (custom-reevaluate-setting 'subed-milliseconds-move)))  ;; Reset to default
+  subed-milliseconds-move)
 
 
 (defcustom subed-playback-speed-while-typing 0.3
