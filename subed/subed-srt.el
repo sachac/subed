@@ -316,7 +316,8 @@ Return point or nil if there is no previous subtitle."
         (replace-match (subed-srt--msecs-to-timestamp msecs-new))))
     (when subed-subtitle-time-adjusted-hook
       (let ((sub-id (subed-srt--subtitle-id)))
-        (run-hook-with-args 'subed-subtitle-time-adjusted-hook sub-id msecs-new)))))
+        (run-hook-with-args 'subed-subtitle-time-adjusted-hook sub-id
+                            (subed-srt--subtitle-msecs-start))))))
 
 (defun subed-srt-increase-start-time (&optional arg)
   "Add `subed-seconds-adjust' milliseconds to start time of current subtitle.

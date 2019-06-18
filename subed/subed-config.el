@@ -243,8 +243,9 @@ hardcoded."
 ;; Hooks
 
 (defvar subed-subtitle-time-adjusted-hook ()
-  "Functions to call when a subtitle's start or stop time has
-changed.")
+  "Functions to call when a subtitle's start or stop time has changed.
+The functions are called with the relevant subtitle ID and the
+subtitle's start time.")
 
 (defvar-local subed-point-motion-hook nil
   "Functions to call after point changed.")

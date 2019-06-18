@@ -616,7 +616,7 @@ Baz.
                   (expect 'foo :to-have-been-called-times 1)
                   (subed-srt-jump-to-subtitle-id 1)
                   (subed-srt-increase-stop-time)
-                  (expect 'foo :to-have-been-called-with 1 65223)
+                  (expect 'foo :to-have-been-called-with 1 61000)
                   (expect 'foo :to-have-been-called-times 2)
                   (subed-srt-jump-to-subtitle-end 2)
                   (subed-srt-decrease-start-time)
@@ -624,7 +624,7 @@ Baz.
                   (expect 'foo :to-have-been-called-times 3)
                   (subed-srt-jump-to-subtitle-text 3)
                   (subed-srt-decrease-stop-time 100)
-                  (expect 'foo :to-have-been-called-with 3 195400)
+                  (expect 'foo :to-have-been-called-with 3 183550)
                   (expect 'foo :to-have-been-called-times 4))))
           (it "adjusts the start/stop time."
               (with-temp-buffer
