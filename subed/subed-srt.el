@@ -48,7 +48,7 @@ Return nil if TIME-STRING doesn't match the pattern."
       (let ((hours (string-to-number (match-string 1 time-string)))
             (mins  (string-to-number (match-string 2 time-string)))
             (secs  (string-to-number (match-string 3 time-string)))
-            (msecs (string-to-number (match-string 4 time-string))))
+            (msecs (string-to-number (subed--right-pad (match-string 4 time-string) 3 ?0))))
         (+ (* (truncate hours) 3600000)
            (* (truncate mins) 60000)
            (* (truncate secs) 1000)
@@ -97,7 +97,8 @@ after MSECS if there is one and its start time is >= MSECS +
   "Subtitle start time in milliseconds or nil if it can't be found."
   (let ((timestamp (save-excursion
                      (when (subed-srt-jump-to-subtitle-time-start sub-id)
-                       (buffer-substring (point) (+ (point) subed-srt--length-timestamp))))))
+                       (when (looking-at subed-srt--regexp-timestamp)
+                         (match-string 0))))))
     (when timestamp
       (subed-srt--timestamp-to-msecs timestamp))))
 
@@ -105,7 +106,8 @@ after MSECS if there is one and its start time is >= MSECS +
   "Subtitle stop time in milliseconds or nil if it can't be found."
   (let ((timestamp (save-excursion
                      (when (subed-srt-jump-to-subtitle-time-stop sub-id)
-                       (buffer-substring (point) (+ (point) subed-srt--length-timestamp))))))
+                       (when (looking-at subed-srt--regexp-timestamp)
+                         (match-string 0))))))
     (when timestamp
       (subed-srt--timestamp-to-msecs timestamp))))
 
@@ -184,7 +186,7 @@ Return point or nil if no stop time could be found."
   (save-match-data
     (when (subed-srt-jump-to-subtitle-id sub-id)
       (forward-line 1)
-      (re-search-forward " +--> +" (point-at-eol) t)
+      (re-search-forward " *--> *" (point-at-eol) t)
       (when (looking-at subed-srt--regexp-timestamp)
         (point)))))
 
@@ -302,8 +304,8 @@ Return point or nil if there is no previous subtitle."
   (let ((msecs-new (+ (subed-srt--subtitle-msecs-start) msecs)))
     (save-excursion
       (subed-srt-jump-to-subtitle-time-start)
-      (delete-region (point) (+ (point) subed-srt--length-timestamp))
-      (insert (subed-srt--msecs-to-timestamp msecs-new)))
+      (when (looking-at subed-srt--regexp-timestamp)
+        (replace-match (subed-srt--msecs-to-timestamp msecs-new))))
     (when subed-subtitle-time-adjusted-hook
       (let ((sub-id (subed-srt--subtitle-id)))
         (run-hook-with-args 'subed-subtitle-time-adjusted-hook sub-id msecs-new)))))
@@ -313,8 +315,8 @@ Return point or nil if there is no previous subtitle."
   (let ((msecs-new (+ (subed-srt--subtitle-msecs-stop) msecs)))
     (save-excursion
       (subed-srt-jump-to-subtitle-time-stop)
-      (delete-region (point) (+ (point) subed-srt--length-timestamp))
-      (insert (subed-srt--msecs-to-timestamp msecs-new)))
+      (when (looking-at subed-srt--regexp-timestamp)
+        (replace-match (subed-srt--msecs-to-timestamp msecs-new))))
     (when subed-subtitle-time-adjusted-hook
       (let ((sub-id (subed-srt--subtitle-id)))
         (run-hook-with-args 'subed-subtitle-time-adjusted-hook sub-id msecs-new)))))
@@ -543,9 +545,8 @@ each subtitle."
             ;; This regex is stricter than `subed-srt--regexp-timestamp'
             (unless (looking-at "^[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\},[0-9]\\{3\\}")
               (error "Found invalid start time: %S"  (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
-            (condition-case nil
-                (forward-char subed-srt--length-timestamp)
-              (error nil))
+            (when (re-search-forward "[[:blank:]]" (point-at-eol) t)
+              (goto-char (match-beginning 0)))
             (unless (looking-at " --> ")
               (error "Found invalid separator between start and stop time: %S"
                      (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))

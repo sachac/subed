@@ -25,7 +25,7 @@
                   (forward-line 2)
                   (kill-line)
                   (insert "HELlo."))
-                (expect (point) :to-equal 100)
+                (expect (point) :to-equal 99)
                 (expect (subed--subtitle-text 3) :to-equal "HELlo.")))
           (it "with only the beginning."
               (with-temp-buffer
