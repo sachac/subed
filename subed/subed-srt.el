@@ -56,8 +56,9 @@ Return nil if TIME-STRING doesn't match the pattern."
 
 (defun subed-srt--msecs-to-timestamp (msecs)
   "Convert MSECS to string in the format HH:MM:SS,MS."
-  (concat (format-seconds "%02h:%02m:%02s" (/ msecs 1000))
-          "," (format "%03d" (mod msecs 1000))))
+  (save-match-data
+    (concat (format-seconds "%02h:%02m:%02s" (/ msecs 1000))
+            "," (format "%03d" (mod msecs 1000)))))
 
 (defun subed-srt--subtitle-id ()
   "Return the ID of subtitle at point or nil if there is no ID."
