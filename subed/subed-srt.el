@@ -298,26 +298,30 @@ Return point or nil if there is no previous subtitle."
 
 (defun subed-srt--adjust-subtitle-start-relative (msecs)
   "Add MSECS milliseconds to start time (use negative value to subtract)."
-  (let ((msecs-new (+ (subed-srt--subtitle-msecs-start) msecs)))
-    (save-excursion
-      (subed-srt-jump-to-subtitle-time-start)
-      (when (looking-at subed-srt--regexp-timestamp)
-        (replace-match (subed-srt--msecs-to-timestamp msecs-new))))
-    (when subed-subtitle-time-adjusted-hook
-      (let ((sub-id (subed-srt--subtitle-id)))
-        (run-hook-with-args 'subed-subtitle-time-adjusted-hook sub-id msecs-new)))))
+  (let* ((msecs-start (subed-srt--subtitle-msecs-start))
+         (msecs-new (when msecs-start (+ msecs-start msecs))))
+    (when msecs-new
+      (save-excursion
+        (subed-srt-jump-to-subtitle-time-start)
+        (when (looking-at subed-srt--regexp-timestamp)
+          (replace-match (subed-srt--msecs-to-timestamp msecs-new))))
+      (when subed-subtitle-time-adjusted-hook
+        (run-hook-with-args 'subed-subtitle-time-adjusted-hook
+                            (subed-srt--subtitle-id) msecs-new)))))
 
 (defun subed-srt--adjust-subtitle-stop-relative (msecs)
   "Add MSECS milliseconds to stop time (use negative value to subtract)."
-  (let ((msecs-new (+ (subed-srt--subtitle-msecs-stop) msecs)))
-    (save-excursion
-      (subed-srt-jump-to-subtitle-time-stop)
-      (when (looking-at subed-srt--regexp-timestamp)
-        (replace-match (subed-srt--msecs-to-timestamp msecs-new))))
+  (let* ((msecs-stop (subed-srt--subtitle-msecs-stop))
+         (msecs-new (when msecs-stop (+ msecs-stop msecs))))
+    (when msecs-new
+      (save-excursion
+        (subed-srt-jump-to-subtitle-time-stop)
+        (when (looking-at subed-srt--regexp-timestamp)
+          (replace-match (subed-srt--msecs-to-timestamp msecs-new))))
     (when subed-subtitle-time-adjusted-hook
-      (let ((sub-id (subed-srt--subtitle-id)))
-        (run-hook-with-args 'subed-subtitle-time-adjusted-hook sub-id
-                            (subed-srt--subtitle-msecs-start))))))
+      (run-hook-with-args 'subed-subtitle-time-adjusted-hook
+                          (subed-srt--subtitle-id)
+                          (subed-srt--subtitle-msecs-start))))))
 
 (defun subed-srt-increase-start-time (&optional arg)
   "Add `subed-seconds-adjust' milliseconds to start time of current subtitle.

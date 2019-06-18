@@ -678,6 +678,18 @@ Baz.
                 (subed-srt-increase-stop-time)
                 (expect (save-excursion (subed-srt-jump-to-subtitle-time-start)
                                         (thing-at-point 'line)) :to-equal "00:01:01,500 --> 00:01:06,123\n")))
+          (it "does nothing if no timestamp can be found."
+              (with-temp-buffer
+                (insert "foo")
+                (goto-char (point-min))
+                (subed-srt-increase-start-time)
+                (expect (buffer-string) :to-equal "foo")
+                (subed-srt-decrease-start-time)
+                (expect (buffer-string) :to-equal "foo")
+                (subed-srt-increase-stop-time)
+                (expect (buffer-string) :to-equal "foo")
+                (subed-srt-decrease-stop-time)
+                (expect (buffer-string) :to-equal "foo")))
           )
 
 (describe "Killing a subtitle"
