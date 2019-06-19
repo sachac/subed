@@ -152,10 +152,13 @@ Before BODY is run, point is placed on the subtitle's ID."
        (save-excursion
          (goto-char ,beg)
          (subed-jump-to-subtitle-id)
-         (progn ,@body)
-         (while (and (<= (point) (or ,end (point-max)))
-                     (subed-forward-subtitle-id))
-           (progn ,@body))))))
+         (catch 'last-subtitle-reached
+           (while t
+             (when (> (point) (or ,end (point-max)))
+               (throw 'last-subtitle-reached t))
+             (progn ,@body)
+             (unless (subed-forward-subtitle-id)
+               (throw 'last-subtitle-reached t))))))))
 
 (defun subed--right-pad (string length fillchar)
   "Use FILLCHAR to make STRING LENGTH characters long."
