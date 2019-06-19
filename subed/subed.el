@@ -167,7 +167,7 @@ Before BODY is run, point is placed on the subtitle's ID."
 
 ;;; Moving subtitles
 
-(defun subed-move-subtitle-forward (&optional arg beg end)
+(defun subed-move-subtitle-forward (&optional arg)
   "Move subtitle `subed-milliseconds-move' forward in time while
 preserving its duration, i.e. increase start and stop time by the
 same amount.
@@ -187,23 +187,27 @@ Example usage:
            \\[subed-move-subtitle-forward]  Move subtitle 500ms forward in time again
        \\[universal-argument] \\[subed-move-subtitle-forward]  Move subtitle 100ms (the default) forward in time
            \\[subed-move-subtitle-forward]  Move subtitle 100ms (the default) forward in time again"
-  (interactive "P" (if (use-region-p) (list (region-beginning) (region-end))))
-  (let ((secs (subed--get-seconds-move arg)))
+  (interactive "P")
+  (let ((msecs (subed--get-milliseconds-move arg))
+        (beg (when (use-region-p) (region-beginning)))
+        (end (when (use-region-p) (region-end))))
     (subed--for-each-subtitle beg end
-      (subed--adjust-subtitle-start-relative secs)
-      (subed--adjust-subtitle-stop-relative secs))))
+      (subed--adjust-subtitle-start-relative msecs)
+      (subed--adjust-subtitle-stop-relative msecs))))
 
-(defun subed-move-subtitle-backward (&optional arg beg end)
-  "Move subtitle `subed-seconds-move' backward in time while
+(defun subed-move-subtitle-backward (&optional arg)
+  "Move subtitle `subed-milliseconds-move' backward in time while
 preserving its duration, i.e. decrease start and stop time by the
 same amount.
 
 See `subed-move-subtitle-forward'."
   (interactive "P" (if (use-region-p) (list (region-beginning) (region-end))))
-  (let ((secs (* -1 (subed--get-seconds-move arg))))
+  (let ((msecs (* -1 (subed--get-milliseconds-move arg)))
+        (beg (when (use-region-p) (region-beginning)))
+        (end (when (use-region-p) (region-end))))
     (subed--for-each-subtitle beg end
-      (subed--adjust-subtitle-start-relative secs)
-      (subed--adjust-subtitle-stop-relative secs))))
+      (subed--adjust-subtitle-start-relative msecs)
+      (subed--adjust-subtitle-stop-relative msecs))))
 
 
 ;;; Replay time-adjusted subtitle
