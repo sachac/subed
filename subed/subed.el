@@ -188,7 +188,8 @@ Example usage:
        \\[universal-argument] \\[subed-move-subtitle-forward]  Move subtitle 100ms (the default) forward in time
            \\[subed-move-subtitle-forward]  Move subtitle 100ms (the default) forward in time again"
   (interactive "P")
-  (let ((msecs (subed--get-milliseconds-move arg))
+  (let ((deactivate-mark nil)
+        (msecs (subed--get-milliseconds-move arg))
         (beg (when (use-region-p) (region-beginning)))
         (end (when (use-region-p) (region-end))))
     (subed--for-each-subtitle beg end
@@ -202,7 +203,8 @@ same amount.
 
 See `subed-move-subtitle-forward'."
   (interactive "P" (if (use-region-p) (list (region-beginning) (region-end))))
-  (let ((msecs (* -1 (subed--get-milliseconds-move arg)))
+  (let ((deactivate-mark nil)
+        (msecs (* -1 (subed--get-milliseconds-move arg)))
         (beg (when (use-region-p) (region-beginning)))
         (end (when (use-region-p) (region-end))))
     (subed--for-each-subtitle beg end
