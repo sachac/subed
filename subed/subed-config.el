@@ -81,7 +81,7 @@
 
 (defvar-local subed--mode-enabled nil
   "Whether `subed-mode' is enabled.
-This is automatically set by `subed-mode-enable' and `subed-mode-disable'.")
+This is set by `subed-mode-enable' and `subed-mode-disable'.")
 
 (defvar-local subed--debug-enabled nil
   "Whether `subed-debug' prints to `subed-debugging-buffer'.")
@@ -179,24 +179,26 @@ typed something.")
 
 
 (defcustom subed-subtitle-spacing 100
-  "How many milliseconds to keep between subtitles."
+  "How many milliseconds to keep between subtitles when inserting
+subtitles."
   :type 'integer
   :group 'subed)
 
 (defcustom subed-default-subtitle-length 1.0
-  "How long to make subtitles in seconds when inserted after the last subtitle."
+  "How long to make subtitles in seconds when inserted after the
+last subtitle."
   :type 'float
   :group 'subed)
 
 (defcustom subed-loop-seconds-before 0
-  "When looping over a single subtitle, start the loop this many
-seconds before the subtitle starts."
+  "When looping over subtitle(s), start the loop this many
+earlier."
   :type 'float
   :group 'subed)
 
 (defcustom subed-loop-seconds-after 0
-  "When looping over a single subtitle, end the loop this many
-seconds after the subtitle stop."
+  "When looping over subtitle(s), end the loop this many seconds
+later."
   :type 'float
   :group 'subed)
 
