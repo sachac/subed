@@ -96,7 +96,6 @@
     (let ((debug-window (get-buffer-window subed-debug-buffer)))
       (when debug-window
         (delete-window debug-window)))
-    (kill-buffer subed-debug-buffer)
     (remove-hook 'kill-buffer-hook 'subed-disable-debugging :local)))
 
 (defun subed-toggle-debugging ()
@@ -108,8 +107,8 @@
     (subed-enable-debugging)))
 
 (defun subed-debug (format-string &rest args)
-  "Display message in debugging buffer if debugging is enabled."
-  (when subed--debug-enabled
+  "Display message in debugging buffer if it exists."
+  (when (get-buffer subed-debug-buffer)
     (with-current-buffer (get-buffer-create subed-debug-buffer)
       (setq-local buffer-read-only nil)
       (insert (apply 'format (concat format-string "\n") args))
