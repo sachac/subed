@@ -455,7 +455,7 @@ buffer."
     (cancel-timer subed--unpause-after-typing-timer))
 
   (when (or subed-mpv-is-playing subed--player-is-auto-paused)
-    (if (>= 0 subed-playback-speed-while-typing)
+    (if (<= subed-playback-speed-while-typing 0)
         ;; Pause playback
         (progn
           (subed-mpv-pause)
