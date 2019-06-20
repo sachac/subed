@@ -13,7 +13,8 @@ subed is still alpha software.  Expect it to kill your Emacs session.
      subtitle's text.
    - Insert (~M-i~) and kill (~M-k~) subtitles.
    - Freely adjust subtitle start (~M-[~ / ~M-]~) and stop (~M-{~ / ~M-}~) time.
-   - Freely move subtitle without changing its length (~C-M-n~ / ~C-M-p~).
+   - Freely move current subtitle or all marked subtitles forward or backward in
+     time without changing subtitle duration (~C-M-n~ / ~C-M-p~).
    - Sort and re-number subtitles and remove any extra spaces and newlines
      (~M-s~).
 
