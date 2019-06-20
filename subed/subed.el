@@ -218,19 +218,23 @@ See `subed-move-subtitle-forward'."
 player to jump to the subtitle's start position."
   (member 'subed--replay-adjusted-subtitle subed-subtitle-time-adjusted-hook))
 
-(defun subed-enable-replay-adjusted-subtitle ()
+(defun subed-enable-replay-adjusted-subtitle (&optional quiet)
   "Automatically replay a subtitle when its start/stop time is adjusted."
   (interactive)
   (unless (subed-replay-adjusted-subtitle-p)
     (add-hook 'subed-subtitle-time-adjusted-hook 'subed--replay-adjusted-subtitle :append :local)
-    (subed-debug "Enabled replaying adjusted subtitle: %s" subed-subtitle-time-adjusted-hook)))
+    (subed-debug "Enabled replaying adjusted subtitle: %s" subed-subtitle-time-adjusted-hook)
+    (when (not quiet)
+      (message "Enabled replaying adjusted subtitle"))))
 
-(defun subed-disable-replay-adjusted-subtitle ()
+(defun subed-disable-replay-adjusted-subtitle (&optional quiet)
   "Do not replay a subtitle automatically when its start/stop time is adjusted."
   (interactive)
   (when (subed-replay-adjusted-subtitle-p)
     (remove-hook 'subed-subtitle-time-adjusted-hook 'subed--replay-adjusted-subtitle :local)
-    (subed-debug "Disabled replaying adjusted subtitle: %s" subed-subtitle-time-adjusted-hook)))
+    (subed-debug "Disabled replaying adjusted subtitle: %s" subed-subtitle-time-adjusted-hook)
+    (when (not quiet)
+      (message "Disabled replaying adjusted subtitle"))))
 
 (defun subed-toggle-replay-adjusted-subtitle ()
   "Enable or disable automatic replaying of subtitle when its
@@ -252,20 +256,24 @@ start/stop time is adjusted."
   "Whether point is automatically moved to currently playing subtitle."
   (member 'subed--sync-point-to-player subed-mpv-playback-position-hook))
 
-(defun subed-enable-sync-point-to-player ()
+(defun subed-enable-sync-point-to-player (&optional quiet)
   "Automatically move point to the currently playing subtitle."
   (interactive)
   (unless (subed-sync-point-to-player-p)
     (add-hook 'subed-mpv-playback-position-hook 'subed--sync-point-to-player :append :local)
-    (subed-debug "Enabled syncing point to playback position: %s" subed-mpv-playback-position-hook)))
+    (subed-debug "Enabled syncing point to playback position: %s" subed-mpv-playback-position-hook)
+    (when (not quiet)
+      (message "Enabled syncing point to playback position"))))
 
-(defun subed-disable-sync-point-to-player ()
+(defun subed-disable-sync-point-to-player (&optional quiet)
   "Do not move point automatically to the currently playing
 subtitle."
   (interactive)
   (when (subed-sync-point-to-player-p)
     (remove-hook 'subed-mpv-playback-position-hook 'subed--sync-point-to-player :local)
-    (subed-debug "Disabled syncing point to playback position: %s" subed-mpv-playback-position-hook)))
+    (subed-debug "Disabled syncing point to playback position: %s" subed-mpv-playback-position-hook)
+    (when (not quiet)
+      (message "Disabled syncing point to playback position"))))
 
 (defun subed-toggle-sync-point-to-player ()
   "Enable or disable moving point automatically to the currently
@@ -296,13 +304,13 @@ that for `subed-point-sync-delay-after-motion' seconds."
       (cancel-timer subed--point-sync-delay-after-motion-timer)
     (setq subed--point-was-synced (subed-sync-point-to-player-p)))
   (when subed--point-was-synced
-    (subed-disable-sync-point-to-player))
+    (subed-disable-sync-point-to-player :quiet))
   (when subed--point-was-synced
     (setq subed--point-sync-delay-after-motion-timer
           (run-at-time subed-point-sync-delay-after-motion nil
                        '(lambda ()
                           (setq subed--point-sync-delay-after-motion-timer nil)
-                          (subed-enable-sync-point-to-player))))))
+                          (subed-enable-sync-point-to-player :quiet))))))
 
 
 ;;; Sync player-to-point
@@ -312,20 +320,24 @@ that for `subed-point-sync-delay-after-motion' seconds."
 subtitle at point."
   (member 'subed--sync-player-to-point subed-subtitle-motion-hook))
 
-(defun subed-enable-sync-player-to-point ()
+(defun subed-enable-sync-player-to-point (&optional quiet)
   "Automatically seek player to subtitle at point."
   (interactive)
   (unless (subed-sync-player-to-point-p)
     (subed--sync-player-to-point)
     (add-hook 'subed-subtitle-motion-hook 'subed--sync-player-to-point :append :local)
-    (subed-debug "Enabled syncing playback position to point: %s" subed-subtitle-motion-hook)))
+    (subed-debug "Enabled syncing playback position to point: %s" subed-subtitle-motion-hook)
+    (when (not quiet)
+      (message "Enabled syncing playback position to point"))))
 
-(defun subed-disable-sync-player-to-point ()
+(defun subed-disable-sync-player-to-point (&optional quiet)
   "Do not automatically seek player to subtitle at point."
   (interactive)
   (when (subed-sync-player-to-point-p)
     (remove-hook 'subed-subtitle-motion-hook 'subed--sync-player-to-point :local)
-    (subed-debug "Disabled syncing playback position to point: %s" subed-subtitle-motion-hook)))
+    (subed-debug "Disabled syncing playback position to point: %s" subed-subtitle-motion-hook)
+    (when (not quiet)
+      (message "Disabled syncing playback position to point"))))
 
 (defun subed-toggle-sync-player-to-point ()
   "Enable or disable automatically seeking player to subtitle at point."
@@ -354,7 +366,7 @@ subtitle at point."
 time it reaches the subtitle's stop time."
   (or subed--subtitle-loop-start subed--subtitle-loop-stop))
 
-(defun subed-toggle-subtitle-loop ()
+(defun subed-toggle-subtitle-loop (&optional quiet)
   "Enable or disable looping in player over currently focused
 subtitle."
   (interactive)
@@ -364,7 +376,9 @@ subtitle."
         (remove-hook 'subed-subtitle-motion-hook 'subed--set-subtitle-loop :local)
         (setq subed--subtitle-loop-start nil
               subed--subtitle-loop-stop nil)
-        (subed-debug "Disabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop))
+        (subed-debug "Disabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop)
+        (when (not quiet)
+          (message "Disabled looping")))
     (progn
       (subed--set-subtitle-loop (subed--subtitle-id))
       (add-hook 'subed-mpv-playback-position-hook 'subed--ensure-subtitle-loop :append :local)
@@ -379,7 +393,10 @@ subtitle."
                                      (* subed-loop-seconds-after 1000)))
   (subed-debug "Set loop: %s - %s"
                (subed-srt--msecs-to-timestamp subed--subtitle-loop-start)
-               (subed-srt--msecs-to-timestamp subed--subtitle-loop-stop)))
+               (subed-srt--msecs-to-timestamp subed--subtitle-loop-stop))
+  (message "Looping over %s - %s"
+           (subed-srt--msecs-to-timestamp subed--subtitle-loop-start)
+           (subed-srt--msecs-to-timestamp subed--subtitle-loop-stop)))
 
 (defun subed--ensure-subtitle-loop (cur-msecs)
   "Seek back to `subed--subtitle-loop-start' if player is after
@@ -404,17 +421,25 @@ See `subed-playback-speed-while-typing' and
 `subed-playback-speed-while-not-typing'."
   (member 'subed--pause-while-typing after-change-functions))
 
-(defun subed-enable-pause-while-typing ()
+(defun subed-enable-pause-while-typing (&optional quiet)
   "Automatically pause player while the user is editing the
 buffer for `subed-unpause-after-typing-delay' seconds."
   (unless (subed-pause-while-typing-p)
-    (add-hook 'after-change-functions 'subed--pause-while-typing :append :local)))
+    (add-hook 'after-change-functions 'subed--pause-while-typing :append :local)
+    (when (not quiet)
+      (subed-debug "%S" subed-playback-speed-while-typing)
+      (if (<= subed-playback-speed-while-typing 0)
+          (message "Playback will pause while subtitle texts are edited")
+        (message "Playback will slow down by %s while subtitle texts are edited"
+                 subed-playback-speed-while-typing)))))
 
-(defun subed-disable-pause-while-typing ()
+(defun subed-disable-pause-while-typing (&optional quiet)
   "Do not automatically pause player while the user is editing
 the buffer."
   (when (subed-pause-while-typing-p)
-    (remove-hook 'after-change-functions 'subed--pause-while-typing :local)))
+    (remove-hook 'after-change-functions 'subed--pause-while-typing :local)
+    (when (not quiet)
+      (message "Playback speed will not change while subtitle texts are edited"))))
 
 (defun subed-toggle-pause-while-typing ()
   "Enable or disable auto-pausing while the user is editing the
@@ -483,10 +508,10 @@ existing file."
             (subed-mpv-find-video video-file)
           (error (message "%s -- Set subed-auto-find-video to nil to suppress this message."
                           (car (cdr err))))))))
-  (subed-enable-pause-while-typing)
-  (subed-enable-sync-point-to-player)
-  (subed-enable-sync-player-to-point)
-  (subed-enable-replay-adjusted-subtitle)
+  (subed-enable-pause-while-typing :quiet)
+  (subed-enable-sync-point-to-player :quiet)
+  (subed-enable-sync-player-to-point :quiet)
+  (subed-enable-replay-adjusted-subtitle :quiet)
   (setq major-mode 'subed-mode
         mode-name "SubEd")
   (setq subed--mode-enabled t)
@@ -495,10 +520,10 @@ existing file."
 (defun subed-mode-disable ()
   "Disable subed mode."
   (interactive)
-  (subed-disable-pause-while-typing)
-  (subed-disable-sync-point-to-player)
-  (subed-disable-sync-player-to-point)
-  (subed-disable-replay-adjusted-subtitle)
+  (subed-disable-pause-while-typing :quiet)
+  (subed-disable-sync-point-to-player :quiet)
+  (subed-disable-sync-player-to-point :quiet)
+  (subed-disable-replay-adjusted-subtitle :quiet)
   (subed-mpv-kill)
   (subed-disable-debugging)
   (kill-all-local-variables)
