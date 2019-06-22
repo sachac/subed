@@ -304,7 +304,8 @@ playing subtitle."
 
 (defun subed--sync-point-to-player (msecs)
   "Move point to currently playing subtitle."
-  (when (subed-jump-to-subtitle-text-at-msecs msecs)
+  (when (and (not (use-region-p))
+             (subed-jump-to-subtitle-text-at-msecs msecs))
     (subed-debug "Synchronized point to playback position: %s -> #%s"
                  (subed-srt--msecs-to-timestamp msecs) (subed--subtitle-id))
     ;; post-command-hook is not triggered because we didn't move interactively.
