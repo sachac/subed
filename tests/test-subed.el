@@ -220,8 +220,7 @@
            (setq subed-mpv-playback-position 0)
            (spy-on 'subed--subtitle-msecs-start :and-return-value 5000)
            (spy-on 'subed--subtitle-msecs-stop :and-return-value 6500)
-           (spy-on 'subed-mpv-jump)
-           (spy-on 'subed-disable-sync-point-to-player-temporarily))
+           (spy-on 'subed-mpv-jump))
           (it "does not seek player if point is on current subtitle."
               (setq subed-mpv-playback-position 5000)
               (subed--sync-player-to-point)
