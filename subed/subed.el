@@ -145,20 +145,19 @@ Before BODY is run, point is placed on the subtitle's ID."
   `(atomic-change-group
      (if (not ,beg)
          ;; Run body on subtitle at point
-         (progn (save-excursion (subed-jump-to-subtitle-id)
-                                ,@body))
-       (progn
-         ;; Run body on multiple subtitles
-         (save-excursion
-           (goto-char ,beg)
-           (subed-jump-to-subtitle-id)
-           (catch 'last-subtitle-reached
-             (while t
-               (when (> (point) (or ,end (point-max)))
-                 (throw 'last-subtitle-reached t))
-               (progn ,@body)
-               (unless (subed-forward-subtitle-id)
-                 (throw 'last-subtitle-reached t)))))))))
+         (save-excursion (subed-jump-to-subtitle-id)
+                         ,@body)
+       ;; Run body on multiple subtitles
+       (save-excursion
+         (goto-char ,beg)
+         (subed-jump-to-subtitle-id)
+         (catch 'last-subtitle-reached
+           (while t
+             (when (> (point) (or ,end (point-max)))
+               (throw 'last-subtitle-reached t))
+             (progn ,@body)
+             (unless (subed-forward-subtitle-id)
+               (throw 'last-subtitle-reached t))))))))
 
 (defun subed--right-pad (string length fillchar)
   "Use FILLCHAR to make STRING LENGTH characters long."
