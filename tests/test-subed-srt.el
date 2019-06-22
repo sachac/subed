@@ -656,7 +656,7 @@ Baz.
                 (subed-srt-decrease-stop-time 200)
                 (expect (save-excursion (subed-srt-jump-to-subtitle-time-stop)
                                         (thing-at-point 'line)) :to-equal "00:03:03,550 --> 00:03:15,400\n")))
-          (it "sets the number of seconds when given an argument."
+          (it "sets the number of seconds if given an argument."
               (with-temp-buffer
                 (insert mock-srt-data)
                 (subed-srt-jump-to-subtitle-id 1)
