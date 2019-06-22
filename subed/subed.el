@@ -244,7 +244,8 @@ start/stop time is adjusted."
     (subed-enable-replay-adjusted-subtitle)))
 
 (defun subed--replay-adjusted-subtitle (sub-id msecs-start)
-  "Move point to currently playing subtitle."
+  "Seek player to start time of current subtitle or first
+subtitle in region if region is active."
   (subed-mpv-jump msecs-start)
   (subed-debug "Replaying subtitle at: %s" (subed-srt--msecs-to-timestamp msecs-start)))
 
