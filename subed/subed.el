@@ -159,6 +159,15 @@ Before BODY is run, point is placed on the subtitle's ID."
              (unless (subed-forward-subtitle-id)
                (throw 'last-subtitle-reached t))))))))
 
+(defmacro subed--with-subtitle-replay-disabled (&rest body)
+  "Run BODY while automatic subtitle replay is disabled."
+  (declare (indent defun))
+  `(let ((replay-was-enabled-p (subed-replay-adjusted-subtitle-p)))
+     (subed-disable-replay-adjusted-subtitle :quiet)
+     (progn ,@body)
+     (when replay-was-enabled-p
+       (subed-enable-replay-adjusted-subtitle :quiet))))
+
 (defun subed--right-pad (string length fillchar)
   "Use FILLCHAR to make STRING LENGTH characters long."
   (concat string (make-string (- length (length string)) fillchar)))
