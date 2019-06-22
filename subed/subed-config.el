@@ -268,8 +268,8 @@ subtitle's start time.")
     (when (and new-point subed--status-point
                (not (= new-point subed--status-point)))
 
-      ;; If point is synced to playback position, temporarily disable that to
-      ;; prevent race conditions that make the cursor doesn't move unexpectedly.
+      ;; If point is synced to playback position, temporarily prevent unexpected
+      ;; movement of the cursor.
       (subed-disable-sync-point-to-player-temporarily)
 
       (setq subed--status-point new-point)
