@@ -153,6 +153,65 @@
                             (expect (subed--subtitle-msecs-stop 3) :to-equal orig-stop-3)
                             )))
                     )
+          (it "disables subtitle replay while moving subtitles."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (subed-enable-replay-adjusted-subtitle :quiet)
+                (spy-on 'subed-enable-replay-adjusted-subtitle :and-call-through)
+                (spy-on 'subed-disable-replay-adjusted-subtitle :and-call-through)
+                (spy-on 'subed--adjust-subtitle-start-relative :and-call-fake
+                        (lambda (msecs) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
+                (spy-on 'subed--adjust-subtitle-stop-relative :and-call-fake
+                        (lambda (msecs) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
+                (subed-move-subtitle-forward 100)
+                (expect 'subed-disable-replay-adjusted-subtitle :to-have-been-called-times 1)
+                (expect 'subed-enable-replay-adjusted-subtitle :to-have-been-called-times 1)
+                (subed-move-subtitle-backward 100)
+                (expect 'subed-disable-replay-adjusted-subtitle :to-have-been-called-times 2)
+                (expect 'subed-enable-replay-adjusted-subtitle :to-have-been-called-times 2)))
+          (it "does not enable subtitle replay afterwards if it is disabled."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (subed-disable-replay-adjusted-subtitle :quiet)
+                (spy-on 'subed-enable-replay-adjusted-subtitle :and-call-through)
+                (spy-on 'subed-disable-replay-adjusted-subtitle :and-call-through)
+                (spy-on 'subed--adjust-subtitle-start-relative :and-call-fake
+                        (lambda (msecs) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
+                (spy-on 'subed--adjust-subtitle-stop-relative :and-call-fake
+                        (lambda (msecs) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
+                (subed-move-subtitle-forward 100)
+                (expect 'subed-disable-replay-adjusted-subtitle :to-have-been-called-times 1)
+                (expect 'subed-enable-replay-adjusted-subtitle :to-have-been-called-times 0)
+                (subed-move-subtitle-backward 100)
+                (expect 'subed-disable-replay-adjusted-subtitle :to-have-been-called-times 2)
+                (expect 'subed-enable-replay-adjusted-subtitle :to-have-been-called-times 0)))
+          (it "seeks player to current subtitle if region is not active."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (spy-on 'subed-replay-adjusted-subtitle-p :and-return-value t)
+                (spy-on 'subed-mpv-jump)
+                (subed-move-subtitle-forward 100)
+                (expect 'subed-mpv-jump :to-have-been-called-times 1)
+                (expect 'subed-mpv-jump :to-have-been-called-with 183550)
+                (subed-move-subtitle-backward 200)
+                (expect 'subed-mpv-jump :to-have-been-called-times 2)
+                (expect 'subed-mpv-jump :to-have-been-called-with 183350)))
+          (it "seeks player to first subtitle in active region."
+              (with-temp-buffer
+                (insert mock-srt-data)
+                (let ((beg 15)
+                      (end (point-max)))
+                  (spy-on 'use-region-p :and-return-value t)
+                  (spy-on 'region-beginning :and-return-value beg)
+                  (spy-on 'region-end :and-return-value end)
+                  (spy-on 'subed-replay-adjusted-subtitle-p :and-return-value t)
+                  (spy-on 'subed-mpv-jump)
+                  (subed-move-subtitle-forward 100)
+                  (expect 'subed-mpv-jump :to-have-been-called-times 1)
+                  (expect 'subed-mpv-jump :to-have-been-called-with '61100)
+                  (subed-move-subtitle-backward 300)
+                  (expect 'subed-mpv-jump :to-have-been-called-times 2)
+                  (expect 'subed-mpv-jump :to-have-been-called-with '60800))))
           )
 
 (describe "Syncing player to point"
