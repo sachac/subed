@@ -200,9 +200,14 @@ Example usage:
         (msecs (subed--get-milliseconds-move arg))
         (beg (when (use-region-p) (region-beginning)))
         (end (when (use-region-p) (region-end))))
-    (subed--for-each-subtitle beg end
-      (subed--adjust-subtitle-start-relative msecs)
-      (subed--adjust-subtitle-stop-relative msecs))))
+    (subed--with-subtitle-replay-disabled
+      (subed--for-each-subtitle beg end
+        (subed--adjust-subtitle-start-relative msecs)
+        (subed--adjust-subtitle-stop-relative msecs)))
+    (when (subed-replay-adjusted-subtitle-p)
+      (save-excursion
+        (when beg (goto-char beg))
+        (subed-mpv-jump (subed--subtitle-msecs-start))))))
 
 (defun subed-move-subtitle-backward (&optional arg)
   "Move subtitle `subed-milliseconds-move' backward in time while
@@ -215,9 +220,14 @@ See `subed-move-subtitle-forward'."
         (msecs (* -1 (subed--get-milliseconds-move arg)))
         (beg (when (use-region-p) (region-beginning)))
         (end (when (use-region-p) (region-end))))
-    (subed--for-each-subtitle beg end
-      (subed--adjust-subtitle-start-relative msecs)
-      (subed--adjust-subtitle-stop-relative msecs))))
+    (subed--with-subtitle-replay-disabled
+      (subed--for-each-subtitle beg end
+        (subed--adjust-subtitle-start-relative msecs)
+        (subed--adjust-subtitle-stop-relative msecs)))
+    (when (subed-replay-adjusted-subtitle-p)
+      (save-excursion
+        (when beg (goto-char beg))
+        (subed-mpv-jump (subed--subtitle-msecs-start))))))
 
 
 ;;; Replay time-adjusted subtitle
