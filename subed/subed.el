@@ -180,12 +180,12 @@ Before BODY is run, point is placed on the subtitle's ID."
 while preserving its duration, i.e. increase start and stop time
 by the same amount.
 
-If the region is active, all subtitles that are fully or
-partially in it are moved.
+All subtitles that are fully or partially in the active region
+are moved.
 
-The first step is to set `subed-milliseconds-adjust' to the value
-of the prefix argument if it is provided and if it is a number.
-If the prefix argument is provided but not numerical,
+If a prefix argument is given, it is used to set
+`subed-milliseconds-adjust' before moving subtitles.  If the
+prefix argument is given but not numerical,
 `subed-milliseconds-adjust' is reset to its default value.
 
 Example usage:

@@ -329,9 +329,9 @@ subtitle ID and start time of the adjusted subtitle."
 (defun subed-srt-increase-start-time (&optional arg)
   "Add `subed-milliseconds-adjust' milliseconds to start time of current subtitle.
 
-The first step is to set `subed-milliseconds-adjust' to the value
-of the prefix argument if it is provided and if it is a number.
-If the prefix argument is provided but not numerical,
+If a prefix argument is given, it is used to set
+`subed-milliseconds-adjust' before moving subtitles.  If the
+prefix argument is given but not numerical,
 `subed-milliseconds-adjust' is reset to its default value.
 
 Example usage:
