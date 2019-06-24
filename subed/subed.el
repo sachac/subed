@@ -232,6 +232,28 @@ See `subed-move-subtitle-forward'."
     (subed-move-subtitles msecs beg end)))
 
 
+;;; Shifting subtitles
+;;; (same as moving, but follow-up subtitles are also moved)
+
+(defun subed-shift-subtitle-forward (&optional arg)
+  "Shifting subtitles is like moving them, but it always moves
+the subtitles between point and the end of the buffer."
+  (interactive "P")
+  (let ((deactivate-mark nil)
+        (msecs (subed--get-milliseconds-adjust arg))
+        (beg (if (use-region-p) (region-beginning) (point))))
+    (subed-move-subtitles msecs beg)))
+
+(defun subed-shift-subtitle-backward (&optional arg)
+  "Shifting subtitles is like moving them, but it always moves
+the subtitles between point and the end of the buffer."
+  (interactive "P")
+  (let ((deactivate-mark nil)
+        (msecs (* -1 (subed--get-milliseconds-adjust arg)))
+        (beg (if (use-region-p) (region-beginning) (point))))
+    (subed-move-subtitles msecs beg)))
+
+
 ;;; Replay time-adjusted subtitle
 (defun subed-replay-adjusted-subtitle-p ()
   "Whether adjusting a subtitle's start/stop time causes the
