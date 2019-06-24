@@ -64,7 +64,7 @@ Baz.
                                      (progn
                                        (subed-srt-jump-to-subtitle-id outset-id)
                                        (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal 1))))))
-                    (it "returns last subtitle ID if time is after last subtitle's start time."
+                    (it "returns last subtitle ID if time is after the last subtitle's start time."
                         (with-temp-buffer
                           (insert mock-srt-data)
                           (let ((msecs (+ (save-excursion
