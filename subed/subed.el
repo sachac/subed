@@ -175,6 +175,22 @@ Before BODY is run, point is placed on the subtitle's ID."
 
 ;;; Moving subtitles
 
+(defun subed-move-subtitles (msecs &optional beg end)
+  "Move subtitles between BEG and END MSECS milliseconds forward.
+Use a negative value for MSECS to move subtitles backward.
+If END is nil, move all subtitles from BEG to end of buffer.
+If BEG is nil, move only the current subtitle.
+After subtitles are moved is done, replay the first moved
+subtitle if replaying is enabled."
+  (subed--with-subtitle-replay-disabled
+    (subed--for-each-subtitle beg end
+      (subed--adjust-subtitle-start-relative msecs)
+      (subed--adjust-subtitle-stop-relative msecs)))
+  (when (subed-replay-adjusted-subtitle-p)
+    (save-excursion
+      (when beg (goto-char beg))
+      (subed-mpv-jump (subed--subtitle-msecs-start)))))
+
 (defun subed-move-subtitle-forward (&optional arg)
   "Move subtitle `subed-milliseconds-adjust' forward in time
 while preserving its duration, i.e. increase start and stop time
@@ -200,14 +216,7 @@ Example usage:
         (msecs (subed--get-milliseconds-adjust arg))
         (beg (when (use-region-p) (region-beginning)))
         (end (when (use-region-p) (region-end))))
-    (subed--with-subtitle-replay-disabled
-      (subed--for-each-subtitle beg end
-        (subed--adjust-subtitle-start-relative msecs)
-        (subed--adjust-subtitle-stop-relative msecs)))
-    (when (subed-replay-adjusted-subtitle-p)
-      (save-excursion
-        (when beg (goto-char beg))
-        (subed-mpv-jump (subed--subtitle-msecs-start))))))
+    (subed-move-subtitles msecs beg end)))
 
 (defun subed-move-subtitle-backward (&optional arg)
   "Move subtitle `subed-milliseconds-adjust' backward in time
@@ -220,14 +229,7 @@ See `subed-move-subtitle-forward'."
         (msecs (* -1 (subed--get-milliseconds-adjust arg)))
         (beg (when (use-region-p) (region-beginning)))
         (end (when (use-region-p) (region-end))))
-    (subed--with-subtitle-replay-disabled
-      (subed--for-each-subtitle beg end
-        (subed--adjust-subtitle-start-relative msecs)
-        (subed--adjust-subtitle-stop-relative msecs)))
-    (when (subed-replay-adjusted-subtitle-p)
-      (save-excursion
-        (when beg (goto-char beg))
-        (subed-mpv-jump (subed--subtitle-msecs-start))))))
+    (subed-move-subtitles msecs beg end)))
 
 
 ;;; Replay time-adjusted subtitle
