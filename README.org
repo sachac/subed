@@ -19,6 +19,8 @@ subed is still alpha software.  Expect it to kill your Emacs session.
      or backward (~C-M-p~) in time without changing subtitle duration.  A prefix
      argument sets the number of milliseconds for the current session (e.g. ~C-u
      500 C-M-n C-M-n~ moves the current subtitle 1 second forward).
+   - Shift the current subtitle together will all following subtitles forward
+     (~C-M-f~) or backward (~C-M-b~).
    - Sort and re-number subtitles and remove any extra spaces and newlines
      (~M-s~).
 
