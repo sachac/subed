@@ -304,8 +304,8 @@ Return point or nil if there is no previous subtitle."
       (save-excursion
         (subed-srt-jump-to-subtitle-time-start)
         (when (looking-at subed-srt--regexp-timestamp)
-          (replace-match (subed-srt--msecs-to-timestamp msecs-new))))))
-  (subed-srt--run-subtitle-time-adjusted-hook))
+          (replace-match (subed-srt--msecs-to-timestamp msecs-new))))
+      (subed-srt--run-subtitle-time-adjusted-hook))))
 
 (defun subed-srt--adjust-subtitle-stop-relative (msecs)
   "Add MSECS milliseconds to stop time (use negative value to subtract)."
@@ -315,8 +315,8 @@ Return point or nil if there is no previous subtitle."
       (save-excursion
         (subed-srt-jump-to-subtitle-time-stop)
         (when (looking-at subed-srt--regexp-timestamp)
-          (replace-match (subed-srt--msecs-to-timestamp msecs-new))))))
-  (subed-srt--run-subtitle-time-adjusted-hook))
+          (replace-match (subed-srt--msecs-to-timestamp msecs-new))))
+      (subed-srt--run-subtitle-time-adjusted-hook))))
 
 (defun subed-srt--run-subtitle-time-adjusted-hook ()
   "Run `subed-subtitle-time-adjusted-hook' functions with
