@@ -298,6 +298,7 @@ Return point or nil if there is no previous subtitle."
 
 (defun subed-srt--adjust-subtitle-start-relative (msecs)
   "Add MSECS milliseconds to start time (use negative value to subtract)."
+  (subed-disable-sync-point-to-player-temporarily)
   (let* ((msecs-start (subed-srt--subtitle-msecs-start))
          (msecs-new (when msecs-start (+ msecs-start msecs))))
     (when msecs-new
@@ -309,6 +310,7 @@ Return point or nil if there is no previous subtitle."
 
 (defun subed-srt--adjust-subtitle-stop-relative (msecs)
   "Add MSECS milliseconds to stop time (use negative value to subtract)."
+  (subed-disable-sync-point-to-player-temporarily)
   (let* ((msecs-stop (subed-srt--subtitle-msecs-stop))
          (msecs-new (when msecs-stop (+ msecs-stop msecs))))
     (when msecs-new
