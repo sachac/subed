@@ -176,17 +176,17 @@ Before BODY is run, point is placed on the subtitle's ID."
 ;;; Moving subtitles
 
 (defun subed-move-subtitle-forward (&optional arg)
-  "Move subtitle `subed-milliseconds-move' forward in time while
-preserving its duration, i.e. increase start and stop time by the
-same amount.
+  "Move subtitle `subed-milliseconds-adjust' forward in time
+while preserving its duration, i.e. increase start and stop time
+by the same amount.
 
 If the region is active, all subtitles that are fully or
 partially in it are moved.
 
-The first step is to set `subed-milliseconds-move' to the value of the
-prefix argument if it is provided and if it is a number.  If the
-prefix argument is provided but not numerical,
-`subed-milliseconds-move' is reset to its default value.
+The first step is to set `subed-milliseconds-adjust' to the value
+of the prefix argument if it is provided and if it is a number.
+If the prefix argument is provided but not numerical,
+`subed-milliseconds-adjust' is reset to its default value.
 
 Example usage:
   \\[universal-argument] 1000 \\[subed-move-subtitle-forward]  Move subtitle 1000ms forward in time
@@ -197,7 +197,7 @@ Example usage:
            \\[subed-move-subtitle-forward]  Move subtitle 100ms (the default) forward in time again"
   (interactive "P")
   (let ((deactivate-mark nil)
-        (msecs (subed--get-milliseconds-move arg))
+        (msecs (subed--get-milliseconds-adjust arg))
         (beg (when (use-region-p) (region-beginning)))
         (end (when (use-region-p) (region-end))))
     (subed--with-subtitle-replay-disabled
@@ -210,14 +210,14 @@ Example usage:
         (subed-mpv-jump (subed--subtitle-msecs-start))))))
 
 (defun subed-move-subtitle-backward (&optional arg)
-  "Move subtitle `subed-milliseconds-move' backward in time while
-preserving its duration, i.e. decrease start and stop time by the
-same amount.
+  "Move subtitle `subed-milliseconds-adjust' backward in time
+while preserving its duration, i.e. decrease start and stop time
+by the same amount.
 
 See `subed-move-subtitle-forward'."
   (interactive "P" (if (use-region-p) (list (region-beginning) (region-end))))
   (let ((deactivate-mark nil)
-        (msecs (* -1 (subed--get-milliseconds-move arg)))
+        (msecs (* -1 (subed--get-milliseconds-adjust arg)))
         (beg (when (use-region-p) (region-beginning)))
         (end (when (use-region-p) (region-end))))
     (subed--with-subtitle-replay-disabled
