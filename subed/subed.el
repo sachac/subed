@@ -215,7 +215,7 @@ while preserving its duration, i.e. decrease start and stop time
 by the same amount.
 
 See `subed-move-subtitle-forward'."
-  (interactive "P" (if (use-region-p) (list (region-beginning) (region-end))))
+  (interactive "P")
   (let ((deactivate-mark nil)
         (msecs (* -1 (subed--get-milliseconds-adjust arg)))
         (beg (when (use-region-p) (region-beginning)))
