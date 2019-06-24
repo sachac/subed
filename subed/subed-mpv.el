@@ -228,8 +228,8 @@ See \"List of events\" in mpv(1)."
       ("property-change"
        (when (string= (alist-get 'name json-data) "time-pos")
          (let ((pos-msecs (* 1000 (or (alist-get 'data json-data) 0))))
-           (setq subed-mpv-playback-position pos-msecs)
-           (run-hook-with-args 'subed-mpv-playback-position-hook pos-msecs))))
+           (setq subed-mpv-playback-position (round pos-msecs))
+           (run-hook-with-args 'subed-mpv-playback-position-hook subed-mpv-playback-position))))
       ((or "unpause" "file-loaded")
        (setq subed-mpv-is-playing t)
        (subed-debug "Playing status changed: playing=%s" subed-mpv-is-playing))
