@@ -132,7 +132,7 @@ default.  Return (new) `subed-milliseconds-adjust' value."
   subed-milliseconds-adjust)
 
 
-(defcustom subed-playback-speed-while-typing 0.3
+(defcustom subed-playback-speed-while-typing 0
   "Video playback speed while the user is editing the buffer.  If
 set to zero or smaller, playback is paused."
   :type 'float
