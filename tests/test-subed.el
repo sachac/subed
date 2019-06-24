@@ -238,30 +238,6 @@
               (expect 'subed-mpv-jump :to-have-been-called-with 5000))
           )
 
-(describe "Syncing point to player"
-          :var (subed-mpv-playback-position)
-          (before-each
-           (setq subed-mpv-playback-position 0)
-           (spy-on 'subed--subtitle-msecs-start :and-return-value 5000)
-           (spy-on 'subed--subtitle-msecs-stop :and-return-value 6500)
-           (spy-on 'subed-mpv-jump))
-          (it "does not seek player if point is on current subtitle."
-              (setq subed-mpv-playback-position 5000)
-              (subed--sync-player-to-point)
-              (expect 'subed-mpv-jump :not :to-have-been-called)
-              (setq subed-mpv-playback-position 6500)
-              (subed--sync-player-to-point)
-              (expect 'subed-mpv-jump :not :to-have-been-called))
-          (it "seeks player if point is on future subtitle."
-              (setq subed-mpv-playback-position 6501)
-              (subed--sync-player-to-point)
-              (expect 'subed-mpv-jump :to-have-been-called-with 5000))
-          (it "seeks player if point is on past subtitle."
-              (setq subed-mpv-playback-position 4999)
-              (subed--sync-player-to-point)
-              (expect 'subed-mpv-jump :to-have-been-called-with 5000))
-          )
-
 (describe "Temporarily disabling point-to-player syncing"
           (before-each
            (spy-on 'subed-disable-sync-point-to-player))
