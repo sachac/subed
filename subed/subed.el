@@ -180,6 +180,8 @@ Before BODY is run, point is placed on the subtitle's ID."
   "Add `subed-milliseconds-adjust' milliseconds to start time of
 current subtitle.
 
+Return new start time in milliseconds or nil if it didn't change.
+
 If a prefix argument is given, it is used to set
 `subed-milliseconds-adjust' before moving subtitles.  If the
 prefix argument is given but not numerical,
@@ -198,6 +200,7 @@ Example usage:
 (defun subed-decrease-start-time (&optional arg)
   "Subtract `subed-milliseconds-adjust' milliseconds from start
 time of current subtitle.
+Return new start time in milliseconds or nil if it didn't change.
 See also `subed-increase-start-time'."
   (interactive "P")
   (subed--adjust-subtitle-start-relative (* -1 (subed--get-milliseconds-adjust arg))))
@@ -205,6 +208,7 @@ See also `subed-increase-start-time'."
 (defun subed-increase-stop-time (&optional arg)
   "Add `subed-milliseconds-adjust' milliseconds to stop time of
 current subtitle.
+Return new stop time in milliseconds or nil if it didn't change.
 See also `subed-increase-start-time'."
   (interactive "P")
   (subed--adjust-subtitle-stop-relative (subed--get-milliseconds-adjust arg)))
@@ -212,6 +216,7 @@ See also `subed-increase-start-time'."
 (defun subed-decrease-stop-time (&optional arg)
   "Subtract `subed-milliseconds-adjust' milliseconds from stop
 time of current subtitle.
+Return new stop time in milliseconds or nil if it didn't change.
 See also `subed-increase-start-time'."
   (interactive "P")
   (subed--adjust-subtitle-stop-relative (* -1 (subed--get-milliseconds-adjust arg))))
