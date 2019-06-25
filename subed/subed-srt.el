@@ -300,8 +300,17 @@ Return point or nil if there is no previous subtitle."
   "Add MSECS milliseconds to start time (use negative value to subtract)."
   (subed-disable-sync-point-to-player-temporarily)
   (let* ((msecs-start (subed-srt--subtitle-msecs-start))
-         (msecs-new (when msecs-start (+ msecs-start msecs))))
+         (msecs-new (when msecs-start (+ msecs-start msecs)))
+         (msecs-prev (save-excursion
+                       (when (subed-srt-backward-subtitle-id)
+                         (subed-srt--subtitle-msecs-stop))))
+         (msecs-min (if msecs-prev (+ msecs-prev subed-subtitle-spacing) 0))
+         (msecs-max (subed-srt--subtitle-msecs-stop)))
     (when msecs-new
+      (when (and msecs-min (< msecs-new msecs-min))
+        (setq msecs-new msecs-min))
+      (when (> msecs-new msecs-max)
+        (setq msecs-new msecs-max))
       (save-excursion
         (subed-srt-jump-to-subtitle-time-start)
         (when (looking-at subed-srt--regexp-timestamp)
@@ -312,8 +321,17 @@ Return point or nil if there is no previous subtitle."
   "Add MSECS milliseconds to stop time (use negative value to subtract)."
   (subed-disable-sync-point-to-player-temporarily)
   (let* ((msecs-stop (subed-srt--subtitle-msecs-stop))
-         (msecs-new (when msecs-stop (+ msecs-stop msecs))))
+         (msecs-new (when msecs-stop (+ msecs-stop msecs)))
+         (msecs-next (save-excursion
+                       (when (subed-srt-forward-subtitle-id)
+                         (subed-srt--subtitle-msecs-start))))
+         (msecs-min (subed-srt--subtitle-msecs-start))
+         (msecs-max (when msecs-next (- msecs-next subed-subtitle-spacing))))
     (when msecs-new
+      (when (< msecs-new msecs-min)
+        (setq msecs-new msecs-min))
+      (when (and msecs-max (> msecs-new msecs-max))
+        (setq msecs-new msecs-max))
       (save-excursion
         (subed-srt-jump-to-subtitle-time-stop)
         (when (looking-at subed-srt--regexp-timestamp)

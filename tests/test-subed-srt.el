@@ -678,6 +678,99 @@ Baz.
                 (subed-srt-increase-stop-time)
                 (expect (save-excursion (subed-srt-jump-to-subtitle-time-start)
                                         (thing-at-point 'line)) :to-equal "00:01:01,500 --> 00:01:06,123\n")))
+          (describe "enforces limits"
+                    (describe "when decreasing start time"
+                              (it "of the first subtitle."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-srt-jump-to-subtitle-id 1)
+                                    (subed-srt-decrease-start-time 60999)
+                                    (expect (subed-srt--subtitle-msecs-start) :to-be 1)
+                                    (subed-srt-decrease-start-time 1)
+                                    (expect (subed-srt--subtitle-msecs-start) :to-be 0)
+                                    (subed-srt-decrease-start-time 1)
+                                    (expect (subed-srt--subtitle-msecs-start) :to-be 0)))
+                              (it "of a non-first subtitle."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-srt-jump-to-subtitle-id 2)
+                                    (subed-srt-decrease-start-time (- (subed-srt--subtitle-msecs-start 2)
+                                                                      (subed-srt--subtitle-msecs-stop 1)
+                                                                      subed-subtitle-spacing
+                                                                      1))
+                                    (expect (subed-srt--subtitle-msecs-start) :to-be (+ (subed-srt--subtitle-msecs-stop 1)
+                                                                                        subed-subtitle-spacing
+                                                                                        1))
+                                    (subed-srt-decrease-start-time 1)
+                                    (expect (subed-srt--subtitle-msecs-start) :to-be (+ (subed-srt--subtitle-msecs-stop 1)
+                                                                                        subed-subtitle-spacing))
+                                    (subed-srt-decrease-start-time 1)
+                                    (expect (subed-srt--subtitle-msecs-start) :to-be (+ (subed-srt--subtitle-msecs-stop 1)
+                                                                                        subed-subtitle-spacing))))
+                              )
+                    (it "when increasing start time."
+                        (with-temp-buffer
+                          (insert mock-srt-data)
+                          (subed-srt-jump-to-subtitle-id 2)
+                          (subed-srt-increase-start-time (- (subed-srt--subtitle-msecs-stop 2)
+                                                            (subed-srt--subtitle-msecs-start 2)
+                                                            1))
+                          (expect (subed-srt--subtitle-msecs-start 2) :to-be (- (subed-srt--subtitle-msecs-stop 2) 1))
+                          (subed-srt-increase-start-time 1)
+                          (expect (subed-srt--subtitle-msecs-start 2) :to-be (subed-srt--subtitle-msecs-stop 2))
+                          (subed-srt-increase-start-time 1)
+                          (expect (subed-srt--subtitle-msecs-start 2) :to-be (subed-srt--subtitle-msecs-stop 2))))
+                    (it "when decreasing stop time."
+                        (with-temp-buffer
+                          (insert mock-srt-data)
+                          (subed-srt-jump-to-subtitle-id 2)
+                          (subed-srt-decrease-stop-time (- (subed-srt--subtitle-msecs-stop 2)
+                                                           (subed-srt--subtitle-msecs-start 2)
+                                                           1))
+                          (expect (subed-srt--subtitle-msecs-stop 2) :to-be (+ (subed-srt--subtitle-msecs-start 2) 1))
+                          (subed-srt-decrease-stop-time 1)
+                          (expect (subed-srt--subtitle-msecs-stop 2) :to-be (subed-srt--subtitle-msecs-start 2))
+                          (subed-srt-decrease-stop-time 1)
+                          (expect (subed-srt--subtitle-msecs-stop 2) :to-be (subed-srt--subtitle-msecs-start 2))))
+                    (describe "when increasing stop time"
+                              (it "of the last subtitle."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-srt-jump-to-subtitle-id 3)
+                                    (subed-srt-increase-stop-time (- (* 99 3600000)
+                                                                     (subed-srt--subtitle-msecs-stop 3)))
+                                    (expect (subed-srt--subtitle-msecs-stop 3) :to-be (* 99 3600000))
+                                    (subed-srt-increase-stop-time (* 59 60000))
+                                    (expect (subed-srt--subtitle-msecs-stop 3) :to-be (+ (* 99 3600000)
+                                                                                         (* 59 60000)))
+                                    (subed-srt-increase-stop-time (* 59 1000))
+                                    (expect (subed-srt--subtitle-msecs-stop 3) :to-be (+ (* 99 3600000)
+                                                                                         (* 59 60000)
+                                                                                         (* 59 1000)))
+                                    (subed-srt-increase-stop-time 999)
+                                    (expect (subed-srt--subtitle-msecs-stop 3) :to-be (+ (* 99 3600000)
+                                                                                         (* 59 60000)
+                                                                                         (* 59 1000)
+                                                                                         999))))
+                              (it "of a non-last subtitle."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-srt-jump-to-subtitle-id 2)
+                                    (subed-srt-increase-stop-time (- (subed-srt--subtitle-msecs-start 3)
+                                                                     (subed-srt--subtitle-msecs-stop 2)
+                                                                     subed-subtitle-spacing
+                                                                     1))
+                                    (expect (subed-srt--subtitle-msecs-stop 2) :to-be (- (subed-srt--subtitle-msecs-start 3)
+                                                                                         subed-subtitle-spacing
+                                                                                         1))
+                                    (subed-srt-increase-stop-time 1)
+                                    (expect (subed-srt--subtitle-msecs-stop 2) :to-be (- (subed-srt--subtitle-msecs-start 3)
+                                                                                         subed-subtitle-spacing))
+                                    (subed-srt-increase-stop-time 1)
+                                    (expect (subed-srt--subtitle-msecs-stop 2) :to-be (- (subed-srt--subtitle-msecs-start 3)
+                                                                                         subed-subtitle-spacing))))
+                              )
+                    )
           (it "does nothing if no timestamp can be found."
               (with-temp-buffer
                 (insert "foo")

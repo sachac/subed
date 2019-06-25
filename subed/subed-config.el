@@ -161,8 +161,8 @@ typed something.")
 
 
 (defcustom subed-subtitle-spacing 100
-  "How many milliseconds to keep between subtitles when inserting
-subtitles."
+  "How many milliseconds to keep between subtitles when adjusting
+or inserting subtitles."
   :type 'integer
   :group 'subed)
 
