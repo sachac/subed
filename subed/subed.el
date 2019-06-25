@@ -20,7 +20,10 @@
 ;; Boston, MA 02110-1301, USA.
 ;;
 ;;
-;; See README.org or https://github.com/rndusr/subed for more information.
+;;; Commentary:
+;;
+;; subed is a major mode for editing subtitles with Emacs and mpv.  See
+;; README.org or https://github.com/rndusr/subed for more information.
 ;;
 ;;
 ;;; Code:
