@@ -560,7 +560,7 @@ existing file."
   (subed-enable-sync-player-to-point :quiet)
   (subed-enable-replay-adjusted-subtitle :quiet)
   (setq major-mode 'subed-mode
-        mode-name "SubEd")
+        mode-name "subed")
   (setq subed--mode-enabled t)
   (run-mode-hooks 'subed-mode-hook))
 
