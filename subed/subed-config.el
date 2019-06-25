@@ -231,6 +231,14 @@ hardcoded."
 The functions are called with the relevant subtitle ID and the
 subtitle's start time.")
 
+(defun subed--run-subtitle-time-adjusted-hook ()
+  "Run `subed-subtitle-time-adjusted-hook' functions with
+subtitle ID and start time of the adjusted subtitle."
+  (when subed-subtitle-time-adjusted-hook
+    (run-hook-with-args 'subed-subtitle-time-adjusted-hook
+                        (subed--subtitle-id)
+                        (subed--subtitle-msecs-start))))
+
 (defvar-local subed-point-motion-hook nil
   "Functions to call after point changed.")
 
