@@ -218,6 +218,7 @@ See also `subed-increase-start-time'."
 
 
 ;;; Moving subtitles
+;;; (adjusting start and stop time by the same amount)
 
 (defun subed-move-subtitles (msecs &optional beg end)
   "Move subtitles between BEG and END MSECS milliseconds forward.
