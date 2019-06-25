@@ -1,4 +1,9 @@
-;;; subed.el --- A major mode for editing SubRip (srt) subtitles  -*- lexical-binding: t; -*-
+;;; subed.el --- A major mode for editing subtitles  -*- lexical-binding: t; -*-
+
+;; Version: 0.0
+;; Keywords: convenience, files, hypermedia, multimedia
+;; URL: https://github.com/rndusr/subed
+;; Package-Requires: ((emacs "24.3"))
 
 ;;; License:
 ;;
@@ -18,14 +23,12 @@
 ;; along with GNU Emacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ;; Boston, MA 02110-1301, USA.
-;;
-;;
+
 ;;; Commentary:
 ;;
 ;; subed is a major mode for editing subtitles with Emacs and mpv.  See
 ;; README.org or https://github.com/rndusr/subed for more information.
-;;
-;;
+
 ;;; Code:
 
 (add-to-list 'auto-mode-alist '("\\.srt$" . subed-mode-enable))
