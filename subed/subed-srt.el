@@ -338,45 +338,6 @@ Return point or nil if there is no previous subtitle."
           (replace-match (subed-srt--msecs-to-timestamp msecs-new))))
       (subed--run-subtitle-time-adjusted-hook))))
 
-(defun subed-srt-increase-start-time (&optional arg)
-  "Add `subed-milliseconds-adjust' milliseconds to start time of current subtitle.
-
-If a prefix argument is given, it is used to set
-`subed-milliseconds-adjust' before moving subtitles.  If the
-prefix argument is given but not numerical,
-`subed-milliseconds-adjust' is reset to its default value.
-
-Example usage:
-  \\[universal-argument] 1000 \\[subed-increase-start-time]  Increase start time by 1000ms
-           \\[subed-increase-start-time]  Increase start time by 1000ms again
-   \\[universal-argument] 500 \\[subed-increase-start-time]  Increase start time by 500ms
-           \\[subed-increase-start-time]  Increase start time by 500ms again
-       \\[universal-argument] \\[subed-increase-start-time]  Increase start time by 100ms (the default)
-           \\[subed-increase-start-time]  Increase start time by 100ms (the default) again"
-  (interactive "P")
-  (subed-srt--adjust-subtitle-start-relative (subed--get-milliseconds-adjust arg)))
-
-(defun subed-srt-decrease-start-time (&optional arg)
-  "Subtract `subed-milliseconds-adjust' milliseconds from start time of current subtitle.
-
-See also `subed-increase-start-time'."
-  (interactive "P")
-  (subed-srt--adjust-subtitle-start-relative (* -1 (subed--get-milliseconds-adjust arg))))
-
-(defun subed-srt-increase-stop-time (&optional arg)
-  "Add `subed-milliseconds-adjust' milliseconds to stop time of current subtitle.
-
-See also `subed-increase-start-time'."
-  (interactive "P")
-  (subed-srt--adjust-subtitle-stop-relative (subed--get-milliseconds-adjust arg)))
-
-(defun subed-srt-decrease-stop-time (&optional arg)
-  "Subtract `subed-milliseconds-adjust' milliseconds from stop time of current subtitle.
-
-See also `subed-increase-start-time'."
-  (interactive "P")
-  (subed-srt--adjust-subtitle-stop-relative (* -1 (subed--get-milliseconds-adjust arg))))
-
 (defun subed-srt-subtitle-insert (&optional arg)
   "Insert subtitle(s).
 `universal-argument' is used in the following manner:

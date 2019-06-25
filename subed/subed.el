@@ -64,11 +64,6 @@
 (fset 'subed-forward-subtitle-time-stop 'subed-srt-forward-subtitle-time-stop)
 (fset 'subed-backward-subtitle-time-stop 'subed-srt-backward-subtitle-time-stop)
 
-(fset 'subed-increase-start-time 'subed-srt-increase-start-time)
-(fset 'subed-decrease-start-time 'subed-srt-decrease-start-time)
-(fset 'subed-increase-stop-time 'subed-srt-increase-stop-time)
-(fset 'subed-decrease-stop-time 'subed-srt-decrease-stop-time)
-
 (fset 'subed-subtitle-insert 'subed-srt-subtitle-insert)
 (fset 'subed-subtitle-kill 'subed-srt-subtitle-kill)
 (fset 'subed-sanitize 'subed-srt-sanitize)
@@ -177,6 +172,49 @@ Before BODY is run, point is placed on the subtitle's ID."
 (defun subed--right-pad (string length fillchar)
   "Use FILLCHAR to make STRING LENGTH characters long."
   (concat string (make-string (- length (length string)) fillchar)))
+
+
+;;; Adjusting start/stop time individually
+
+(defun subed-increase-start-time (&optional arg)
+  "Add `subed-milliseconds-adjust' milliseconds to start time of
+current subtitle.
+
+If a prefix argument is given, it is used to set
+`subed-milliseconds-adjust' before moving subtitles.  If the
+prefix argument is given but not numerical,
+`subed-milliseconds-adjust' is reset to its default value.
+
+Example usage:
+  \\[universal-argument] 1000 \\[subed-increase-start-time]  Increase start time by 1000ms
+           \\[subed-increase-start-time]  Increase start time by 1000ms again
+   \\[universal-argument] 500 \\[subed-increase-start-time]  Increase start time by 500ms
+           \\[subed-increase-start-time]  Increase start time by 500ms again
+       \\[universal-argument] \\[subed-increase-start-time]  Increase start time by 100ms (the default)
+           \\[subed-increase-start-time]  Increase start time by 100ms (the default) again"
+  (interactive "P")
+  (subed--adjust-subtitle-start-relative (subed--get-milliseconds-adjust arg)))
+
+(defun subed-decrease-start-time (&optional arg)
+  "Subtract `subed-milliseconds-adjust' milliseconds from start
+time of current subtitle.
+See also `subed-increase-start-time'."
+  (interactive "P")
+  (subed--adjust-subtitle-start-relative (* -1 (subed--get-milliseconds-adjust arg))))
+
+(defun subed-increase-stop-time (&optional arg)
+  "Add `subed-milliseconds-adjust' milliseconds to stop time of
+current subtitle.
+See also `subed-increase-start-time'."
+  (interactive "P")
+  (subed--adjust-subtitle-stop-relative (subed--get-milliseconds-adjust arg)))
+
+(defun subed-decrease-stop-time (&optional arg)
+  "Subtract `subed-milliseconds-adjust' milliseconds from stop
+time of current subtitle.
+See also `subed-increase-start-time'."
+  (interactive "P")
+  (subed--adjust-subtitle-stop-relative (* -1 (subed--get-milliseconds-adjust arg))))
 
 
 ;;; Moving subtitles
