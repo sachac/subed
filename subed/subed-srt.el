@@ -312,7 +312,10 @@ Return new start time in milliseconds or nil if it didn't change."
         (setq msecs-new msecs-min))
       (when (> msecs-new msecs-max)
         (setq msecs-new msecs-max))
-      (unless (eq msecs-new msecs-start)
+      ;; msecs-new must be bigger than the current start time if we are adding
+      ;; or smaller if we are subtracting.
+      (when (or (and (> msecs 0) (> msecs-new msecs-start))   ;; Adding
+                (and (< msecs 0) (< msecs-new msecs-start)))  ;; Subtracting
         (save-excursion
           (subed-srt-jump-to-subtitle-time-start)
           (when (looking-at subed-srt--regexp-timestamp)
@@ -336,7 +339,10 @@ Return new stop time in milliseconds or nil if it didn't change."
         (setq msecs-new msecs-min))
       (when (and msecs-max (> msecs-new msecs-max))
         (setq msecs-new msecs-max))
-      (unless (eq msecs-new msecs-stop)
+      ;; msecs-new must be bigger than the current stop time if we are adding or
+      ;; smaller if we are subtracting.
+      (when (or (and (> msecs 0) (> msecs-new msecs-stop))   ;; Adding
+                (and (< msecs 0) (< msecs-new msecs-stop)))  ;; Subtracting
         (save-excursion
           (subed-srt-jump-to-subtitle-time-stop)
           (when (looking-at subed-srt--regexp-timestamp)

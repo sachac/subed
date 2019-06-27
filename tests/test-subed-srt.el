@@ -783,6 +783,28 @@ Baz.
                                     (expect (subed-srt--subtitle-msecs-stop 2) :to-be (- (subed-srt--subtitle-msecs-start 3)
                                                                                          subed-subtitle-spacing))))
                               )
+                    (it "without undershooting the target time."
+                        (with-temp-buffer
+                          (insert (concat "1\n"
+                                          "00:00:01,000 --> 00:00:02,000\n"
+                                          "Foo.\n\n"
+                                          "2\n"
+                                          "00:00:02,000 --> 00:00:03,000\n"
+                                          "Bar.\n"))
+                          (subed-jump-to-subtitle-id 1)
+                          (expect (subed-increase-stop-time 1) :to-be nil)
+                          (expect (subed--subtitle-msecs-stop) :to-equal 2000)))
+                    (it "without overshooting the target time."
+                        (with-temp-buffer
+                          (insert (concat "1\n"
+                                          "00:00:01,000 --> 00:00:02,000\n"
+                                          "Foo.\n\n"
+                                          "2\n"
+                                          "00:00:02,000 --> 00:00:03,000\n"
+                                          "Bar.\n"))
+                          (subed-jump-to-subtitle-id 2)
+                          (expect (subed-decrease-start-time 1) :to-be nil)
+                          (expect (subed--subtitle-msecs-start) :to-equal 2000)))
                     )
           (it "does nothing if no timestamp can be found."
               (with-temp-buffer
