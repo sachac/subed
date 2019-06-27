@@ -31,8 +31,6 @@
 
 ;;; Code:
 
-(add-to-list 'auto-mode-alist '("\\.srt$" . subed-mode-enable))
-
 (require 'subed-config)
 (require 'subed-srt)
 (require 'subed-mpv)
@@ -634,6 +632,7 @@ existing file."
   (remove-hook 'kill-buffer-hook #'subed-mpv-kill :local)
   (setq subed--mode-enabled nil))
 
+;;;###autoload
 (defun subed-mode ()
   "Major mode for editing subtitles.
 
@@ -647,6 +646,9 @@ Key bindings:
   (if subed--mode-enabled
       (subed-mode-disable)
     (subed-mode-enable)))
+
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.srt$" . subed-mode-enable))
 
 (provide 'subed)
 ;;; subed.el ends here
