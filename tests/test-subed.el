@@ -159,9 +159,9 @@
                 (subed-enable-replay-adjusted-subtitle :quiet)
                 (spy-on 'subed-enable-replay-adjusted-subtitle :and-call-through)
                 (spy-on 'subed-disable-replay-adjusted-subtitle :and-call-through)
-                (spy-on 'subed--adjust-subtitle-start-relative :and-call-fake
+                (spy-on 'subed--adjust-subtitle-start :and-call-fake
                         (lambda (msecs) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
-                (spy-on 'subed--adjust-subtitle-stop-relative :and-call-fake
+                (spy-on 'subed--adjust-subtitle-stop :and-call-fake
                         (lambda (msecs) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
                 (subed-move-subtitle-forward 100)
                 (expect 'subed-disable-replay-adjusted-subtitle :to-have-been-called-times 1)
@@ -175,9 +175,9 @@
                 (subed-disable-replay-adjusted-subtitle :quiet)
                 (spy-on 'subed-enable-replay-adjusted-subtitle :and-call-through)
                 (spy-on 'subed-disable-replay-adjusted-subtitle :and-call-through)
-                (spy-on 'subed--adjust-subtitle-start-relative :and-call-fake
+                (spy-on 'subed--adjust-subtitle-start :and-call-fake
                         (lambda (msecs) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
-                (spy-on 'subed--adjust-subtitle-stop-relative :and-call-fake
+                (spy-on 'subed--adjust-subtitle-stop :and-call-fake
                         (lambda (msecs) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
                 (subed-move-subtitle-forward 100)
                 (expect 'subed-disable-replay-adjusted-subtitle :to-have-been-called-times 1)

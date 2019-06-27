@@ -45,8 +45,8 @@
 (fset 'subed--subtitle-msecs-stop 'subed-srt--subtitle-msecs-stop)
 (fset 'subed--subtitle-text 'subed-srt--subtitle-text)
 (fset 'subed--subtitle-relative-point 'subed-srt--subtitle-relative-point)
-(fset 'subed--adjust-subtitle-start-relative 'subed-srt--adjust-subtitle-start-relative)
-(fset 'subed--adjust-subtitle-stop-relative 'subed-srt--adjust-subtitle-stop-relative)
+(fset 'subed--adjust-subtitle-start 'subed-srt--adjust-subtitle-start)
+(fset 'subed--adjust-subtitle-stop 'subed-srt--adjust-subtitle-stop)
 
 (fset 'subed-jump-to-subtitle-id 'subed-srt-jump-to-subtitle-id)
 (fset 'subed-jump-to-subtitle-time-start 'subed-srt-jump-to-subtitle-time-start)
@@ -195,7 +195,7 @@ Example usage:
        \\[universal-argument] \\[subed-increase-start-time]  Increase start time by 100ms (the default)
            \\[subed-increase-start-time]  Increase start time by 100ms (the default) again"
   (interactive "P")
-  (subed--adjust-subtitle-start-relative (subed--get-milliseconds-adjust arg)))
+  (subed--adjust-subtitle-start (subed--get-milliseconds-adjust arg)))
 
 (defun subed-decrease-start-time (&optional arg)
   "Subtract `subed-milliseconds-adjust' milliseconds from start
@@ -203,7 +203,7 @@ time of current subtitle.
 Return new start time in milliseconds or nil if it didn't change.
 See also `subed-increase-start-time'."
   (interactive "P")
-  (subed--adjust-subtitle-start-relative (* -1 (subed--get-milliseconds-adjust arg))))
+  (subed--adjust-subtitle-start (* -1 (subed--get-milliseconds-adjust arg))))
 
 (defun subed-increase-stop-time (&optional arg)
   "Add `subed-milliseconds-adjust' milliseconds to stop time of
@@ -211,7 +211,7 @@ current subtitle.
 Return new stop time in milliseconds or nil if it didn't change.
 See also `subed-increase-start-time'."
   (interactive "P")
-  (subed--adjust-subtitle-stop-relative (subed--get-milliseconds-adjust arg)))
+  (subed--adjust-subtitle-stop (subed--get-milliseconds-adjust arg)))
 
 (defun subed-decrease-stop-time (&optional arg)
   "Subtract `subed-milliseconds-adjust' milliseconds from stop
@@ -219,7 +219,7 @@ time of current subtitle.
 Return new stop time in milliseconds or nil if it didn't change.
 See also `subed-increase-start-time'."
   (interactive "P")
-  (subed--adjust-subtitle-stop-relative (* -1 (subed--get-milliseconds-adjust arg))))
+  (subed--adjust-subtitle-stop (* -1 (subed--get-milliseconds-adjust arg))))
 
 
 ;;; Moving subtitles
@@ -234,8 +234,8 @@ After subtitles are moved is done, replay the first moved
 subtitle if replaying is enabled."
   (subed--with-subtitle-replay-disabled
     (subed--for-each-subtitle beg end
-      (subed--adjust-subtitle-start-relative msecs)
-      (subed--adjust-subtitle-stop-relative msecs)))
+      (subed--adjust-subtitle-start msecs)
+      (subed--adjust-subtitle-stop msecs)))
   (when (subed-replay-adjusted-subtitle-p)
     (save-excursion
       (when beg (goto-char beg))
