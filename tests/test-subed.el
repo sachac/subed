@@ -94,6 +94,58 @@
                            (subed-move-subtitle-backward 100)
                            (expect (subed--subtitle-msecs-start) :to-equal orig-start)
                            (expect (subed--subtitle-msecs-stop) :to-equal orig-stop)))))
+          (it "adjusts start and stop time by the same amount when adding fails."
+              (with-temp-buffer
+                (insert (concat "1\n"
+                                "00:00:01,000 --> 00:00:01,600\n"
+                                "Foo.\n\n"
+                                "2\n"
+                                "00:00:02,000 --> 00:00:03,000\n"
+                                "Bar.\n"))
+                (subed-jump-to-subtitle-id 1)
+                (subed-move-subtitle-forward 1000)
+                (expect (subed--subtitle-msecs-start) :to-equal 1300)
+                (expect (subed--subtitle-msecs-stop) :to-equal 1900)))
+          (it "adjusts start and stop time by the same amount when subtracting fails."
+              (with-temp-buffer
+                (insert (concat "1\n"
+                                "00:00:01,000 --> 00:00:01,600\n"
+                                "Foo.\n\n"
+                                "2\n"
+                                "00:00:02,000 --> 00:00:03,000\n"
+                                "Bar.\n"))
+                (subed-jump-to-subtitle-id 2)
+                (subed-move-subtitle-backward 1000)
+                (expect (subed--subtitle-msecs-start) :to-equal 1700)
+                (expect (subed--subtitle-msecs-stop) :to-equal 2700)))
+          (it "does not adjust start time if adjusting stop time fails."
+              (with-temp-buffer
+                (insert (concat "1\n"
+                                "00:00:01,000 --> 00:00:02,000\n"
+                                "Foo.\n\n"
+                                "2\n"
+                                "00:00:02,000 --> 00:00:03,000\n"
+                                "Bar.\n"))
+                (subed-jump-to-subtitle-id 1)
+                (expect (subed-move-subtitle-forward 1) :to-be nil)
+                (expect (subed--subtitle-msecs-start 1) :to-equal 1000)
+                (expect (subed--subtitle-msecs-stop 1) :to-equal 2000)
+                (expect (subed--subtitle-msecs-start 2) :to-equal 2000)
+                (expect (subed--subtitle-msecs-stop 2) :to-equal 3000)))
+          (it "does not adjust stop time if adjusting start time fails."
+              (with-temp-buffer
+                (insert (concat "1\n"
+                                "00:00:01,000 --> 00:00:02,000\n"
+                                "Foo.\n\n"
+                                "2\n"
+                                "00:00:02,000 --> 00:00:03,000\n"
+                                "Bar.\n"))
+                (subed-jump-to-subtitle-id 2)
+                (expect (subed-move-subtitle-backward 1) :to-be nil)
+                (expect (subed--subtitle-msecs-start 1) :to-equal 1000)
+                (expect (subed--subtitle-msecs-stop 1) :to-equal 2000)
+                (expect (subed--subtitle-msecs-start 2) :to-equal 2000)
+                (expect (subed--subtitle-msecs-stop 2) :to-equal 3000)))
           (describe "adjusts subtitles in the active region,"
                     (it "excluding the first subtitle."
                         (with-temp-buffer

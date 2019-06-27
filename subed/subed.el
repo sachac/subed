@@ -234,8 +234,15 @@ After subtitles are moved is done, replay the first moved
 subtitle if replaying is enabled."
   (subed--with-subtitle-replay-disabled
     (subed--for-each-subtitle beg end
-      (subed--adjust-subtitle-start msecs)
-      (subed--adjust-subtitle-stop msecs)))
+      (if (> msecs 0)
+          ;; Moving subtitles forward may reduce MSECS if there isn't enough
+          ;; room for the full movement.  Using the MSECS the stop time was
+          ;; moved to move the start time ensures that subtitle length doesn't
+          ;; change.
+          (let ((msecs (subed--adjust-subtitle-stop msecs)))
+            (when msecs (subed--adjust-subtitle-start msecs)))
+        (let ((msecs (subed--adjust-subtitle-start msecs)))
+          (when msecs (subed--adjust-subtitle-stop msecs))))))
   (when (subed-replay-adjusted-subtitle-p)
     (save-excursion
       (when beg (goto-char beg))
