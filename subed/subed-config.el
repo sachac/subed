@@ -25,31 +25,31 @@
 
 (defvar subed-mode-map
   (let ((subed-mode-map (make-keymap)))
-    (define-key subed-mode-map (kbd "M-n") 'subed-forward-subtitle-text)
-    (define-key subed-mode-map (kbd "M-p") 'subed-backward-subtitle-text)
-    (define-key subed-mode-map (kbd "C-M-a") 'subed-jump-to-subtitle-text)
-    (define-key subed-mode-map (kbd "C-M-e") 'subed-jump-to-subtitle-end)
-    (define-key subed-mode-map (kbd "M-[") 'subed-decrease-start-time)
-    (define-key subed-mode-map (kbd "M-]") 'subed-increase-start-time)
-    (define-key subed-mode-map (kbd "M-{") 'subed-decrease-stop-time)
-    (define-key subed-mode-map (kbd "M-}") 'subed-increase-stop-time)
-    (define-key subed-mode-map (kbd "C-M-n") 'subed-move-subtitle-forward)
-    (define-key subed-mode-map (kbd "C-M-p") 'subed-move-subtitle-backward)
-    (define-key subed-mode-map (kbd "C-M-f") 'subed-shift-subtitle-forward)
-    (define-key subed-mode-map (kbd "C-M-b") 'subed-shift-subtitle-backward)
-    (define-key subed-mode-map (kbd "M-i") 'subed-subtitle-insert)
-    (define-key subed-mode-map (kbd "M-k") 'subed-subtitle-kill)
-    (define-key subed-mode-map (kbd "M-s") 'subed-sort)
-    (define-key subed-mode-map (kbd "M-SPC") 'subed-mpv-toggle-pause)
-    (define-key subed-mode-map (kbd "C-c C-d") 'subed-toggle-debugging)
-    (define-key subed-mode-map (kbd "C-c C-v") 'subed-mpv-find-video)
-    (define-key subed-mode-map (kbd "C-c C-p") 'subed-toggle-pause-while-typing)
-    (define-key subed-mode-map (kbd "C-c C-l") 'subed-toggle-subtitle-loop)
-    (define-key subed-mode-map (kbd "C-c C-r") 'subed-toggle-replay-adjusted-subtitle)
-    ;; (define-key subed-mode-map (kbd "C-c [") 'subed-copy-subtitle-start-time)
-    ;; (define-key subed-mode-map (kbd "C-c ]") 'subed-copy-subtitle-stop-time)
-    (define-key subed-mode-map (kbd "C-c .") 'subed-toggle-sync-point-to-player)
-    (define-key subed-mode-map (kbd "C-c ,") 'subed-toggle-sync-player-to-point)
+    (define-key subed-mode-map (kbd "M-n") #'subed-forward-subtitle-text)
+    (define-key subed-mode-map (kbd "M-p") #'subed-backward-subtitle-text)
+    (define-key subed-mode-map (kbd "C-M-a") #'subed-jump-to-subtitle-text)
+    (define-key subed-mode-map (kbd "C-M-e") #'subed-jump-to-subtitle-end)
+    (define-key subed-mode-map (kbd "M-[") #'subed-decrease-start-time)
+    (define-key subed-mode-map (kbd "M-]") #'subed-increase-start-time)
+    (define-key subed-mode-map (kbd "M-{") #'subed-decrease-stop-time)
+    (define-key subed-mode-map (kbd "M-}") #'subed-increase-stop-time)
+    (define-key subed-mode-map (kbd "C-M-n") #'subed-move-subtitle-forward)
+    (define-key subed-mode-map (kbd "C-M-p") #'subed-move-subtitle-backward)
+    (define-key subed-mode-map (kbd "C-M-f") #'subed-shift-subtitle-forward)
+    (define-key subed-mode-map (kbd "C-M-b") #'subed-shift-subtitle-backward)
+    (define-key subed-mode-map (kbd "M-i") #'subed-subtitle-insert)
+    (define-key subed-mode-map (kbd "M-k") #'subed-subtitle-kill)
+    (define-key subed-mode-map (kbd "M-s") #'subed-sort)
+    (define-key subed-mode-map (kbd "M-SPC") #'subed-mpv-toggle-pause)
+    (define-key subed-mode-map (kbd "C-c C-d") #'subed-toggle-debugging)
+    (define-key subed-mode-map (kbd "C-c C-v") #'subed-mpv-find-video)
+    (define-key subed-mode-map (kbd "C-c C-p") #'subed-toggle-pause-while-typing)
+    (define-key subed-mode-map (kbd "C-c C-l") #'subed-toggle-subtitle-loop)
+    (define-key subed-mode-map (kbd "C-c C-r") #'subed-toggle-replay-adjusted-subtitle)
+    ;; (define-key subed-mode-map (kbd "C-c [") #'subed-copy-subtitle-start-time)
+    ;; (define-key subed-mode-map (kbd "C-c ]") #'subed-copy-subtitle-stop-time)
+    (define-key subed-mode-map (kbd "C-c .") #'subed-toggle-sync-point-to-player)
+    (define-key subed-mode-map (kbd "C-c ,") #'subed-toggle-sync-player-to-point)
     subed-mode-map)
   "Keymap for subed-mode")
 
@@ -128,9 +128,9 @@ variable persistent for the duration of the sessio.  Use
 `arg' is non-nil, reset `subed-milliseconds-adjust' to its
 default.  Return (new) `subed-milliseconds-adjust' value."
   (cond ((integerp arg)
-          (setq subed-milliseconds-adjust arg))                    ;; Custom adjustment
+          (setq subed-milliseconds-adjust arg))                     ;; Custom adjustment
         ((not (eq nil arg))
-         (custom-reevaluate-setting 'subed-milliseconds-adjust)))  ;; Reset to default
+         (custom-reevaluate-setting #'subed-milliseconds-adjust)))  ;; Reset to default
   subed-milliseconds-adjust)
 
 

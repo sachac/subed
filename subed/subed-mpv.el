@@ -83,7 +83,7 @@ See also `subed-mpv-socket-base'."
                                                    :buffer nil
                                                    :noquery t))
       (error
-       (error "%s" (mapconcat 'identity (cdr (cdr err)) ": "))))))
+       (error "%s" (mapconcat #'identity (cdr (cdr err)) ": "))))))
 
 (defun subed-mpv--server-stop ()
   "Kill a running mpv process."
@@ -142,7 +142,7 @@ again, passing (cdr delays)."
     (while subed-mpv--client-command-queue
       (let ((cmd (pop subed-mpv--client-command-queue)))
         (subed-debug "Running queued command: %s" cmd)
-        (apply 'subed-mpv--client-send (list cmd))))))
+        (apply #'subed-mpv--client-send (list cmd))))))
 
 (defun subed-mpv--client-disconnect ()
   "Close connection to mpv process, if there is one."
@@ -289,9 +289,9 @@ See \"List of events\" in mpv(1)."
   "Open video file in mpv.
 Video files are expected to have any of the extensions listed in
 `subed-video-extensions'."
-  (interactive (list (read-file-name "Find video: " nil nil t nil 'subed-mpv--is-video-file-p)))
+  (interactive (list (read-file-name "Find video: " nil nil t nil #'subed-mpv--is-video-file-p)))
   (let ((filepath (expand-file-name file)))
-    (when (apply 'subed-mpv--server-start subed-mpv-arguments)
+    (when (apply #'subed-mpv--server-start subed-mpv-arguments)
       (subed-debug "Opening video file: %s" filepath)
       (subed-mpv--client-connect subed-mpv--retry-delays)
       (subed-mpv--client-send `(loadfile ,filepath replace))

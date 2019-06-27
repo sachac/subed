@@ -573,9 +573,9 @@ each subtitle."
                 (lambda () (unless (subed-srt-forward-subtitle-id)
                              (goto-char (point-max))))
                 ;; endrecfun (move to end of current record/subtitle)
-                'subed-srt-jump-to-subtitle-end
+                #'subed-srt-jump-to-subtitle-end
                 ;; startkeyfun (return sort value of current record/subtitle)
-                'subed-srt--subtitle-msecs-start))
+                #'subed-srt--subtitle-msecs-start))
     (subed-srt-regenerate-ids)))
 
 (provide 'subed-srt)
