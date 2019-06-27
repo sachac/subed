@@ -298,7 +298,13 @@ Return point or nil if there is no previous subtitle."
 
 (defun subed-srt--adjust-subtitle-start (msecs)
   "Add MSECS milliseconds to start time (use negative value to subtract).
-Return new start time in milliseconds or nil if it didn't change."
+
+If the adjustment would result in overlapping subtitles, reduce
+MSECS so that there are at least `subed-subtitle-spacing'
+milliseconds between subtitles.
+
+Return the number of milliseconds the start time was adjusted or
+nil if nothing was adjusted."
   (subed-disable-sync-point-to-player-temporarily)
   (let* ((msecs-start (subed-srt--subtitle-msecs-start))
          (msecs-new (when msecs-start (+ msecs-start msecs)))
@@ -321,11 +327,17 @@ Return new start time in milliseconds or nil if it didn't change."
           (when (looking-at subed-srt--regexp-timestamp)
             (replace-match (subed-srt--msecs-to-timestamp msecs-new))
             (subed--run-subtitle-time-adjusted-hook)
-            msecs-new))))))
+            (- msecs-new msecs-start)))))))
 
 (defun subed-srt--adjust-subtitle-stop (msecs)
   "Add MSECS milliseconds to stop time (use negative value to subtract).
-Return new stop time in milliseconds or nil if it didn't change."
+
+If the adjustment would result in overlapping subtitles, reduce
+MSECS so that there are at least `subed-subtitle-spacing'
+milliseconds between subtitles.
+
+Return the number of milliseconds the stop time was adjusted or
+nil if nothing was adjusted."
   (subed-disable-sync-point-to-player-temporarily)
   (let* ((msecs-stop (subed-srt--subtitle-msecs-stop))
          (msecs-new (when msecs-stop (+ msecs-stop msecs)))
@@ -348,7 +360,7 @@ Return new stop time in milliseconds or nil if it didn't change."
           (when (looking-at subed-srt--regexp-timestamp)
             (replace-match (subed-srt--msecs-to-timestamp msecs-new))
             (subed--run-subtitle-time-adjusted-hook)
-            msecs-new))))))
+            (- msecs-new msecs-stop)))))))
 
 (defun subed-srt-subtitle-insert (&optional arg)
   "Insert subtitle(s).
