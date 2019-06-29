@@ -73,8 +73,8 @@
 (defun subed-enable-debugging ()
   "Hide debugging messages and set `debug-on-error' to `nil'."
   (interactive)
-  (unless subed--debug-enabled
-    (setq subed--debug-enabled t
+  (unless subed-debugging-enabled-p
+    (setq subed-debugging-enabled-p t
           debug-on-error t)
     (let ((debug-buffer (get-buffer-create subed-debug-buffer))
           (debug-window (or (get-buffer-window subed-debug-buffer)
@@ -89,8 +89,8 @@
   "Display debugging messages in separate window and set
 `debug-on-error' to `t'."
   (interactive)
-  (when subed--debug-enabled
-    (setq subed--debug-enabled nil
+  (when subed-debugging-enabled-p
+    (setq subed-debugging-enabled-p nil
           debug-on-error nil)
     (let ((debug-window (get-buffer-window subed-debug-buffer)))
       (when debug-window
@@ -101,7 +101,7 @@
   "Display or hide debugging messages in separate window and set
 `debug-on-error' to `t' or `nil'."
   (interactive)
-  (if subed--debug-enabled
+  (if subed-debugging-enabled-p
       (subed-disable-debugging)
     (subed-enable-debugging)))
 
@@ -613,7 +613,7 @@ existing file."
   (subed-enable-replay-adjusted-subtitle :quiet)
   (setq major-mode 'subed-mode
         mode-name "subed")
-  (setq subed--mode-enabled t)
+  (setq subed-mode--enabled-p t)
   (run-mode-hooks 'subed-mode-hook))
 
 (defun subed-mode-disable ()
@@ -630,7 +630,7 @@ existing file."
   (remove-hook 'before-save-hook #'subed-sort :local)
   (remove-hook 'after-save-hook #'subed-mpv-reload-subtitles :local)
   (remove-hook 'kill-buffer-hook #'subed-mpv-kill :local)
-  (setq subed--mode-enabled nil))
+  (setq subed-mode--enabled-p nil))
 
 ;;;###autoload
 (defun subed-mode ()
@@ -643,7 +643,7 @@ Key bindings:
 \\{subed-mode-map}"
   (interactive)
   ;; Use 'enabled property of this function to store enabled/disabled status
-  (if subed--mode-enabled
+  (if subed-mode--enabled-p
       (subed-mode-disable)
     (subed-mode-enable)))
 

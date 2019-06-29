@@ -81,12 +81,12 @@
   :group 'hypermedia
   :prefix "subed-")
 
-(defvar-local subed--mode-enabled nil
+(defvar-local subed-mode--enabled-p nil
   "Whether `subed-mode' is enabled.
 This is set by `subed-mode-enable' and `subed-mode-disable'.")
 
-(defvar-local subed--debug-enabled nil
-  "Whether `subed-debug' prints to `subed-debugging-buffer'.")
+(defvar-local subed-debugging-enabled-p nil
+  "Whether debugging messages are displayed.")
 
 (defcustom subed-debug-buffer "*subed-debug*"
   "Name of the buffer that contains debugging messages."

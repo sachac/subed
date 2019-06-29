@@ -101,7 +101,7 @@ See also `subed-mpv-socket-base'."
 
 (defun subed-mpv--client-buffer ()
   "Unique name of buffer that stores RPC responses."
-  (if subed--debug-enabled
+  (if subed-debugging-enabled-p
       (format "*subed-mpv-buffer:%s-%s*"
               (file-name-base (or (buffer-file-name) "unnamed"))
               (buffer-hash))
