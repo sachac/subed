@@ -310,6 +310,7 @@ the subtitles between point and the end of the buffer."
 
 
 ;;; Replay time-adjusted subtitle
+
 (defun subed-replay-adjusted-subtitle-p ()
   "Whether adjusting a subtitle's start/stop time causes the
 player to jump to the subtitle's start position."
