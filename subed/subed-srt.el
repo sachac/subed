@@ -494,6 +494,20 @@ each subtitle."
                 (insert id-str)))
             (setq id (1+ id))))))))
 
+(defvar-local subed-srt--regenerate-ids-soon-timer nil)
+(defun subed-srt--regenerate-ids-soon ()
+  "Run `subed-srt--regenerate-ids' in 100ms unless this function
+is called again within the next 100ms, in which case the
+previously scheduled call is canceled and another call is
+scheduled in 100ms."
+  (interactive)
+  (when subed-srt--regenerate-ids-soon-timer
+    (cancel-timer subed-srt--regenerate-ids-soon-timer))
+  (setq subed-srt--regenerate-ids-soon-timer
+        (run-at-time 0.1 nil (lambda ()
+                               (setq subed-srt--regenerate-ids-soon-timer nil)
+                               (subed-srt--regenerate-ids)))))
+
 (defun subed-srt--sanitize ()
   "Remove surplus newlines and whitespace."
   (interactive)
