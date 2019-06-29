@@ -397,6 +397,7 @@ playing subtitle."
     (run-hooks 'post-command-hook)
     (add-hook 'post-command-hook #'subed--post-command-handler :append :local)))
 
+(defvar-local subed--point-sync-delay-after-motion-timer nil)
 (defun subed-disable-sync-point-to-player-temporarily ()
   "If point is synced to playback position, temporarily disable
 that for `subed-point-sync-delay-after-motion' seconds."
@@ -549,6 +550,7 @@ buffer."
       (subed-disable-pause-while-typing)
     (subed-enable-pause-while-typing)))
 
+(defvar-local subed--unpause-after-typing-timer nil)
 (defun subed--pause-while-typing (&rest args)
   "Pause or slow down playback for `subed-unpause-after-typing-delay' seconds."
   (when subed--unpause-after-typing-timer

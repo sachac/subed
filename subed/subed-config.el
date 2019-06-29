@@ -153,10 +153,6 @@ unpausing the player."
   :type 'float
   :group 'subed)
 
-(defvar-local subed--unpause-after-typing-timer nil
-  "Timer that waits before unpausing the player after the user
-typed something.")
-
 (defvar-local subed--player-is-auto-paused nil
   "Whether the player was paused by the user or automatically.")
 
@@ -197,10 +193,6 @@ later."
 was moved by the user."
   :type 'float
   :group 'subed)
-
-(defvar-local subed--point-sync-delay-after-motion-timer nil
-  "Timer that waits before re-adding
-`subed--sync-point-to-player' after temporarily removing it.")
 
 (defvar-local subed--point-was-synced nil
   "When temporarily disabling point-to-player sync, this variable
