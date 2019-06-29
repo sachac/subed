@@ -58,7 +58,7 @@ Return nil if TIME-STRING doesn't match the pattern."
             "," (format "%03d" (mod msecs 1000)))))
 
 (defun subed-srt--subtitle-id ()
-  "Return the ID of subtitle at point or nil if there is no ID."
+  "Return the ID of the subtitle at point or nil if there is no ID."
   (save-excursion
     (when (subed-srt--jump-to-subtitle-id)
       (string-to-number (current-word)))))
