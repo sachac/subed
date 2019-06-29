@@ -782,7 +782,7 @@ Baz.
                                           "Bar.\n"))
                           (subed-jump-to-subtitle-id 1)
                           (expect (subed-increase-stop-time 1) :to-be nil)
-                          (expect (subed--subtitle-msecs-stop) :to-equal 2000)))
+                          (expect (subed-subtitle-msecs-stop) :to-equal 2000)))
                     (it "without overshooting the target time."
                         (with-temp-buffer
                           (insert (concat "1\n"
@@ -793,7 +793,7 @@ Baz.
                                           "Bar.\n"))
                           (subed-jump-to-subtitle-id 2)
                           (expect (subed-decrease-start-time 1) :to-be nil)
-                          (expect (subed--subtitle-msecs-start) :to-equal 2000)))
+                          (expect (subed-subtitle-msecs-start) :to-equal 2000)))
                     )
           (it "does nothing if no timestamp can be found."
               (with-temp-buffer

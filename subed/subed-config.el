@@ -123,10 +123,11 @@ variable persistent for the duration of the sessio.  Use
   :type 'float
   :group 'subed)
 
-(defun subed--get-milliseconds-adjust (arg)
+(defun subed-get-milliseconds-adjust (arg)
   "Set `subed-milliseconds-adjust' to `arg' if it's a number.  If
 `arg' is non-nil, reset `subed-milliseconds-adjust' to its
-default.  Return (new) `subed-milliseconds-adjust' value."
+default.
+Return new `subed-milliseconds-adjust' value."
   (cond ((integerp arg)
           (setq subed-milliseconds-adjust arg))                     ;; Custom adjustment
         ((not (eq nil arg))
@@ -236,8 +237,8 @@ subtitle's start time.")
 subtitle ID and start time of the adjusted subtitle."
   (when subed-subtitle-time-adjusted-hook
     (run-hook-with-args 'subed-subtitle-time-adjusted-hook
-                        (subed--subtitle-id)
-                        (subed--subtitle-msecs-start))))
+                        (subed-subtitle-id)
+                        (subed-subtitle-msecs-start))))
 
 (defvar-local subed-point-motion-hook nil
   "Functions to call after point changed.")
@@ -249,7 +250,7 @@ subtitle ID and start time of the adjusted subtitle."
   "Keeps track of `(point)' to detect changes.")
 
 (defvar-local subed--status-subtitle-id 1
-  "Keeps track of `(subed--subtitle-id)' to detect changes.")
+  "Keeps track of `(subed-subtitle-id)' to detect changes.")
 
 (defun subed--post-command-handler ()
   "Detect point motion and user entering text and signal hooks."
@@ -265,7 +266,7 @@ subtitle ID and start time of the adjusted subtitle."
       (setq subed--status-point new-point)
       ;; Signal point motion
       (run-hooks 'subed-point-motion-hook)
-      (let ((new-sub-id (subed--subtitle-id)))
+      (let ((new-sub-id (subed-subtitle-id)))
         (when (and new-sub-id subed--status-subtitle-id
                    (not (= subed--status-subtitle-id new-sub-id)))
           (setq subed--status-subtitle-id new-sub-id)

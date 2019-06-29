@@ -38,13 +38,13 @@
 ;; Abstraction layer to allow support for other subtitle formats
 (set 'subed-font-lock-keywords #'subed-srt-font-lock-keywords)
 
-(fset 'subed--subtitle-id #'subed-srt--subtitle-id)
-(fset 'subed--subtitle-msecs-start #'subed-srt--subtitle-msecs-start)
-(fset 'subed--subtitle-msecs-stop #'subed-srt--subtitle-msecs-stop)
-(fset 'subed--subtitle-text #'subed-srt--subtitle-text)
-(fset 'subed--subtitle-relative-point #'subed-srt--subtitle-relative-point)
-(fset 'subed--adjust-subtitle-start #'subed-srt--adjust-subtitle-start)
-(fset 'subed--adjust-subtitle-stop #'subed-srt--adjust-subtitle-stop)
+(fset 'subed-subtitle-id #'subed-srt--subtitle-id)
+(fset 'subed-subtitle-msecs-start #'subed-srt--subtitle-msecs-start)
+(fset 'subed-subtitle-msecs-stop #'subed-srt--subtitle-msecs-stop)
+(fset 'subed-subtitle-text #'subed-srt--subtitle-text)
+(fset 'subed-subtitle-relative-point #'subed-srt--subtitle-relative-point)
+(fset 'subed-adjust-subtitle-start #'subed-srt--adjust-subtitle-start)
+(fset 'subed-adjust-subtitle-stop #'subed-srt--adjust-subtitle-stop)
 
 (fset 'subed-jump-to-subtitle-id #'subed-srt--jump-to-subtitle-id)
 (fset 'subed-jump-to-subtitle-time-start #'subed-srt--jump-to-subtitle-time-start)
@@ -119,13 +119,13 @@
 
 ;;; Utilities
 
-(defmacro subed--save-excursion (&rest body)
+(defmacro subed-save-excursion (&rest body)
   "Restore relative point within current subtitle after executing BODY.
 This also works if the buffer changes (e.g. when sorting
 subtitles) as long the subtitle IDs don't change."
   (save-excursion
-    `(let ((sub-id (subed--subtitle-id))
-           (sub-pos (subed--subtitle-relative-point)))
+    `(let ((sub-id (subed-subtitle-id))
+           (sub-pos (subed-subtitle-relative-point)))
        (progn ,@body)
        (subed-jump-to-subtitle-id sub-id)
        ;; Subtitle text may have changed and we may not be able to move to the
@@ -135,7 +135,7 @@ subtitles) as long the subtitle IDs don't change."
          ('beginning-of-buffer nil)
          ('end-of-buffer nil)))))
 
-(defmacro subed--for-each-subtitle (&optional beg end &rest body)
+(defmacro subed-for-each-subtitle (&optional beg end &rest body)
   "Run BODY for each subtitle between the region specified by BEG and END.
 If END is nil, it defaults to `point-max'.
 If BEG and END are both nil, run BODY only on the subtitle at point.
@@ -158,7 +158,7 @@ Before BODY is run, point is placed on the subtitle's ID."
              (unless (subed-forward-subtitle-id)
                (throw 'last-subtitle-reached t))))))))
 
-(defmacro subed--with-subtitle-replay-disabled (&rest body)
+(defmacro subed-with-subtitle-replay-disabled (&rest body)
   "Run BODY while automatic subtitle replay is disabled."
   (declare (indent defun))
   `(let ((replay-was-enabled-p (subed-replay-adjusted-subtitle-p)))
@@ -193,7 +193,7 @@ Example usage:
        \\[universal-argument] \\[subed-increase-start-time]  Increase start time by 100ms (the default)
            \\[subed-increase-start-time]  Increase start time by 100ms (the default) again"
   (interactive "P")
-  (subed--adjust-subtitle-start (subed--get-milliseconds-adjust arg)))
+  (subed-adjust-subtitle-start (subed-get-milliseconds-adjust arg)))
 
 (defun subed-decrease-start-time (&optional arg)
   "Subtract `subed-milliseconds-adjust' milliseconds from start
@@ -201,7 +201,7 @@ time of current subtitle.
 Return new start time in milliseconds or nil if it didn't change.
 See also `subed-increase-start-time'."
   (interactive "P")
-  (subed--adjust-subtitle-start (* -1 (subed--get-milliseconds-adjust arg))))
+  (subed-adjust-subtitle-start (* -1 (subed-get-milliseconds-adjust arg))))
 
 (defun subed-increase-stop-time (&optional arg)
   "Add `subed-milliseconds-adjust' milliseconds to stop time of
@@ -209,7 +209,7 @@ current subtitle.
 Return new stop time in milliseconds or nil if it didn't change.
 See also `subed-increase-start-time'."
   (interactive "P")
-  (subed--adjust-subtitle-stop (subed--get-milliseconds-adjust arg)))
+  (subed-adjust-subtitle-stop (subed-get-milliseconds-adjust arg)))
 
 (defun subed-decrease-stop-time (&optional arg)
   "Subtract `subed-milliseconds-adjust' milliseconds from stop
@@ -217,7 +217,7 @@ time of current subtitle.
 Return new stop time in milliseconds or nil if it didn't change.
 See also `subed-increase-start-time'."
   (interactive "P")
-  (subed--adjust-subtitle-stop (* -1 (subed--get-milliseconds-adjust arg))))
+  (subed-adjust-subtitle-stop (* -1 (subed-get-milliseconds-adjust arg))))
 
 
 ;;; Moving subtitles
@@ -230,21 +230,21 @@ If END is nil, move all subtitles from BEG to end of buffer.
 If BEG is nil, move only the current subtitle.
 After subtitles are moved is done, replay the first moved
 subtitle if replaying is enabled."
-  (subed--with-subtitle-replay-disabled
-    (subed--for-each-subtitle beg end
+  (subed-with-subtitle-replay-disabled
+    (subed-for-each-subtitle beg end
       (if (> msecs 0)
           ;; Moving subtitles forward may reduce MSECS if there isn't enough
           ;; room for the full movement.  Using the MSECS the stop time was
           ;; moved to move the start time ensures that subtitle length doesn't
           ;; change.
-          (let ((msecs (subed--adjust-subtitle-stop msecs)))
-            (when msecs (subed--adjust-subtitle-start msecs)))
-        (let ((msecs (subed--adjust-subtitle-start msecs)))
-          (when msecs (subed--adjust-subtitle-stop msecs))))))
+          (let ((msecs (subed-adjust-subtitle-stop msecs)))
+            (when msecs (subed-adjust-subtitle-start msecs)))
+        (let ((msecs (subed-adjust-subtitle-start msecs)))
+          (when msecs (subed-adjust-subtitle-stop msecs))))))
   (when (subed-replay-adjusted-subtitle-p)
     (save-excursion
       (when beg (goto-char beg))
-      (subed-mpv-jump (subed--subtitle-msecs-start)))))
+      (subed-mpv-jump (subed-subtitle-msecs-start)))))
 
 (defun subed-move-subtitle-forward (&optional arg)
   "Move subtitle `subed-milliseconds-adjust' forward in time
@@ -268,7 +268,7 @@ Example usage:
            \\[subed-move-subtitle-forward]  Move subtitle 100ms (the default) forward in time again"
   (interactive "P")
   (let ((deactivate-mark nil)
-        (msecs (subed--get-milliseconds-adjust arg))
+        (msecs (subed-get-milliseconds-adjust arg))
         (beg (when (use-region-p) (region-beginning)))
         (end (when (use-region-p) (region-end))))
     (subed-move-subtitles msecs beg end)))
@@ -281,7 +281,7 @@ by the same amount.
 See `subed-move-subtitle-forward'."
   (interactive "P")
   (let ((deactivate-mark nil)
-        (msecs (* -1 (subed--get-milliseconds-adjust arg)))
+        (msecs (* -1 (subed-get-milliseconds-adjust arg)))
         (beg (when (use-region-p) (region-beginning)))
         (end (when (use-region-p) (region-end))))
     (subed-move-subtitles msecs beg end)))
@@ -295,7 +295,7 @@ See `subed-move-subtitle-forward'."
 the subtitles between point and the end of the buffer."
   (interactive "P")
   (let ((deactivate-mark nil)
-        (msecs (subed--get-milliseconds-adjust arg))
+        (msecs (subed-get-milliseconds-adjust arg))
         (beg (if (use-region-p) (region-beginning) (point))))
     (subed-move-subtitles msecs beg)))
 
@@ -304,7 +304,7 @@ the subtitles between point and the end of the buffer."
 the subtitles between point and the end of the buffer."
   (interactive "P")
   (let ((deactivate-mark nil)
-        (msecs (* -1 (subed--get-milliseconds-adjust arg)))
+        (msecs (* -1 (subed-get-milliseconds-adjust arg)))
         (beg (if (use-region-p) (region-beginning) (point))))
     (subed-move-subtitles msecs beg)))
 
@@ -386,7 +386,7 @@ playing subtitle."
   (when (and (not (use-region-p))
              (subed-jump-to-subtitle-text-at-msecs msecs))
     (subed-debug "Synchronized point to playback position: %s -> #%s"
-                 (subed-srt--msecs-to-timestamp msecs) (subed--subtitle-id))
+                 (subed-srt--msecs-to-timestamp msecs) (subed-subtitle-id))
     ;; post-command-hook is not triggered because we didn't move interactively.
     ;; But there's not really a difference, e.g. the minor mode `hl-line' breaks
     ;; unless we call its post-command function, so we do it manually.
@@ -448,14 +448,14 @@ subtitle at point."
 (defun subed--sync-player-to-point ()
   "Seek player to currently focused subtitle."
   (subed-debug "Seeking player to subtitle at point %s" (point))
-  (let ((cur-sub-start (subed--subtitle-msecs-start))
-        (cur-sub-stop (subed--subtitle-msecs-stop)))
+  (let ((cur-sub-start (subed-subtitle-msecs-start))
+        (cur-sub-stop (subed-subtitle-msecs-stop)))
     (when (and subed-mpv-playback-position cur-sub-start cur-sub-stop
                (or (< subed-mpv-playback-position cur-sub-start)
                    (> subed-mpv-playback-position cur-sub-stop)))
       (subed-mpv-jump cur-sub-start)
       (subed-debug "Synchronized playback position to point: #%s -> %s"
-                   (subed--subtitle-id) cur-sub-start))))
+                   (subed-subtitle-id) cur-sub-start))))
 
 
 ;;; Loop over single subtitle
@@ -479,16 +479,16 @@ subtitle."
         (when (not quiet)
           (message "Disabled looping")))
     (progn
-      (subed--set-subtitle-loop (subed--subtitle-id))
+      (subed--set-subtitle-loop (subed-subtitle-id))
       (add-hook 'subed-mpv-playback-position-hook #'subed--ensure-subtitle-loop :append :local)
       (add-hook 'subed-subtitle-motion-hook #'subed--set-subtitle-loop :append :local)
       (subed-debug "Enabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop))))
 
 (defun subed--set-subtitle-loop (&optional sub-id)
   "Set loop positions to start/stop time of SUB-ID or current subtitle."
-  (setq subed--subtitle-loop-start (- (subed--subtitle-msecs-start sub-id)
+  (setq subed--subtitle-loop-start (- (subed-subtitle-msecs-start sub-id)
                                       (* subed-loop-seconds-before 1000))
-        subed--subtitle-loop-stop (+ (subed--subtitle-msecs-stop sub-id)
+        subed--subtitle-loop-stop (+ (subed-subtitle-msecs-stop sub-id)
                                      (* subed-loop-seconds-after 1000)))
   (subed-debug "Set loop: %s - %s"
                (subed-srt--msecs-to-timestamp subed--subtitle-loop-start)

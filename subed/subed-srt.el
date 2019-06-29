@@ -499,7 +499,7 @@ each subtitle."
   (interactive)
   (atomic-change-group
     (save-match-data
-      (subed--save-excursion
+      (subed-save-excursion
        ;; Remove trailing whitespace from each line
        (delete-trailing-whitespace (point-min) (point-max))
 
@@ -571,7 +571,7 @@ each subtitle."
   (atomic-change-group
     (subed-srt--sanitize)
     (subed-srt--validate)
-    (subed--save-excursion
+    (subed-save-excursion
      (goto-char (point-min))
      (sort-subr nil
                 ;; nextrecfun (move to next record/subtitle or to end-of-buffer
