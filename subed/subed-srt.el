@@ -63,6 +63,12 @@ Return nil if TIME-STRING doesn't match the pattern."
     (when (subed-srt--jump-to-subtitle-id)
       (string-to-number (current-word)))))
 
+(defun subed-srt--max-subtitle-id ()
+  "Return the ID of the last subtitle or nil if there are no subtitles."
+  (save-excursion
+    (goto-char (point-max))
+    (subed-srt--subtitle-id)))
+
 (defun subed-srt--subtitle-id-at-msecs (msecs)
   "Return the ID of the subtitle at MSECS milliseconds.
 If MSECS is between subtitles, return the subtitle that starts
