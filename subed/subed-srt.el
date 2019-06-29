@@ -469,7 +469,8 @@ nil if nothing was adjusted."
                        (goto-char (point-max)))))
             (delete-region beg end)))
       (progn
-        (delete-region beg end)))))
+        (delete-region beg end))))
+  (subed-srt--regenerate-ids-soon))
 
 
 ;;; Maintenance
