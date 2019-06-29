@@ -863,22 +863,24 @@ Baz.
           )
 
 (describe "Inserting"
+          (before-each
+           (spy-on 'subed-srt--regenerate-ids-soon))
           (describe "in an empty buffer,"
                     (describe "appending"
                               (it "a single subtile."
                                   (cl-loop for arg in (list nil 1) do
                                            (with-temp-buffer
                                              (subed-srt--subtitle-insert arg)
-                                             (expect (buffer-string) :to-equal (concat "1\n"
+                                             (expect (buffer-string) :to-equal (concat "0\n"
                                                                                        "00:00:00,100 --> 00:00:00,900\n\n"))
                                              (expect (point) :to-equal 33))))
                               (it "multiple subtiles."
                                   (cl-loop for arg in (list 2) do
                                            (with-temp-buffer
                                              (subed-srt--subtitle-insert arg)
-                                             (expect (buffer-string) :to-equal (concat "1\n"
+                                             (expect (buffer-string) :to-equal (concat "0\n"
                                                                                        "00:00:00,100 --> 00:00:00,950\n\n\n"
-                                                                                       "2\n"
+                                                                                       "0\n"
                                                                                        "00:00:01,050 --> 00:00:01,900\n\n"))
                                              (expect (point) :to-equal 33)))))
                     (describe "prepending"
@@ -886,16 +888,16 @@ Baz.
                                   (cl-loop for arg in (list '- -1 (list 4)) do
                                            (with-temp-buffer
                                              (subed-srt--subtitle-insert arg)
-                                             (expect (buffer-string) :to-equal (concat "1\n"
+                                             (expect (buffer-string) :to-equal (concat "0\n"
                                                                                        "00:00:00,100 --> 00:00:00,900\n\n"))
                                              (expect (point) :to-equal 33))))
                               (it "multiple subtiles."
                                   (cl-loop for arg in (list -2 (list -16)) do
                                            (with-temp-buffer
                                              (subed-srt--subtitle-insert arg)
-                                             (expect (buffer-string) :to-equal (concat "1\n"
+                                             (expect (buffer-string) :to-equal (concat "0\n"
                                                                                        "00:00:00,100 --> 00:00:00,950\n\n\n"
-                                                                                       "2\n"
+                                                                                       "0\n"
                                                                                        "00:00:01,050 --> 00:00:01,900\n\n"))
                                              (expect (point) :to-equal 33)))))
                     )
@@ -910,13 +912,13 @@ Baz.
                                              (expect (buffer-string) :to-equal (concat "1\n"
                                                                                        "00:01:01,000 --> 00:01:05,123\n"
                                                                                        "Foo.\n\n"
-                                                                                       "2\n"
+                                                                                       "0\n"
                                                                                        "00:01:05,223 --> 00:02:02,134\n"
                                                                                        "\n\n"
-                                                                                       "3\n"
+                                                                                       "2\n"
                                                                                        "00:02:02,234 --> 00:02:10,345\n"
                                                                                        "Bar.\n\n"
-                                                                                       "4\n"
+                                                                                       "3\n"
                                                                                        "00:03:03,45 --> 00:03:15,5\n"
                                                                                        "Baz.\n"))
                                              (expect (point) :to-equal 71))))
@@ -929,16 +931,16 @@ Baz.
                                              (expect (buffer-string) :to-equal (concat "1\n"
                                                                                        "00:01:01,000 --> 00:01:05,123\n"
                                                                                        "Foo.\n\n"
-                                                                                       "2\n"
+                                                                                       "0\n"
                                                                                        "00:01:05,223 --> 00:01:33,628\n"
                                                                                        "\n\n"
-                                                                                       "3\n"
+                                                                                       "0\n"
                                                                                        "00:01:33,728 --> 00:02:02,133\n"
                                                                                        "\n\n"
-                                                                                       "4\n"
+                                                                                       "2\n"
                                                                                        "00:02:02,234 --> 00:02:10,345\n"
                                                                                        "Bar.\n\n"
-                                                                                       "5\n"
+                                                                                       "3\n"
                                                                                        "00:03:03,45 --> 00:03:15,5\n"
                                                                                        "Baz.\n"))
                                              (expect (point) :to-equal 71))))
@@ -953,13 +955,13 @@ Baz.
                                              (expect (buffer-string) :to-equal (concat "1\n"
                                                                                        "00:01:01,000 --> 00:01:05,123\n"
                                                                                        "Foo.\n\n"
-                                                                                       "2\n"
+                                                                                       "0\n"
                                                                                        "00:01:05,223 --> 00:02:02,134\n"
                                                                                        "\n\n"
-                                                                                       "3\n"
+                                                                                       "2\n"
                                                                                        "00:02:02,234 --> 00:02:10,345\n"
                                                                                        "Bar.\n\n"
-                                                                                       "4\n"
+                                                                                       "3\n"
                                                                                        "00:03:03,45 --> 00:03:15,5\n"
                                                                                        "Baz.\n"))
                                              (expect (point) :to-equal 71))))
@@ -972,16 +974,16 @@ Baz.
                                              (expect (buffer-string) :to-equal (concat "1\n"
                                                                                        "00:01:01,000 --> 00:01:05,123\n"
                                                                                        "Foo.\n\n"
-                                                                                       "2\n"
+                                                                                       "0\n"
                                                                                        "00:01:05,223 --> 00:01:33,628\n"
                                                                                        "\n\n"
-                                                                                       "3\n"
+                                                                                       "0\n"
                                                                                        "00:01:33,728 --> 00:02:02,133\n"
                                                                                        "\n\n"
-                                                                                       "4\n"
+                                                                                       "2\n"
                                                                                        "00:02:02,234 --> 00:02:10,345\n"
                                                                                        "Bar.\n\n"
-                                                                                       "5\n"
+                                                                                       "3\n"
                                                                                        "00:03:03,45 --> 00:03:15,5\n"
                                                                                        "Baz.\n"))
                                              (expect (point) :to-equal 71))))
@@ -993,16 +995,16 @@ Baz.
                                              (insert mock-srt-data)
                                              (subed-srt--jump-to-subtitle-text 1)
                                              (subed-srt--subtitle-insert arg)
-                                             (expect (buffer-string) :to-equal (concat "1\n"
+                                             (expect (buffer-string) :to-equal (concat "0\n"
                                                                                        "00:00:00,100 --> 00:01:00,900\n"
                                                                                        "\n\n"
-                                                                                       "2\n"
+                                                                                       "1\n"
                                                                                        "00:01:01,000 --> 00:01:05,123\n"
                                                                                        "Foo.\n\n"
-                                                                                       "3\n"
+                                                                                       "2\n"
                                                                                        "00:02:02,234 --> 00:02:10,345\n"
                                                                                        "Bar.\n\n"
-                                                                                       "4\n"
+                                                                                       "3\n"
                                                                                        "00:03:03,45 --> 00:03:15,5\n"
                                                                                        "Baz.\n"))
                                              (expect (point) :to-equal 33))))
@@ -1012,19 +1014,19 @@ Baz.
                                              (insert mock-srt-data)
                                              (subed-srt--jump-to-subtitle-text 1)
                                              (subed-srt--subtitle-insert arg)
-                                             (expect (buffer-string) :to-equal (concat "1\n"
+                                             (expect (buffer-string) :to-equal (concat "0\n"
                                                                                        "00:00:00,100 --> 00:00:30,450\n"
                                                                                        "\n\n"
-                                                                                       "2\n"
+                                                                                       "0\n"
                                                                                        "00:00:30,550 --> 00:01:00,900\n"
                                                                                        "\n\n"
-                                                                                       "3\n"
+                                                                                       "1\n"
                                                                                        "00:01:01,000 --> 00:01:05,123\n"
                                                                                        "Foo.\n\n"
-                                                                                       "4\n"
+                                                                                       "2\n"
                                                                                        "00:02:02,234 --> 00:02:10,345\n"
                                                                                        "Bar.\n\n"
-                                                                                       "5\n"
+                                                                                       "3\n"
                                                                                        "00:03:03,45 --> 00:03:15,5\n"
                                                                                        "Baz.\n"))
                                              (expect (point) :to-equal 33))))
@@ -1045,7 +1047,7 @@ Baz.
                                                                                        "3\n"
                                                                                        "00:03:03,45 --> 00:03:15,5\n"
                                                                                        "Baz.\n\n"
-                                                                                       "4\n"
+                                                                                       "0\n"
                                                                                        "00:03:15,600 --> 00:03:16,400\n"
                                                                                        "\n"))
                                              (expect (point) :to-equal 144))))
@@ -1064,15 +1066,20 @@ Baz.
                                                                                        "3\n"
                                                                                        "00:03:03,45 --> 00:03:15,5\n"
                                                                                        "Baz.\n\n"
-                                                                                       "4\n"
+                                                                                       "0\n"
                                                                                        "00:03:15,600 --> 00:03:16,450\n"
                                                                                        "\n\n"
-                                                                                       "5\n"
+                                                                                       "0\n"
                                                                                        "00:03:16,550 --> 00:03:17,400\n"
                                                                                        "\n"))
                                              (expect (point) :to-equal 144))))
                               )
                     )
+          (it "schedules ID regeneration."
+              (with-temp-buffer
+                (subed-srt--subtitle-insert)
+                (expect #'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                (expect #'subed-srt--regenerate-ids :not :to-have-been-called)))
           )
 
 (describe "Validating"
