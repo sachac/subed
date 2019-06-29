@@ -445,7 +445,7 @@ nil if nothing was adjusted."
         (when (looking-at "^[[:blank:]]*$")
           (forward-line -1)
           (kill-whole-line)))
-      (subed-srt--regenerate-ids)
+      (subed-srt--regenerate-ids-soon)
       (subed-srt--jump-to-subtitle-text))))
 
 (defun subed-srt--subtitle-kill ()
