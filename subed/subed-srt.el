@@ -60,7 +60,7 @@ Return nil if TIME-STRING doesn't match the pattern."
 (defun subed-srt--subtitle-id ()
   "Return the ID of subtitle at point or nil if there is no ID."
   (save-excursion
-    (when (subed-srt-jump-to-subtitle-id)
+    (when (subed-srt--jump-to-subtitle-id)
       (string-to-number (current-word)))))
 
 (defun subed-srt--subtitle-id-at-msecs (msecs)
@@ -82,18 +82,18 @@ after MSECS if there is one and its start time is >= MSECS +
       ;; Move to first subtitle that starts at or after MSECS
       (catch 'last-subtitle-reached
         (while (<= (or (subed-srt--subtitle-msecs-start) -1) msecs)
-          (unless (subed-srt-forward-subtitle-id)
+          (unless (subed-srt--forward-subtitle-id)
             (throw 'last-subtitle-reached nil))))
       ;; Move back to previous subtitle if start of current subtitle is in the
       ;; future (i.e. MSECS is between subtitles)
       (when (> (or (subed-srt--subtitle-msecs-start) -1) msecs)
-        (subed-srt-backward-subtitle-id))
+        (subed-srt--backward-subtitle-id))
       (subed-srt--subtitle-id))))
 
 (defun subed-srt--subtitle-msecs-start (&optional sub-id)
   "Subtitle start time in milliseconds or nil if it can't be found."
   (let ((timestamp (save-excursion
-                     (when (subed-srt-jump-to-subtitle-time-start sub-id)
+                     (when (subed-srt--jump-to-subtitle-time-start sub-id)
                        (when (looking-at subed-srt--regexp-timestamp)
                          (match-string 0))))))
     (when timestamp
@@ -102,7 +102,7 @@ after MSECS if there is one and its start time is >= MSECS +
 (defun subed-srt--subtitle-msecs-stop (&optional sub-id)
   "Subtitle stop time in milliseconds or nil if it can't be found."
   (let ((timestamp (save-excursion
-                     (when (subed-srt-jump-to-subtitle-time-stop sub-id)
+                     (when (subed-srt--jump-to-subtitle-time-stop sub-id)
                        (when (looking-at subed-srt--regexp-timestamp)
                          (match-string 0))))))
     (when timestamp
@@ -111,15 +111,15 @@ after MSECS if there is one and its start time is >= MSECS +
 (defun subed-srt--subtitle-text (&optional sub-id)
   "Return subtitle's text."
   (or (save-excursion
-        (let ((beg (subed-srt-jump-to-subtitle-text sub-id))
-              (end (subed-srt-jump-to-subtitle-end sub-id)))
+        (let ((beg (subed-srt--jump-to-subtitle-text sub-id))
+              (end (subed-srt--jump-to-subtitle-end sub-id)))
           (when (and beg end)
             (buffer-substring beg end)))) ""))
 
 (defun subed-srt--subtitle-relative-point ()
   "Point relative to subtitle's ID or nil if ID can't be found."
   (let ((start-point (save-excursion
-                       (when (subed-srt-jump-to-subtitle-id)
+                       (when (subed-srt--jump-to-subtitle-id)
                          (point)))))
     (when start-point
       (- (point) start-point))))
@@ -127,7 +127,7 @@ after MSECS if there is one and its start time is >= MSECS +
 
 ;;; Traversing
 
-(defun subed-srt-jump-to-subtitle-id (&optional sub-id)
+(defun subed-srt--jump-to-subtitle-id (&optional sub-id)
   "Move to the ID of a subtitle and return point.
 If SUBTITLE-ID is not given, focus the current subtitle's ID.
 Return point or nil if no subtitle ID could be found."
@@ -157,59 +157,59 @@ Return point or nil if no subtitle ID could be found."
     (when (looking-at "^\\([0-9]+\\)$")
       (point))))
 
-(defun subed-srt-jump-to-subtitle-id-at-msecs (msecs)
+(defun subed-srt--jump-to-subtitle-id-at-msecs (msecs)
   "Move point to the ID of the subtitle that is playing at MSECS.
 Return point or nil if point is still on the same subtitle.
 See also `subed-srt--subtitle-id-at-msecs'."
   (let ((current-sub-id (subed-srt--subtitle-id))
         (target-sub-id (subed-srt--subtitle-id-at-msecs msecs)))
     (when (and target-sub-id current-sub-id (not (= target-sub-id current-sub-id)))
-      (subed-srt-jump-to-subtitle-id target-sub-id))))
+      (subed-srt--jump-to-subtitle-id target-sub-id))))
 
-(defun subed-srt-jump-to-subtitle-time-start (&optional sub-id)
+(defun subed-srt--jump-to-subtitle-time-start (&optional sub-id)
   "Move point to subtitle's start time.
 Return point or nil if no start time could be found."
   (interactive)
   (save-match-data
-    (when (subed-srt-jump-to-subtitle-id sub-id)
+    (when (subed-srt--jump-to-subtitle-id sub-id)
       (forward-line)
       (when (looking-at subed-srt--regexp-timestamp)
         (point)))))
 
-(defun subed-srt-jump-to-subtitle-time-stop (&optional sub-id)
+(defun subed-srt--jump-to-subtitle-time-stop (&optional sub-id)
   "Move point to subtitle's stop time.
 Return point or nil if no stop time could be found."
   (interactive)
   (save-match-data
-    (when (subed-srt-jump-to-subtitle-id sub-id)
+    (when (subed-srt--jump-to-subtitle-id sub-id)
       (forward-line 1)
       (re-search-forward " *--> *" (point-at-eol) t)
       (when (looking-at subed-srt--regexp-timestamp)
         (point)))))
 
-(defun subed-srt-jump-to-subtitle-text (&optional sub-id)
+(defun subed-srt--jump-to-subtitle-text (&optional sub-id)
   "Move point on the first character of subtitle's text.
 Return point."
   (interactive)
-  (when (subed-srt-jump-to-subtitle-id sub-id)
+  (when (subed-srt--jump-to-subtitle-id sub-id)
     (forward-line 2)
     (point)))
 
-(defun subed-srt-jump-to-subtitle-text-at-msecs (msecs)
+(defun subed-srt--jump-to-subtitle-text-at-msecs (msecs)
   "Move point to the text of the subtitle that is playing at MSECS.
 Return point or nil if point is still on the same subtitle.
 See also `subed-srt--subtitle-id-at-msecs'."
-  (when (subed-srt-jump-to-subtitle-id-at-msecs msecs)
-    (subed-srt-jump-to-subtitle-text)))
+  (when (subed-srt--jump-to-subtitle-id-at-msecs msecs)
+    (subed-srt--jump-to-subtitle-text)))
 
-(defun subed-srt-jump-to-subtitle-end (&optional sub-id)
+(defun subed-srt--jump-to-subtitle-end (&optional sub-id)
   "Move point after the last character of the subtitle's text.
 Return point or nil if point did not change or if no subtitle end
 can be found."
   (interactive)
   (save-match-data
     (let ((orig-point (point)))
-      (subed-srt-jump-to-subtitle-text sub-id)
+      (subed-srt--jump-to-subtitle-text sub-id)
       ;; Look for next separator or end of buffer.  We can't use
       ;; `subed-srt--regexp-separator' here because if subtitle text is empty,
       ;; it may be the only empty line in the separator, i.e. there's only one
@@ -220,78 +220,78 @@ can be found."
       (unless (= (point) orig-point)
         (point)))))
 
-(defun subed-srt-forward-subtitle-id ()
+(defun subed-srt--forward-subtitle-id ()
   "Move point to next subtitle's ID.
 Return point or nil if there is no next subtitle."
   (interactive)
   (save-match-data
     (when (re-search-forward (concat subed-srt--regexp-separator "[0-9]+\n") nil t)
-      (subed-srt-jump-to-subtitle-id))))
+      (subed-srt--jump-to-subtitle-id))))
 
-(defun subed-srt-backward-subtitle-id ()
+(defun subed-srt--backward-subtitle-id ()
   "Move point to previous subtitle's ID.
 Return point or nil if there is no previous subtitle."
   (interactive)
   (let ((orig-point (point))
         (orig-sub-id (subed-srt--subtitle-id)))
-    (when (subed-srt-jump-to-subtitle-id)
+    (when (subed-srt--jump-to-subtitle-id)
       (forward-line -1)
       (if (= (subed-srt--subtitle-id) orig-sub-id)
           (progn (goto-char orig-point)
                  nil)
-        (subed-srt-jump-to-subtitle-id)))))
+        (subed-srt--jump-to-subtitle-id)))))
 
-(defun subed-srt-forward-subtitle-text ()
+(defun subed-srt--forward-subtitle-text ()
   "Move point to next subtitle's text.
 Return point or nil if there is no next subtitle."
   (interactive)
-  (when (subed-srt-forward-subtitle-id)
-    (subed-srt-jump-to-subtitle-text)))
+  (when (subed-srt--forward-subtitle-id)
+    (subed-srt--jump-to-subtitle-text)))
 
-(defun subed-srt-backward-subtitle-text ()
+(defun subed-srt--backward-subtitle-text ()
   "Move point to previous subtitle's text.
 Return point or nil if there is no previous subtitle."
   (interactive)
-  (when (subed-srt-backward-subtitle-id)
-    (subed-srt-jump-to-subtitle-text)))
+  (when (subed-srt--backward-subtitle-id)
+    (subed-srt--jump-to-subtitle-text)))
 
-(defun subed-srt-forward-subtitle-end ()
+(defun subed-srt--forward-subtitle-end ()
   "Move point to end of next subtitle.
 Return point or nil if there is no next subtitle."
   (interactive)
-  (when (subed-srt-forward-subtitle-id)
-    (subed-srt-jump-to-subtitle-end)))
+  (when (subed-srt--forward-subtitle-id)
+    (subed-srt--jump-to-subtitle-end)))
 
-(defun subed-srt-backward-subtitle-end ()
+(defun subed-srt--backward-subtitle-end ()
   "Move point to end of previous subtitle.
 Return point or nil if there is no previous subtitle."
   (interactive)
-  (when (subed-srt-backward-subtitle-id)
-    (subed-srt-jump-to-subtitle-end)))
+  (when (subed-srt--backward-subtitle-id)
+    (subed-srt--jump-to-subtitle-end)))
 
-(defun subed-srt-forward-subtitle-time-start ()
+(defun subed-srt--forward-subtitle-time-start ()
   "Move point to next subtitle's start time."
   (interactive)
-  (when (subed-srt-forward-subtitle-id)
-    (subed-srt-jump-to-subtitle-time-start)))
+  (when (subed-srt--forward-subtitle-id)
+    (subed-srt--jump-to-subtitle-time-start)))
 
-(defun subed-srt-backward-subtitle-time-start ()
+(defun subed-srt--backward-subtitle-time-start ()
   "Move point to previous subtitle's start time."
   (interactive)
-  (when (subed-srt-backward-subtitle-id)
-    (subed-srt-jump-to-subtitle-time-start)))
+  (when (subed-srt--backward-subtitle-id)
+    (subed-srt--jump-to-subtitle-time-start)))
 
-(defun subed-srt-forward-subtitle-time-stop ()
+(defun subed-srt--forward-subtitle-time-stop ()
   "Move point to next subtitle's stop time."
   (interactive)
-  (when (subed-srt-forward-subtitle-id)
-    (subed-srt-jump-to-subtitle-time-stop)))
+  (when (subed-srt--forward-subtitle-id)
+    (subed-srt--jump-to-subtitle-time-stop)))
 
-(defun subed-srt-backward-subtitle-time-stop ()
+(defun subed-srt--backward-subtitle-time-stop ()
   "Move point to previous subtitle's stop time."
   (interactive)
-  (when (subed-srt-backward-subtitle-id)
-    (subed-srt-jump-to-subtitle-time-stop)))
+  (when (subed-srt--backward-subtitle-id)
+    (subed-srt--jump-to-subtitle-time-stop)))
 
 
 ;;; Manipulation
@@ -309,7 +309,7 @@ nil if nothing was adjusted."
   (let* ((msecs-start (subed-srt--subtitle-msecs-start))
          (msecs-new (when msecs-start (+ msecs-start msecs)))
          (msecs-prev (save-excursion
-                       (when (subed-srt-backward-subtitle-id)
+                       (when (subed-srt--backward-subtitle-id)
                          (subed-srt--subtitle-msecs-stop))))
          (msecs-min (if msecs-prev (+ msecs-prev subed-subtitle-spacing) 0))
          (msecs-max (subed-srt--subtitle-msecs-stop)))
@@ -323,7 +323,7 @@ nil if nothing was adjusted."
       (when (or (and (> msecs 0) (> msecs-new msecs-start))   ;; Adding
                 (and (< msecs 0) (< msecs-new msecs-start)))  ;; Subtracting
         (save-excursion
-          (subed-srt-jump-to-subtitle-time-start)
+          (subed-srt--jump-to-subtitle-time-start)
           (when (looking-at subed-srt--regexp-timestamp)
             (replace-match (subed-srt--msecs-to-timestamp msecs-new))
             (subed--run-subtitle-time-adjusted-hook)
@@ -342,7 +342,7 @@ nil if nothing was adjusted."
   (let* ((msecs-stop (subed-srt--subtitle-msecs-stop))
          (msecs-new (when msecs-stop (+ msecs-stop msecs)))
          (msecs-next (save-excursion
-                       (when (subed-srt-forward-subtitle-id)
+                       (when (subed-srt--forward-subtitle-id)
                          (subed-srt--subtitle-msecs-start))))
          (msecs-min (subed-srt--subtitle-msecs-start))
          (msecs-max (when msecs-next (- msecs-next subed-subtitle-spacing))))
@@ -356,13 +356,13 @@ nil if nothing was adjusted."
       (when (or (and (> msecs 0) (> msecs-new msecs-stop))   ;; Adding
                 (and (< msecs 0) (< msecs-new msecs-stop)))  ;; Subtracting
         (save-excursion
-          (subed-srt-jump-to-subtitle-time-stop)
+          (subed-srt--jump-to-subtitle-time-stop)
           (when (looking-at subed-srt--regexp-timestamp)
             (replace-match (subed-srt--msecs-to-timestamp msecs-new))
             (subed--run-subtitle-time-adjusted-hook)
             (- msecs-new msecs-stop)))))))
 
-(defun subed-srt-subtitle-insert (&optional arg)
+(defun subed-srt--subtitle-insert (&optional arg)
   "Insert subtitle(s).
 `universal-argument' is used in the following manner:
           \\[subed-subtitle-insert]   Insert 1 subtitle after the current subtitle
@@ -385,17 +385,17 @@ nil if nothing was adjusted."
            ;; Ensure number-of-subs is positive, now that we figured out `insert-before'
            (number-of-subs (abs number-of-subs)))
       (subed-debug "Inserting %s subtitle(s) %s the current" number-of-subs (if insert-before "before" "after"))
-      (subed-srt-jump-to-subtitle-id)
+      (subed-srt--jump-to-subtitle-id)
       ;; Move to the ID of the subtitle we're prepending subtitles to so that we
       ;; can do (insert "<new subtitle>")
       (if insert-before
-          (subed-srt-jump-to-subtitle-id)
-        (when (and (not (subed-srt-forward-subtitle-id)) ;; Appending after last subtitle
+          (subed-srt--jump-to-subtitle-id)
+        (when (and (not (subed-srt--forward-subtitle-id)) ;; Appending after last subtitle
                    (> (buffer-size) 0))                  ;; Buffer is not empty
           ;; There is no ID because we're appending to the last subtitle.  We just
           ;; have to make sure there is a subtitle delimiter ("\n\n") after the
           ;; last subtitle and point is where the new ID will go.
-          (subed-srt-jump-to-subtitle-end)
+          (subed-srt--jump-to-subtitle-end)
           (forward-line)
           (insert "\n")))
       ;; Insert subtitles
@@ -407,7 +407,7 @@ nil if nothing was adjusted."
                                 (if (looking-at "^[0-9]$")
                                     ;; We're inserting between subtitles or
                                     ;; before the first one
-                                    (when (subed-srt-backward-subtitle-id)
+                                    (when (subed-srt--backward-subtitle-id)
                                            (subed-srt--subtitle-msecs-stop))
                                   ;; We're append after the last subtitle
                                   (subed-srt--subtitle-msecs-stop))))
@@ -439,25 +439,25 @@ nil if nothing was adjusted."
         (when (looking-at "^[[:blank:]]*$")
           (forward-line -1)
           (kill-whole-line)))
-      (subed-srt-regenerate-ids)
-      (subed-srt-jump-to-subtitle-text))))
+      (subed-srt--regenerate-ids)
+      (subed-srt--jump-to-subtitle-text))))
 
-(defun subed-srt-subtitle-kill ()
+(defun subed-srt--subtitle-kill ()
   "Remove subtitle at point."
   (interactive)
   (let ((beg (save-excursion
-               (subed-srt-jump-to-subtitle-id)
+               (subed-srt--jump-to-subtitle-id)
                (point)))
         (end (save-excursion
-               (subed-srt-jump-to-subtitle-id)
-               (when (subed-srt-forward-subtitle-id)
+               (subed-srt--jump-to-subtitle-id)
+               (when (subed-srt--forward-subtitle-id)
                  (point)))))
     (if (not end)
         (progn
           (let ((beg (save-excursion
                        (goto-char beg)
-                       (subed-srt-backward-subtitle-text)
-                       (subed-srt-jump-to-subtitle-end)
+                       (subed-srt--backward-subtitle-text)
+                       (subed-srt--jump-to-subtitle-end)
                        (1+ (point))))
                 (end (save-excursion
                        (goto-char (point-max)))))
@@ -468,7 +468,7 @@ nil if nothing was adjusted."
 
 ;;; Maintenance
 
-(defun subed-srt-regenerate-ids ()
+(defun subed-srt--regenerate-ids ()
   "Ensure subtitle IDs start at 1 and are incremented by 1 for
 each subtitle."
   (interactive)
@@ -476,19 +476,19 @@ each subtitle."
     (save-match-data
       (save-excursion
         (goto-char (point-min))
-        (subed-srt-jump-to-subtitle-id)
+        (subed-srt--jump-to-subtitle-id)
         (unless (string= (current-word) "1")
           (kill-word 1)
           (insert "1"))
         (let ((id 2))
-          (while (subed-srt-forward-subtitle-id)
+          (while (subed-srt--forward-subtitle-id)
             (let ((id-str (number-to-string id)))
               (unless (string= (current-word) id-str)
                 (kill-word 1)
                 (insert id-str)))
             (setq id (1+ id))))))))
 
-(defun subed-srt-sanitize ()
+(defun subed-srt--sanitize ()
   "Remove surplus newlines and whitespace."
   (interactive)
   (atomic-change-group
@@ -509,8 +509,8 @@ each subtitle."
 
        ;; Replace separators between subtitles with double newlines
        (goto-char (point-min))
-       (while (subed-srt-forward-subtitle-id)
-         (let ((prev-sub-end (save-excursion (when (subed-srt-backward-subtitle-end)
+       (while (subed-srt--forward-subtitle-id)
+         (let ((prev-sub-end (save-excursion (when (subed-srt--backward-subtitle-end)
                                                (point)))))
            (when (and prev-sub-end
                       (not (string= (buffer-substring prev-sub-end (point)) "\n\n")))
@@ -520,7 +520,7 @@ each subtitle."
        ;; Two trailing newline if last subtitle text is empty,
        ;; one trailing newline otherwise
        (goto-char (point-max))
-       (subed-srt-jump-to-subtitle-end)
+       (subed-srt--jump-to-subtitle-end)
        (unless (looking-at "\n\\'")
          (delete-region (point) (point-max))
          (insert "\n"))
@@ -532,7 +532,7 @@ each subtitle."
            (unless (= (length (match-string 0)) 5)
              (replace-match " --> "))))))))
 
-(defun subed-srt-validate ()
+(defun subed-srt--validate ()
   "Move point to the first invalid subtitle and report an error."
   (interactive)
   (when (> (buffer-size) 0)
@@ -559,24 +559,24 @@ each subtitle."
               (error "Found invalid stop time: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1))))
           (goto-char orig-point))))))
 
-(defun subed-srt-sort ()
+(defun subed-srt--sort ()
   "Sanitize, then sort subtitles by start time and re-number them."
   (interactive)
   (atomic-change-group
-    (subed-srt-sanitize)
-    (subed-srt-validate)
+    (subed-srt--sanitize)
+    (subed-srt--validate)
     (subed--save-excursion
      (goto-char (point-min))
      (sort-subr nil
                 ;; nextrecfun (move to next record/subtitle or to end-of-buffer
                 ;; if there are no more records)
-                (lambda () (unless (subed-srt-forward-subtitle-id)
+                (lambda () (unless (subed-srt--forward-subtitle-id)
                              (goto-char (point-max))))
                 ;; endrecfun (move to end of current record/subtitle)
-                #'subed-srt-jump-to-subtitle-end
+                #'subed-srt--jump-to-subtitle-end
                 ;; startkeyfun (return sort value of current record/subtitle)
                 #'subed-srt--subtitle-msecs-start))
-    (subed-srt-regenerate-ids)))
+    (subed-srt--regenerate-ids)))
 
 (provide 'subed-srt)
 ;;; subed-srt.el ends here
