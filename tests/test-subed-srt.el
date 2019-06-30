@@ -606,26 +606,27 @@ Baz.
 (describe "Adjusting subtitle start/stop time"
           :var (subed-subtitle-time-adjusted-hook)
           (it "runs the appropriate hook."
-              (let ((foo (setf (symbol-function 'foo) (lambda (sub-id msecs) ()))))
+              (let ((foo (setf (symbol-function 'foo) (lambda (msecs) ()))))
                 (spy-on 'foo)
                 (add-hook 'subed-subtitle-time-adjusted-hook 'foo)
                 (with-temp-buffer
                   (insert mock-srt-data)
                   (expect (subed-increase-start-time) :to-equal 100)
-                  (expect 'foo :to-have-been-called-with 3 183550)
+                  (expect 'foo :to-have-been-called-with 183550)
                   (expect 'foo :to-have-been-called-times 1)
                   (subed-srt--jump-to-subtitle-id 1)
                   (expect (subed-increase-stop-time) :to-equal 100)
-                  (expect 'foo :to-have-been-called-with 1 61000)
+                  (expect 'foo :to-have-been-called-with 61000)
                   (expect 'foo :to-have-been-called-times 2)
                   (subed-srt--jump-to-subtitle-end 2)
                   (expect (subed-decrease-start-time) :to-equal -100)
-                  (expect 'foo :to-have-been-called-with 2 122134)
+                  (expect 'foo :to-have-been-called-with 122134)
                   (expect 'foo :to-have-been-called-times 3)
                   (subed-srt--jump-to-subtitle-text 3)
                   (expect (subed-decrease-stop-time) :to-equal -100)
-                  (expect 'foo :to-have-been-called-with 3 183550)
-                  (expect 'foo :to-have-been-called-times 4))))
+                  (expect 'foo :to-have-been-called-with 183550)
+                  (expect 'foo :to-have-been-called-times 4))
+                (remove-hook 'subed-subtitle-time-adjusted-hook 'foo)))
           (it "adjusts the start/stop time."
               (with-temp-buffer
                 (insert mock-srt-data)
