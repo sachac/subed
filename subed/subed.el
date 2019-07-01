@@ -578,15 +578,20 @@ buffer."
 
 
 (defun subed-guess-video-file ()
-  "Return path to video if replacing the buffer file name's
-extension with members of `subed-video-extensions' yields an
-existing file."
-  (catch 'found-videofile
-    (let ((file-base (file-name-sans-extension (buffer-file-name))))
-      (dolist (extension subed-video-extensions)
-        (let ((file-video (format "%s.%s" file-base extension)))
-          (when (file-exists-p file-video)
-            (throw 'found-videofile file-video)))))))
+  "Find video file with same base name as the opened file in the buffer.
+
+The file extension of function `buffer-file-name' is replaced
+with each item in `subed-video-extensions' and the first existing
+file is returned.
+
+Return nil if function `buffer-file-name' returns nil."
+  (when (buffer-file-name)
+    (catch 'found-videofile
+      (let ((file-base (file-name-sans-extension (buffer-file-name))))
+        (dolist (extension subed-video-extensions)
+          (let ((file-video (format "%s.%s" file-base extension)))
+            (when (file-exists-p file-video)
+              (throw 'found-videofile file-video))))))))
 
 
 (defun subed-mode-enable ()
