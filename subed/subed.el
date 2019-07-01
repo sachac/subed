@@ -614,6 +614,7 @@ Return nil if function `buffer-file-name' returns nil."
               (throw 'found-videofile file-video))))))))
 
 
+;;;###autoload
 (defun subed-mode-enable ()
   "Enable subed mode."
   (interactive)
