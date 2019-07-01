@@ -19,9 +19,13 @@
 ;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ;; Boston, MA 02110-1301, USA.
 
-;;; Code:
 
-;; Key bindings
+;;; Commentary:
+
+;; Customization variables, hooks, keybindings, etc for subed-mode.
+
+
+;;; Code:
 
 (defvar subed-mode-map
   (let ((subed-mode-map (make-keymap)))
@@ -51,7 +55,7 @@
     (define-key subed-mode-map (kbd "C-c .") #'subed-toggle-sync-point-to-player)
     (define-key subed-mode-map (kbd "C-c ,") #'subed-toggle-sync-player-to-point)
     subed-mode-map)
-  "Keymap for subed-mode")
+  "Keymap for ‘subed-mode’.")
 
 
 ;; Syntax highlighting
@@ -104,29 +108,31 @@ This is set by `subed-mode-enable' and `subed-mode-disable'.")
   :group 'subed)
 
 (defcustom subed-auto-find-video t
-  "Whether to open the video automatically when opening a subtitle file.
-The corresponding video is found by replacing the file extension
-of `buffer-file-name' with those in `subed-video-extensions'.
-The first existing file is then passed to `subed-open-video'."
+  "Whether to open the video automatically when opening a subtitle file."
   :type 'boolean
   :group 'subed)
 
 
 (defcustom subed-milliseconds-adjust 100
-  "Number of milliseconds to add/subtract to subtitle start/stop
-times when adjust, moving or shifting subtitles.
+  "Milliseconds to add or subtract from start/stop time.
 
-This variable is set if the functions that use this variable are
-called with a prefix argument.  That makes the value of this
-variable persistent for the duration of the sessio.  Use
-`setq-default' to change the default value."
+This variable is used when adjusting, moving or shifting
+subtitles without a prefix argument.
+
+This variable is set when adjusting, moving or shifting subtitles
+with a prefix argument.  See `subed-increase-start-time' for
+details.
+
+Use `setq-default' to change the default value of this variable."
   :type 'float
   :group 'subed)
 
 (defun subed-get-milliseconds-adjust (arg)
-  "Set `subed-milliseconds-adjust' to `arg' if it's a number.  If
-`arg' is non-nil, reset `subed-milliseconds-adjust' to its
+  "Set `subed-milliseconds-adjust' to ARG if it's a number.
+
+If ARG is non-nil, reset `subed-milliseconds-adjust' to its
 default.
+
 Return new `subed-milliseconds-adjust' value."
   (cond ((integerp arg)
           (setq subed-milliseconds-adjust arg))                     ;; Custom adjustment
@@ -136,20 +142,18 @@ Return new `subed-milliseconds-adjust' value."
 
 
 (defcustom subed-playback-speed-while-typing 0
-  "Video playback speed while the user is editing the buffer.  If
-set to zero or smaller, playback is paused."
+  "Video playback speed while the user is editing the buffer.
+If set to zero or smaller, playback is paused."
   :type 'float
   :group 'subed)
 
 (defcustom subed-playback-speed-while-not-typing 1.0
-  "Video playback speed while the user is not editing the
-buffer."
+  "Video playback speed while the user is not editing the buffer."
   :type 'float
   :group 'subed)
 
 (defcustom subed-unpause-after-typing-delay 1.0
-  "Number of seconds to wait after typing stopped before
-unpausing the player."
+  "Number of seconds to wait after typing stopped before unpausing the player."
   :type 'float
   :group 'subed)
 
@@ -158,26 +162,22 @@ unpausing the player."
 
 
 (defcustom subed-subtitle-spacing 100
-  "How many milliseconds to keep between subtitles when adjusting
-or inserting subtitles."
+  "Milliseconds between subtitles when adjusting or inserting subtitles."
   :type 'integer
   :group 'subed)
 
 (defcustom subed-default-subtitle-length 1.0
-  "How long to make subtitles in seconds when inserted after the
-last subtitle."
+  "How long to make subtitles in seconds when inserted after the last subtitle."
   :type 'float
   :group 'subed)
 
 (defcustom subed-loop-seconds-before 0
-  "When looping over subtitle(s), start the loop this many
-earlier."
+  "Prelude in seconds when looping over subtitle(s)."
   :type 'float
   :group 'subed)
 
 (defcustom subed-loop-seconds-after 0
-  "When looping over subtitle(s), end the loop this many seconds
-later."
+  "Addendum in seconds when looping over subtitle(s)."
   :type 'float
   :group 'subed)
 
@@ -189,8 +189,7 @@ later."
 
 
 (defcustom subed-point-sync-delay-after-motion 1.0
-  "Number of seconds the player can't adjust point after point
-was moved by the user."
+  "Number of seconds the player can't adjust point after point was moved by the user."
   :type 'float
   :group 'subed)
 

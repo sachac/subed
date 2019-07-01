@@ -19,6 +19,12 @@
 ;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ;; Boston, MA 02110-1301, USA.
 
+
+;;; Commentary:
+
+;; SubRip/srt implementation for subed-mode.
+
+
 ;;; Code:
 
 ;;; Syntax highlighting
@@ -29,7 +35,7 @@
    '("[0-9]+:[0-9]+:[0-9]+,[0-9]+" . 'subed-srt-time-face)
    '(",[0-9]+ \\(-->\\) [0-9]+:" 1 'subed-srt-time-separator-face t)
    '("^.*$" . 'subed-srt-text-face))
-  "Highlighting expressions for subed-mode")
+  "Highlighting expressions for `subed-mode'.")
 
 
 ;;; Parsing
@@ -97,7 +103,8 @@ after MSECS if there is one and its start time is >= MSECS +
       (subed-srt--subtitle-id))))
 
 (defun subed-srt--subtitle-msecs-start (&optional sub-id)
-  "Subtitle start time in milliseconds or nil if it can't be found."
+  "Subtitle start time in milliseconds or nil if it can't be found.
+If SUB-ID is not given, use subtitle on point."
   (let ((timestamp (save-excursion
                      (when (subed-srt--jump-to-subtitle-time-start sub-id)
                        (when (looking-at subed-srt--regexp-timestamp)
@@ -106,7 +113,8 @@ after MSECS if there is one and its start time is >= MSECS +
       (subed-srt--timestamp-to-msecs timestamp))))
 
 (defun subed-srt--subtitle-msecs-stop (&optional sub-id)
-  "Subtitle stop time in milliseconds or nil if it can't be found."
+  "Subtitle stop time in milliseconds or nil if it can't be found.
+If SUB-ID is not given, use subtitle on point."
   (let ((timestamp (save-excursion
                      (when (subed-srt--jump-to-subtitle-time-stop sub-id)
                        (when (looking-at subed-srt--regexp-timestamp)
@@ -115,7 +123,8 @@ after MSECS if there is one and its start time is >= MSECS +
       (subed-srt--timestamp-to-msecs timestamp))))
 
 (defun subed-srt--subtitle-text (&optional sub-id)
-  "Return subtitle's text."
+  "Return subtitle's text.
+If SUB-ID is not given, use subtitle on point."
   (or (save-excursion
         (let ((beg (subed-srt--jump-to-subtitle-text sub-id))
               (end (subed-srt--jump-to-subtitle-end sub-id)))
@@ -135,7 +144,7 @@ after MSECS if there is one and its start time is >= MSECS +
 
 (defun subed-srt--jump-to-subtitle-id (&optional sub-id)
   "Move to the ID of a subtitle and return point.
-If SUBTITLE-ID is not given, focus the current subtitle's ID.
+If SUB-ID is not given, focus the current subtitle's ID.
 Return point or nil if no subtitle ID could be found."
   (interactive)
   (save-match-data
@@ -174,6 +183,7 @@ See also `subed-srt--subtitle-id-at-msecs'."
 
 (defun subed-srt--jump-to-subtitle-time-start (&optional sub-id)
   "Move point to subtitle's start time.
+If SUB-ID is not given, use subtitle on point.
 Return point or nil if no start time could be found."
   (interactive)
   (save-match-data
@@ -184,6 +194,7 @@ Return point or nil if no start time could be found."
 
 (defun subed-srt--jump-to-subtitle-time-stop (&optional sub-id)
   "Move point to subtitle's stop time.
+If SUB-ID is not given, use subtitle on point.
 Return point or nil if no stop time could be found."
   (interactive)
   (save-match-data
@@ -195,7 +206,8 @@ Return point or nil if no stop time could be found."
 
 (defun subed-srt--jump-to-subtitle-text (&optional sub-id)
   "Move point on the first character of subtitle's text.
-Return point."
+If SUB-ID is not given, use subtitle on point.
+Return point or nil if a the subtitle's text can't be found."
   (interactive)
   (when (subed-srt--jump-to-subtitle-id sub-id)
     (forward-line 2)
@@ -210,6 +222,7 @@ See also `subed-srt--subtitle-id-at-msecs'."
 
 (defun subed-srt--jump-to-subtitle-end (&optional sub-id)
   "Move point after the last character of the subtitle's text.
+If SUB-ID is not given, use subtitle on point.
 Return point or nil if point did not change or if no subtitle end
 can be found."
   (interactive)
@@ -370,12 +383,13 @@ nil if nothing was adjusted."
 
 (defun subed-srt--subtitle-insert (&optional arg)
   "Insert subtitle(s).
-`universal-argument' is used in the following manner:
+
+ARG, usually provided by `universal-argument', is used in the
+following manner:
           \\[subed-subtitle-insert]   Insert 1 subtitle after the current subtitle
-    \\[universal-argument] - \\[subed-subtitle-insert]   Insert 1 subtitle before the current subtitle
+      \\[universal-argument] \\[subed-subtitle-insert]   Insert 1 subtitle before the current subtitle
     \\[universal-argument] 5 \\[subed-subtitle-insert]   Insert 5 subtitles after the current subtitle
   \\[universal-argument] - 5 \\[subed-subtitle-insert]   Insert 5 subtitles before the current subtitle
-      \\[universal-argument] \\[subed-subtitle-insert]   Insert 1 subtitle before the current subtitle
   \\[universal-argument] \\[universal-argument] \\[subed-subtitle-insert]   Insert 2 subtitles before the current subtitle"
   (interactive "P")
   (save-match-data
@@ -476,8 +490,7 @@ nil if nothing was adjusted."
 ;;; Maintenance
 
 (defun subed-srt--regenerate-ids ()
-  "Ensure subtitle IDs start at 1 and are incremented by 1 for
-each subtitle."
+  "Ensure consecutive, unduplicated subtitle IDs."
   (interactive)
   (atomic-change-group
     (save-match-data
@@ -497,10 +510,12 @@ each subtitle."
 
 (defvar-local subed-srt--regenerate-ids-soon-timer nil)
 (defun subed-srt--regenerate-ids-soon ()
-  "Run `subed-srt--regenerate-ids' in 100ms unless this function
-is called again within the next 100ms, in which case the
-previously scheduled call is canceled and another call is
-scheduled in 100ms."
+  "Delay regenerating subtitle IDs for a short amount of time.
+
+Run `subed-srt--regenerate-ids' in 100ms unless this function is
+called again within the next 100ms, in which case the previously
+scheduled call is canceled and another call is scheduled in
+100ms."
   (interactive)
   (when subed-srt--regenerate-ids-soon-timer
     (cancel-timer subed-srt--regenerate-ids-soon-timer))

@@ -70,7 +70,10 @@ See also `subed-mpv-socket-base'."
           (buffer-hash)))
 
 (defun subed-mpv--server-start (&rest args)
-  "Run mpv in JSON IPC mode."
+  "Run mpv in JSON IPC mode.
+
+Pass ARGS as command line arguments.  \"--idle\" and
+\"--input-ipc-server\" are hardcoded."
   (subed-mpv--server-stop)
   (let ((argv (append (list subed-mpv-executable
                             (format "--input-ipc-server=%s" (subed-mpv--socket))
@@ -100,7 +103,7 @@ See also `subed-mpv-socket-base'."
 ;;; Client (elisp process that connects to server's IPC socket)
 
 (defun subed-mpv--client-buffer ()
-  "Unique name of buffer that stores RPC responses."
+  "Unique name of buffer that store RPC responses."
   (if subed-debugging-enabled-p
       (format "*subed-mpv-buffer:%s-%s*"
               (file-name-base (or (buffer-file-name) "unnamed"))
@@ -111,8 +114,8 @@ See also `subed-mpv-socket-base'."
 
 (defun subed-mpv--client-connect (delays)
   "Try to connect to `subed-mpv--socket'.
-If a connection attempt fails, wait (car delays) seconds and try
-again, passing (cdr delays)."
+If a connection attempt fails, wait (car DELAYS) seconds and try
+again with (cdr DELAYS) as arguments."
   (subed-debug "Attempting to connect to IPC socket: %s" (subed-mpv--socket))
   (subed-mpv--client-disconnect)
   ;; NOTE: make-network-process doesn't fail when the socket file doesn't exist
@@ -177,7 +180,10 @@ CMD to `subed-mpv--client-command-queue' which is evaluated by
       t)))
 
 (defun subed-mpv--client-filter (proc response)
-  "Handle response from the server."
+  "Handle response from the server.
+
+PROC is the mpv process and RESPONSE is the response as a JSON
+string."
   ;; JSON-STRING contains zero or more lines with JSON encoded objects, e.g.:
   ;;   {"data":"mpv 0.29.1","error":"success"}
   ;;   {"data":null,"request_id":1,"error":"success"}
@@ -209,7 +215,7 @@ CMD to `subed-mpv--client-command-queue' which is evaluated by
 			    (subed-mpv--client-handle-json line)))))))))
 
 (defun subed-mpv--client-handle-json (json-string)
-  "Process a single JSON object from the server."
+  "Process server response JSON-STRING."
   (let* ((json-data (condition-case err
                         (json-read-from-string json-string)
                       (error
@@ -222,6 +228,10 @@ CMD to `subed-mpv--client-command-queue' which is evaluated by
 
 (defun subed-mpv--handle-event (json-data)
   "Handler for relevant mpv events.
+
+JSON-DATA is mpv's JSON response in the form of an association
+list.
+
 See \"List of events\" in mpv(1)."
   (let ((event (alist-get 'event json-data)))
     (pcase event
@@ -267,11 +277,11 @@ See \"List of events\" in mpv(1)."
       (setq subed-mpv-playback-speed factor))))
 
 (defun subed-mpv-seek (msec)
-  "Move playback position SEC seconds relative to current position."
+  "Move playback position MSEC milliseconds relative to current position."
   (subed-mpv--client-send `(seek ,(/ msec 1000.0) relative+exact)))
 
 (defun subed-mpv-jump (msec)
-  "Move playback position to absolute position SEC seconds."
+  "Move playback position to absolute position MSEC milliseconds."
   (subed-mpv--client-send `(seek ,(/ msec 1000.0) absolute+exact)))
 
 (defun subed-mpv-reload-subtitles ()
@@ -286,7 +296,8 @@ See \"List of events\" in mpv(1)."
              (member (file-name-extension filename) subed-video-extensions)))))
 
 (defun subed-mpv-find-video (file)
-  "Open video file in mpv.
+  "Open video file FILE in mpv.
+
 Video files are expected to have any of the extensions listed in
 `subed-video-extensions'."
   (interactive (list (read-file-name "Find video: " nil nil t nil #'subed-mpv--is-video-file-p)))

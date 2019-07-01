@@ -71,7 +71,7 @@
 ;;; Debugging
 
 (defun subed-enable-debugging ()
-  "Hide debugging messages and set `debug-on-error' to `nil'."
+  "Hide debugging messages and set `debug-on-error' to nil."
   (interactive)
   (unless subed-debugging-enabled-p
     (setq subed-debugging-enabled-p t
@@ -86,8 +86,7 @@
     (add-hook 'kill-buffer-hook #'subed-disable-debugging :append :local)))
 
 (defun subed-disable-debugging ()
-  "Display debugging messages in separate window and set
-`debug-on-error' to `t'."
+  "Display debugging messages in separate window and set `debug-on-error' to t."
   (interactive)
   (when subed-debugging-enabled-p
     (setq subed-debugging-enabled-p nil
@@ -98,19 +97,18 @@
     (remove-hook 'kill-buffer-hook #'subed-disable-debugging :local)))
 
 (defun subed-toggle-debugging ()
-  "Display or hide debugging messages in separate window and set
-`debug-on-error' to `t' or `nil'."
+  "Display or hide debugging messages in separate window and set `debug-on-error' to t or nil."
   (interactive)
   (if subed-debugging-enabled-p
       (subed-disable-debugging)
     (subed-enable-debugging)))
 
-(defun subed-debug (format-string &rest args)
-  "Display message in debugging buffer if it exists."
+(defun subed-debug (msg &rest args)
+  "Pass MSG and ARGS to `format' and show the result in debugging buffer if it exists."
   (when (get-buffer subed-debug-buffer)
     (with-current-buffer (get-buffer-create subed-debug-buffer)
       (setq-local buffer-read-only nil)
-      (insert (apply #'format (concat format-string "\n") args))
+      (insert (apply #'format (concat msg "\n") args))
       (setq-local buffer-read-only t)
       (let ((debug-window (get-buffer-window subed-debug-buffer)))
         (when debug-window
@@ -175,12 +173,11 @@ Before BODY is run, point is placed on the subtitle's ID."
 ;;; Adjusting start/stop time individually
 
 (defun subed-increase-start-time (&optional arg)
-  "Add `subed-milliseconds-adjust' milliseconds to start time of
-current subtitle.
+  "Add `subed-milliseconds-adjust' milliseconds to start time.
 
 Return new start time in milliseconds or nil if it didn't change.
 
-If a prefix argument is given, it is used to set
+If prefix argument ARG is given, it is used to set
 `subed-milliseconds-adjust' before moving subtitles.  If the
 prefix argument is given but not numerical,
 `subed-milliseconds-adjust' is reset to its default value.
@@ -196,26 +193,29 @@ Example usage:
   (subed-adjust-subtitle-start (subed-get-milliseconds-adjust arg)))
 
 (defun subed-decrease-start-time (&optional arg)
-  "Subtract `subed-milliseconds-adjust' milliseconds from start
-time of current subtitle.
+  "Subtract `subed-milliseconds-adjust' milliseconds from start time.
+
 Return new start time in milliseconds or nil if it didn't change.
-See also `subed-increase-start-time'."
+
+See `subed-increase-start-time' about ARG."
   (interactive "P")
   (subed-adjust-subtitle-start (* -1 (subed-get-milliseconds-adjust arg))))
 
 (defun subed-increase-stop-time (&optional arg)
-  "Add `subed-milliseconds-adjust' milliseconds to stop time of
-current subtitle.
+  "Add `subed-milliseconds-adjust' milliseconds to stop time.
+
 Return new stop time in milliseconds or nil if it didn't change.
-See also `subed-increase-start-time'."
+
+See `subed-increase-start-time' about ARG."
   (interactive "P")
   (subed-adjust-subtitle-stop (subed-get-milliseconds-adjust arg)))
 
 (defun subed-decrease-stop-time (&optional arg)
-  "Subtract `subed-milliseconds-adjust' milliseconds from stop
-time of current subtitle.
+  "Subtract `subed-milliseconds-adjust' milliseconds from stop time.
+
 Return new stop time in milliseconds or nil if it didn't change.
-See also `subed-increase-start-time'."
+
+See `subed-increase-start-time' about ARG."
   (interactive "P")
   (subed-adjust-subtitle-stop (* -1 (subed-get-milliseconds-adjust arg))))
 
@@ -247,14 +247,15 @@ subtitle if replaying is enabled."
       (subed-mpv-jump (subed-subtitle-msecs-start)))))
 
 (defun subed-move-subtitle-forward (&optional arg)
-  "Move subtitle `subed-milliseconds-adjust' forward in time
-while preserving its duration, i.e. increase start and stop time
-by the same amount.
+  "Move subtitle `subed-milliseconds-adjust' forward.
+
+Moving adjusts start and stop time by the same amount, preserving
+subtitle duration.
 
 All subtitles that are fully or partially in the active region
 are moved.
 
-If a prefix argument is given, it is used to set
+If prefix argument ARG is given, it is used to set
 `subed-milliseconds-adjust' before moving subtitles.  If the
 prefix argument is given but not numerical,
 `subed-milliseconds-adjust' is reset to its default value.
@@ -274,11 +275,9 @@ Example usage:
     (subed-move-subtitles msecs beg end)))
 
 (defun subed-move-subtitle-backward (&optional arg)
-  "Move subtitle `subed-milliseconds-adjust' backward in time
-while preserving its duration, i.e. decrease start and stop time
-by the same amount.
+  "Move subtitle `subed-milliseconds-adjust' backward.
 
-See `subed-move-subtitle-forward'."
+See `subed-move-subtitle-forward' about ARG."
   (interactive "P")
   (let ((deactivate-mark nil)
         (msecs (* -1 (subed-get-milliseconds-adjust arg)))
@@ -291,8 +290,12 @@ See `subed-move-subtitle-forward'."
 ;;; (same as moving, but follow-up subtitles are also moved)
 
 (defun subed-shift-subtitle-forward (&optional arg)
-  "Shifting subtitles is like moving them, but it always moves
-the subtitles between point and the end of the buffer."
+  "Shift subtitle `subed-milliseconds-adjust' backward.
+
+Shifting is like moving, but it always moves the subtitles
+between point and the end of the buffer.
+
+See `subed-move-subtitle-forward' about ARG."
   (interactive "P")
   (let ((deactivate-mark nil)
         (msecs (subed-get-milliseconds-adjust arg))
@@ -300,8 +303,12 @@ the subtitles between point and the end of the buffer."
     (subed-move-subtitles msecs beg)))
 
 (defun subed-shift-subtitle-backward (&optional arg)
-  "Shifting subtitles is like moving them, but it always moves
-the subtitles between point and the end of the buffer."
+  "Shift subtitle `subed-milliseconds-adjust' backward.
+
+Shifting is like moving, but it always moves the subtitles
+between point and the end of the buffer.
+
+See `subed-move-subtitle-forward' about ARG."
   (interactive "P")
   (let ((deactivate-mark nil)
         (msecs (* -1 (subed-get-milliseconds-adjust arg)))
@@ -312,12 +319,13 @@ the subtitles between point and the end of the buffer."
 ;;; Replay time-adjusted subtitle
 
 (defun subed-replay-adjusted-subtitle-p ()
-  "Whether adjusting a subtitle's start/stop time causes the
-player to jump to the subtitle's start position."
+  "Whether the player jumps to start time if start or stop time is adjusted."
   (member #'subed--replay-adjusted-subtitle subed-subtitle-time-adjusted-hook))
 
 (defun subed-enable-replay-adjusted-subtitle (&optional quiet)
-  "Automatically replay a subtitle when its start/stop time is adjusted."
+  "Automatically replay a subtitle when its start/stop time is adjusted.
+
+If QUIET is non-nil, do not display a message in the minibuffer."
   (interactive)
   (unless (subed-replay-adjusted-subtitle-p)
     (add-hook 'subed-subtitle-time-adjusted-hook #'subed--replay-adjusted-subtitle :append :local)
@@ -326,7 +334,9 @@ player to jump to the subtitle's start position."
       (message "Enabled replaying adjusted subtitle"))))
 
 (defun subed-disable-replay-adjusted-subtitle (&optional quiet)
-  "Do not replay a subtitle automatically when its start/stop time is adjusted."
+  "Do not replay a subtitle automatically when its start/stop time is adjusted.
+
+If QUIET is non-nil, do not display a message in the minibuffer."
   (interactive)
   (when (subed-replay-adjusted-subtitle-p)
     (remove-hook 'subed-subtitle-time-adjusted-hook #'subed--replay-adjusted-subtitle :local)
@@ -335,8 +345,7 @@ player to jump to the subtitle's start position."
       (message "Disabled replaying adjusted subtitle"))))
 
 (defun subed-toggle-replay-adjusted-subtitle ()
-  "Enable or disable automatic replaying of subtitle when its
-start/stop time is adjusted."
+  "Enable/disable subtitle replay when start/stop time is adjusted."
   (interactive)
   (if (subed-replay-adjusted-subtitle-p)
       (subed-disable-replay-adjusted-subtitle)
@@ -355,7 +364,9 @@ start/stop time is adjusted."
   (member #'subed--sync-point-to-player subed-mpv-playback-position-hook))
 
 (defun subed-enable-sync-point-to-player (&optional quiet)
-  "Automatically move point to the currently playing subtitle."
+  "Automatically move point to the currently playing subtitle.
+
+If QUIET is non-nil, do not display a message in the minibuffer."
   (interactive)
   (unless (subed-sync-point-to-player-p)
     (add-hook 'subed-mpv-playback-position-hook #'subed--sync-point-to-player :append :local)
@@ -364,8 +375,9 @@ start/stop time is adjusted."
       (message "Enabled syncing point to playback position"))))
 
 (defun subed-disable-sync-point-to-player (&optional quiet)
-  "Do not move point automatically to the currently playing
-subtitle."
+  "Do not move point automatically to the currently playing subtitle.
+
+If QUIET is non-nil, do not display a message in the minibuffer."
   (interactive)
   (when (subed-sync-point-to-player-p)
     (remove-hook 'subed-mpv-playback-position-hook #'subed--sync-point-to-player :local)
@@ -374,15 +386,14 @@ subtitle."
       (message "Disabled syncing point to playback position"))))
 
 (defun subed-toggle-sync-point-to-player ()
-  "Enable or disable moving point automatically to the currently
-playing subtitle."
+  "Enable/disable moving point to the currently playing subtitle."
   (interactive)
   (if (subed-sync-point-to-player-p)
       (subed-disable-sync-point-to-player)
     (subed-enable-sync-point-to-player)))
 
 (defun subed--sync-point-to-player (msecs)
-  "Move point to currently playing subtitle."
+  "Move point to subtitle at MSECS."
   (when (and (not (use-region-p))
              (subed-jump-to-subtitle-text-at-msecs msecs))
     (subed-debug "Synchronized point to playback position: %s -> #%s"
@@ -398,8 +409,9 @@ playing subtitle."
 
 (defvar-local subed--point-sync-delay-after-motion-timer nil)
 (defun subed-disable-sync-point-to-player-temporarily ()
-  "If point is synced to playback position, temporarily disable
-that for `subed-point-sync-delay-after-motion' seconds."
+  "Temporarily disable syncing point to player.
+
+After `subed-point-sync-delay-after-motion' seconds point is re-synced."
   (if subed--point-sync-delay-after-motion-timer
       (cancel-timer subed--point-sync-delay-after-motion-timer)
     (setq subed--point-was-synced (subed-sync-point-to-player-p)))
@@ -416,12 +428,13 @@ that for `subed-point-sync-delay-after-motion' seconds."
 ;;; Sync player-to-point
 
 (defun subed-sync-player-to-point-p ()
-  "Whether playback position is automatically adjusted to
-subtitle at point."
+  "Whether playback position jumps to subtitle at point."
   (member #'subed--sync-player-to-point subed-subtitle-motion-hook))
 
 (defun subed-enable-sync-player-to-point (&optional quiet)
-  "Automatically seek player to subtitle at point."
+  "Automatically seek player to subtitle at point.
+
+If QUIET is non-nil, do not display a message in the minibuffer."
   (interactive)
   (unless (subed-sync-player-to-point-p)
     (subed--sync-player-to-point)
@@ -431,7 +444,9 @@ subtitle at point."
       (message "Enabled syncing playback position to point"))))
 
 (defun subed-disable-sync-player-to-point (&optional quiet)
-  "Do not automatically seek player to subtitle at point."
+  "Do not automatically seek player to subtitle at point.
+
+If QUIET is non-nil, do not display a message in the minibuffer."
   (interactive)
   (when (subed-sync-player-to-point-p)
     (remove-hook 'subed-subtitle-motion-hook #'subed--sync-player-to-point :local)
@@ -462,13 +477,13 @@ subtitle at point."
 ;;; Loop over single subtitle
 
 (defun subed-subtitle-loop-p ()
-  "Whether player is rewinded to start of current subtitle every
-time it reaches the subtitle's stop time."
+  "Whether the player is looping over the current subtitle."
   (or subed--subtitle-loop-start subed--subtitle-loop-stop))
 
 (defun subed-toggle-subtitle-loop (&optional quiet)
-  "Enable or disable looping in player over currently focused
-subtitle."
+  "Enable or disable looping in player over the current subtitle.
+
+If QUIET is non-nil, do not display a message in the minibuffer."
   (interactive)
   (if (subed-subtitle-loop-p)
       (progn
@@ -499,8 +514,7 @@ subtitle."
            (subed-srt--msecs-to-timestamp subed--subtitle-loop-stop)))
 
 (defun subed--ensure-subtitle-loop (cur-msecs)
-  "Seek back to `subed--subtitle-loop-start' if player is after
-`subed--subtitle-loop-stop'."
+  "Jump to current subtitle start time if CUR-MSECS is after stop time."
   (when (and subed--subtitle-loop-start subed--subtitle-loop-stop
              subed-mpv-is-playing)
     (when (or (< cur-msecs subed--subtitle-loop-start)
@@ -515,15 +529,19 @@ subtitle."
 ;;; Pause player while the user is editing
 
 (defun subed-pause-while-typing-p ()
-  "Whether player is automatically paused or slowed down while
-the user is editing the buffer.
+  "Whether player is automatically paused or slowed down during editing.
+
 See `subed-playback-speed-while-typing' and
 `subed-playback-speed-while-not-typing'."
   (member #'subed--pause-while-typing after-change-functions))
 
 (defun subed-enable-pause-while-typing (&optional quiet)
-  "Automatically pause player while the user is editing the
-buffer for `subed-unpause-after-typing-delay' seconds."
+  "Pause player while the user is editing a subtitle.
+
+After `subed-unpause-after-typing-delay' seconds, playback is
+resumed automatically unless the player was paused already.
+
+If QUIET is non-nil, do not display a message in the minibuffer."
   (unless (subed-pause-while-typing-p)
     (add-hook 'after-change-functions #'subed--pause-while-typing :append :local)
     (when (not quiet)
@@ -534,16 +552,16 @@ buffer for `subed-unpause-after-typing-delay' seconds."
                  subed-playback-speed-while-typing)))))
 
 (defun subed-disable-pause-while-typing (&optional quiet)
-  "Do not automatically pause player while the user is editing
-the buffer."
+  "Do not automatically pause player while the user is editing the buffer.
+
+If QUIET is non-nil, do not display a message in the minibuffer."
   (when (subed-pause-while-typing-p)
     (remove-hook 'after-change-functions #'subed--pause-while-typing :local)
     (when (not quiet)
       (message "Playback speed will not change while subtitle texts are edited"))))
 
 (defun subed-toggle-pause-while-typing ()
-  "Enable or disable auto-pausing while the user is editing the
-buffer."
+  "Enable or disable auto-pausing while the user is editing the buffer."
   (interactive)
   (if (subed-pause-while-typing-p)
       (subed-disable-pause-while-typing)
@@ -551,10 +569,12 @@ buffer."
 
 (defvar-local subed--unpause-after-typing-timer nil)
 (defun subed--pause-while-typing (&rest args)
-  "Pause or slow down playback for `subed-unpause-after-typing-delay' seconds."
+  "Pause or slow down playback for `subed-unpause-after-typing-delay' seconds.
+
+This function is meant to be an item in `after-change-functions'
+and therefore gets ARGS, which is ignored."
   (when subed--unpause-after-typing-timer
     (cancel-timer subed--unpause-after-typing-timer))
-
   (when (or subed-mpv-is-playing subed--player-is-auto-paused)
     (if (<= subed-playback-speed-while-typing 0)
         ;; Pause playback
@@ -643,7 +663,7 @@ Return nil if function `buffer-file-name' returns nil."
 (defun subed-mode ()
   "Major mode for editing subtitles.
 
-This function enables or disables subed-mode.  See also
+This function enables or disables `subed-mode'.  See also
 `subed-mode-enable' and `subed-mode-disable'.
 
 Key bindings:
