@@ -3,11 +3,11 @@
 (require 'subed-srt)
 
 (describe "Iterating over subtitles"
-          (it "without beginning and end."
+          (it "without providing beginning and end."
               (with-temp-buffer
                 (insert mock-srt-data)
                 (subed-jump-to-subtitle-time-stop 1)
-                (subed-for-each-subtitle nil nil
+                (subed-for-each-subtitle nil nil nil
                   (expect (looking-at "^[0-9]$") :to-be t)
                   (forward-line 2)
                   (kill-line)
@@ -17,7 +17,7 @@
                 (expect (subed-srt--subtitle-text 3) :to-equal "Baz.")
                 (expect (point) :to-equal 20)
                 (subed-jump-to-subtitle-time-stop 2)
-                (subed-for-each-subtitle nil nil
+                (subed-for-each-subtitle nil nil nil
                   (expect (looking-at "^[0-9]$") :to-be t)
                   (forward-line 2)
                   (kill-line)
@@ -27,7 +27,7 @@
                 (expect (subed-srt--subtitle-text 3) :to-equal "Baz.")
                 (expect (point) :to-equal 60)
                 (subed-jump-to-subtitle-time-stop 3)
-                (subed-for-each-subtitle nil nil
+                (subed-for-each-subtitle nil nil nil
                   (expect (looking-at "^[0-9]$") :to-be t)
                   (forward-line 2)
                   (kill-line)
@@ -36,47 +36,106 @@
                 (expect (subed-srt--subtitle-text 2) :to-equal "HEllo.")
                 (expect (subed-srt--subtitle-text 3) :to-equal "HELlo.")
                 (expect (point) :to-equal 99)))
-          (it "with only the beginning."
-              (with-temp-buffer
-                (insert mock-srt-data)
-                (subed-jump-to-subtitle-time-start 1)
-                (expect (point) :to-equal 3)
-                (subed-for-each-subtitle 71 nil
-                  (expect (looking-at "^[0-9]$") :to-be t)
-                  (forward-line 2)
-                  (kill-line)
-                  (insert "Hello."))
-                (expect (subed-srt--subtitle-text 1) :to-equal "Foo.")
-                (expect (subed-srt--subtitle-text 2) :to-equal "Hello.")
-                (expect (subed-srt--subtitle-text 3) :to-equal "Hello.")
-                (expect (point) :to-equal 3)))
-          (describe "with beginning and end,"
-                    (it "excluding subtitles above."
+          (describe "providing only the beginning"
+                    (it "forwards."
                         (with-temp-buffer
                           (insert mock-srt-data)
-                          (subed-jump-to-subtitle-time-stop 1)
-                          (subed-for-each-subtitle 71 79
-                            (expect (looking-at "^[0-9]$") :to-be t)
-                            (forward-line 2)
-                            (kill-line)
-                            (insert "Hello."))
-                          (expect (subed-subtitle-text 1) :to-equal "Foo.")
-                          (expect (subed-subtitle-text 2) :to-equal "Hello.")
-                          (expect (subed-subtitle-text 3) :to-equal "Hello.")
-                          (expect (point) :to-equal 20)))
-                    (it "excluding subtitles below."
+                          (subed-jump-to-subtitle-time-start 1)
+                          (expect (point) :to-equal 3)
+                          (let ((new-texts (list "A" "B" "C")))
+                            (subed-for-each-subtitle 71 nil nil
+                              (expect (looking-at "^[0-9]$") :to-be t)
+                              (forward-line 2)
+                              (kill-line)
+                              (insert (pop new-texts))))
+                            (expect (subed-srt--subtitle-text 1) :to-equal "Foo.")
+                            (expect (subed-srt--subtitle-text 2) :to-equal "A")
+                            (expect (subed-srt--subtitle-text 3) :to-equal "B")
+                            (expect (point) :to-equal 3)))
+                    (it "backwards."
                         (with-temp-buffer
                           (insert mock-srt-data)
                           (subed-jump-to-subtitle-time-stop 3)
-                          (subed-for-each-subtitle 5 76
-                            (expect (looking-at "^[0-9]$") :to-be t)
-                            (forward-line 2)
-                            (kill-line)
-                            (insert "Hello."))
-                          (expect (subed-subtitle-text 1) :to-equal "Hello.")
-                          (expect (subed-subtitle-text 2) :to-equal "Hello.")
-                          (expect (subed-subtitle-text 3) :to-equal "Baz.")
-                          (expect (point) :to-equal 99)))
+                          (expect (point) :to-equal 95)
+                          (let ((new-texts (list "A" "B" "C")))
+                            (subed-for-each-subtitle 75 nil :reverse
+                              (expect (looking-at "^[0-9]$") :to-be t)
+                              (forward-line 2)
+                              (kill-line)
+                              (insert (pop new-texts))))
+                            (message (buffer-string))
+                            (expect (subed-srt--subtitle-text 1) :to-equal "Foo.")
+                            (expect (subed-srt--subtitle-text 2) :to-equal "B")
+                            (expect (subed-srt--subtitle-text 3) :to-equal "A")
+                            (expect (point) :to-equal 92)))
+                    )
+          (describe "providing beginning and end,"
+                    (describe "excluding subtitles above"
+                              (it "forwards."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-jump-to-subtitle-time-stop 1)
+                                    (expect (point) :to-equal 20)
+                                    (let ((new-texts (list "A" "B" "C")))
+                                      (subed-for-each-subtitle 71 79 nil
+                                        (expect (looking-at "^[0-9]$") :to-be t)
+                                        (forward-line 2)
+                                        (kill-line)
+                                        (insert (pop new-texts))))
+                                    (expect (subed-srt--subtitle-text 1) :to-equal "Foo.")
+                                    (expect (subed-srt--subtitle-text 2) :to-equal "A")
+                                    (expect (subed-srt--subtitle-text 3) :to-equal "B")
+                                    (expect (point) :to-equal 20)))
+                              (it "backwards."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-jump-to-subtitle-time-start 3)
+                                    (expect (point) :to-equal 79)
+                                    (let ((new-texts (list "A" "B" "C")))
+                                      (subed-for-each-subtitle 39 77 :reverse
+                                        (expect (looking-at "^[0-9]$") :to-be t)
+                                        (forward-line 2)
+                                        (kill-line)
+                                        (insert (pop new-texts))))
+                                    (message (buffer-string))
+                                    (expect (subed-srt--subtitle-text 1) :to-equal "Foo.")
+                                    (expect (subed-srt--subtitle-text 2) :to-equal "B")
+                                    (expect (subed-srt--subtitle-text 3) :to-equal "A")
+                                    (expect (point) :to-equal 76)))
+                              )
+                    (describe "excluding subtitles below"
+                              (it "forwards."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-jump-to-subtitle-text 3)
+                                    (expect (point) :to-equal 106)
+                                    (let ((new-texts (list "A" "B" "C")))
+                                      (subed-for-each-subtitle 5 76 nil
+                                        (expect (looking-at "^[0-9]$") :to-be t)
+                                        (forward-line 2)
+                                        (kill-line)
+                                        (insert (pop new-texts))))
+                                    (expect (subed-srt--subtitle-text 1) :to-equal "A")
+                                    (expect (subed-srt--subtitle-text 2) :to-equal "B")
+                                    (expect (subed-srt--subtitle-text 3) :to-equal "Baz.")
+                                    (expect (point) :to-equal 100)))
+                              (it "backwards."
+                                  (with-temp-buffer
+                                    (insert mock-srt-data)
+                                    (subed-jump-to-subtitle-time-stop 2)
+                                    (expect (point) :to-equal 58)
+                                    (let ((new-texts (list "A" "B" "C")))
+                                      (subed-for-each-subtitle 20 76 :reverse
+                                        (expect (looking-at "^[0-9]$") :to-be t)
+                                        (forward-line 2)
+                                        (kill-line)
+                                        (insert (pop new-texts))))
+                                    (message (buffer-string))
+                                    (expect (subed-srt--subtitle-text 1) :to-equal "B")
+                                    (expect (subed-srt--subtitle-text 2) :to-equal "A")
+                                    (expect (subed-srt--subtitle-text 3) :to-equal "Baz.")
+                                    (expect (point) :to-equal 55)))
+                              )
                     )
           )
 

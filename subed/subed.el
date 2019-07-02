@@ -133,10 +133,11 @@ subtitles) as long the subtitle IDs don't change."
          ('beginning-of-buffer nil)
          ('end-of-buffer nil)))))
 
-(defmacro subed-for-each-subtitle (&optional beg end &rest body)
+(defmacro subed-for-each-subtitle (&optional beg end reverse &rest body)
   "Run BODY for each subtitle between the region specified by BEG and END.
 If END is nil, it defaults to `point-max'.
 If BEG and END are both nil, run BODY only on the subtitle at point.
+If REVERSE is non-nil, start on the subtitle at END and move backwards.
 Before BODY is run, point is placed on the subtitle's ID."
   (declare (indent defun))
   `(atomic-change-group
@@ -144,17 +145,34 @@ Before BODY is run, point is placed on the subtitle's ID."
          ;; Run body on subtitle at point
          (save-excursion (subed-jump-to-subtitle-id)
                          ,@body)
-       ;; Run body on multiple subtitles
-       (save-excursion
-         (goto-char ,beg)
-         (subed-jump-to-subtitle-id)
-         (catch 'last-subtitle-reached
-           (while t
-             (when (> (point) (or ,end (point-max)))
-               (throw 'last-subtitle-reached t))
-             (progn ,@body)
-             (unless (subed-forward-subtitle-id)
-               (throw 'last-subtitle-reached t))))))))
+       (let ((begm (make-marker))
+             (endm (make-marker)))
+         (set-marker begm ,beg)
+         (set-marker endm (or ,end (point-max)))
+         ;; Run body on multiple subtitles
+         (if ,reverse
+             ;; Iterate backwards
+             (save-excursion (goto-char endm)
+                             (subed-jump-to-subtitle-id)
+                             (catch 'first-subtitle-reached
+                               (while t
+                                 ;; The subtitle includes every character up to the next subtitle's ID (or eob)
+                                 (let ((sub-end (save-excursion (subed-jump-to-subtitle-end))))
+                                   (when (< sub-end begm)
+                                     (throw 'first-subtitle-reached t)))
+                                   (progn ,@body)
+                                   (unless (subed-backward-subtitle-id)
+                                     (throw 'first-subtitle-reached t)))))
+           ;; Iterate forwards
+           (save-excursion (goto-char begm)
+                           (subed-jump-to-subtitle-id)
+                           (catch 'last-subtitle-reached
+                             (while t
+                               (when (> (point) endm)
+                                 (throw 'last-subtitle-reached t))
+                               (progn ,@body)
+                               (unless (subed-forward-subtitle-id)
+                                 (throw 'last-subtitle-reached t))))))))))
 
 (defmacro subed-with-subtitle-replay-disabled (&rest body)
   "Run BODY while automatic subtitle replay is disabled."
