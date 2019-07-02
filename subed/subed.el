@@ -494,11 +494,10 @@ If QUIET is non-nil, do not display a message in the minibuffer."
         (subed-debug "Disabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop)
         (when (not quiet)
           (message "Disabled looping")))
-    (progn
-      (subed--set-subtitle-loop (subed-subtitle-id))
-      (add-hook 'subed-mpv-playback-position-hook #'subed--ensure-subtitle-loop :append :local)
-      (add-hook 'subed-subtitle-motion-hook #'subed--set-subtitle-loop :append :local)
-      (subed-debug "Enabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop))))
+    (subed--set-subtitle-loop (subed-subtitle-id))
+    (add-hook 'subed-mpv-playback-position-hook #'subed--ensure-subtitle-loop :append :local)
+    (add-hook 'subed-subtitle-motion-hook #'subed--set-subtitle-loop :append :local)
+    (subed-debug "Enabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop)))
 
 (defun subed--set-subtitle-loop (&optional sub-id)
   "Set loop positions to start/stop time of SUB-ID or current subtitle."
