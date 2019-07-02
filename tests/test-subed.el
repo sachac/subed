@@ -127,7 +127,7 @@
                                 "00:00:02,000 --> 00:00:03,000\n"
                                 "Bar.\n"))
                 (subed-jump-to-subtitle-id 1)
-                (expect (subed-move-subtitle-forward 1) :to-be nil)
+                (subed-move-subtitle-forward 1)
                 (expect (subed-subtitle-msecs-start 1) :to-equal 1000)
                 (expect (subed-subtitle-msecs-stop 1) :to-equal 2000)
                 (expect (subed-subtitle-msecs-start 2) :to-equal 2000)
@@ -141,7 +141,7 @@
                                 "00:00:02,000 --> 00:00:03,000\n"
                                 "Bar.\n"))
                 (subed-jump-to-subtitle-id 2)
-                (expect (subed-move-subtitle-backward 1) :to-be nil)
+                (subed-move-subtitle-backward 1)
                 (expect (subed-subtitle-msecs-start 1) :to-equal 1000)
                 (expect (subed-subtitle-msecs-stop 1) :to-equal 2000)
                 (expect (subed-subtitle-msecs-start 2) :to-equal 2000)
