@@ -228,8 +228,8 @@ See `subed-increase-start-time' about ARG."
 Use a negative value for MSECS to move subtitles backward.
 If END is nil, move all subtitles from BEG to end of buffer.
 If BEG is nil, move only the current subtitle.
-After subtitles are moved is done, replay the first moved
-subtitle if replaying is enabled."
+After subtitles are moved, replay the first moved subtitle if
+replaying is enabled."
   (subed-with-subtitle-replay-disabled
     (subed-for-each-subtitle beg end
       (if (> msecs 0)
