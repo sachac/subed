@@ -243,7 +243,7 @@ See `subed-increase-start-time' about ARG."
 
 (defun subed-move-subtitles (msecs &optional beg end)
   "Move subtitles between BEG and END MSECS milliseconds forward.
-Use a negative value for MSECS to move subtitles backward.
+Use a negative MSECS value to move subtitles backward.
 If END is nil, move all subtitles from BEG to end of buffer.
 If BEG is nil, move only the current subtitle.
 After subtitles are moved, replay the first moved subtitle if
