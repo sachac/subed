@@ -237,7 +237,7 @@ See `subed-increase-start-time' about ARG."
   (interactive "P")
   (subed-adjust-subtitle-stop (* -1 (subed-get-milliseconds-adjust arg))))
 
-(defun subed-adjust-to-player-start-timestamp ()
+(defun subed-copy-player-pos-to-start-time ()
   "Replace current subtitle's start timestamp with mpv player's current timestamp."
   (interactive)
   (subed-srt--jump-to-subtitle-time-start)
@@ -246,7 +246,7 @@ See `subed-increase-start-time' about ARG."
     (replace-match (subed-srt--msecs-to-timestamp subed-mpv-playback-position))
     (subed--run-subtitle-time-adjusted-hook)))
 
-(defun subed-adjust-to-player-stop-timestamp ()
+(defun subed-copy-player-pos-to-stop-time ()
   "Replace current subtitle's stop timestamp with mpv player's current timestamp."
   (interactive)
   (subed-srt--jump-to-subtitle-time-stop)
