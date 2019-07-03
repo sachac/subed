@@ -655,6 +655,38 @@ Baz.
                 (expect (save-excursion (subed-srt--jump-to-subtitle-time-stop)
                                         (thing-at-point 'line)) :to-equal "00:03:03,550 --> 00:03:15,400\n")))
           (describe "enforces limits"
+                    (describe "unless the second argument is truthy"
+                              (it "when adjusting start time."
+                                  (with-temp-buffer
+                                    (insert (concat "1\n"
+                                                    "00:00:01,000 --> 00:00:02,000\n"
+                                                    "Foo.\n\n"
+                                                    "2\n"
+                                                    "00:00:02,100 --> 00:00:03,000\n"
+                                                    "Bar.\n"))
+                                    (subed-srt--jump-to-subtitle-id 2)
+                                    (expect (subed-srt--adjust-subtitle-start -100 :ignore-spacing) :to-be -100)
+                                    (expect (subed-srt--subtitle-msecs-start 2) :to-be 2000)
+                                    (expect (subed-srt--subtitle-msecs-stop 1) :to-be 2000)
+                                    (expect (subed-srt--adjust-subtitle-start -200 :ignore-spacing) :to-be -200)
+                                    (expect (subed-srt--subtitle-msecs-start 2) :to-be 1800)
+                                    (expect (subed-srt--subtitle-msecs-stop 1) :to-be 2000)))
+                              (it "when adjusting stop time."
+                                  (with-temp-buffer
+                                    (insert (concat "1\n"
+                                                    "00:00:01,000 --> 00:00:02,000\n"
+                                                    "Foo.\n\n"
+                                                    "2\n"
+                                                    "00:00:02,100 --> 00:00:03,000\n"
+                                                    "Bar.\n"))
+                                    (subed-srt--jump-to-subtitle-id 1)
+                                    (expect (subed-srt--adjust-subtitle-stop 100 :ignore-spacing) :to-be 100)
+                                    (expect (subed-srt--subtitle-msecs-stop 1) :to-be 2100)
+                                    (expect (subed-srt--subtitle-msecs-start 2) :to-be 2100)
+                                    (expect (subed-srt--adjust-subtitle-stop 200 :ignore-spacing) :to-be 200)
+                                    (expect (subed-srt--subtitle-msecs-stop 1) :to-be 2300)
+                                    (expect (subed-srt--subtitle-msecs-start 2) :to-be 2100)))
+                              )
                     (describe "when decreasing start time"
                               (it "of the first subtitle."
                                   (with-temp-buffer
