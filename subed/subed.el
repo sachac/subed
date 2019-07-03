@@ -617,18 +617,23 @@ and therefore gets ARGS, which is ignored."
 (defun subed-guess-video-file ()
   "Find video file with same base name as the opened file in the buffer.
 
-The file extension of function `buffer-file-name' is replaced
+The file extension of the function `buffer-file-name' is replaced
 with each item in `subed-video-extensions' and the first existing
-file is returned.
+file is returned. It also checks for an existing video file with
+the base name stripped from an eventual language code.
 
 Return nil if function `buffer-file-name' returns nil."
   (when (buffer-file-name)
     (catch 'found-videofile
-      (let ((file-base (file-name-sans-extension (buffer-file-name))))
-        (dolist (extension subed-video-extensions)
-          (let ((file-video (format "%s.%s" file-base extension)))
-            (when (file-exists-p file-video)
-              (throw 'found-videofile file-video))))))))
+      (let* ((file-base (file-name-sans-extension (buffer-file-name)))
+	     (file-stem (file-name-sans-extension file-base)))
+	(dolist (extension subed-video-extensions)
+	  (let ((file-base-video (format "%s.%s" file-base extension))
+		(file-stem-video (format "%s.%s" file-stem extension)))
+	    (when (file-exists-p file-base-video)
+	      (throw 'found-videofile file-base-video))
+	    (when (file-exists-p file-stem-video)
+	      (throw 'found-videofile file-stem-video))))))))
 
 
 ;;;###autoload
