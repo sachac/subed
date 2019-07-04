@@ -5,8 +5,6 @@ subed is an Emacs major mode for editing subtitles while playing the
 corresponding video with [[https://mpv.io/][mpv]].  At the moment, the only supported format is
 SubRip ( ~.srt~).
 
-subed is still alpha software.  Expect it to kill your Emacs session.
-
 ** Features
    - Quickly jump to next (~M-n~) and previous (~M-p~) subtitle text.
    - Quickly jump to the beginning (~C-M-a~) and end (~C-M-e~) of the current
