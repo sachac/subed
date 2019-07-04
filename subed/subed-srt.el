@@ -315,29 +315,39 @@ Return point or nil if there is no previous subtitle."
 
 ;;; Manipulation
 
-(defun subed-srt--adjust-subtitle-start (msecs &optional ignore-spacing)
+(defun subed-srt--adjust-subtitle-start (msecs &optional
+                                               ignore-negative-duration
+                                               ignore-spacing)
   "Add MSECS milliseconds to start time (use negative value to subtract).
 
-If the adjustment would result in overlapping subtitles, reduce
-MSECS so that there are at least `subed-subtitle-spacing'
-milliseconds between subtitles.  If IGNORE-SPACING is non-nil
-this limitation is disabled.
+Unless IGNORE-NEGATIVE-DURATION is non-nil, recude MSECS so that
+the start time isn't larger than the stop time.  Zero-length
+subtiltes are always allowed.
+
+Unless IGNORE-SPACING is non-nil, if the adjustment would result
+in gaps between subtitles being smaller than
+`subed-subtitle-spacing', reduce MSECS so that this doesn't
+happen.
 
 Return the number of milliseconds the start time was adjusted or
-nil if nothing was adjusted."
+nil if nothing changed."
   (subed-disable-sync-point-to-player-temporarily)
   (let* ((msecs-start (subed-srt--subtitle-msecs-start))
-         (msecs-new (when msecs-start (+ msecs-start msecs)))
-         (msecs-prev (save-excursion
-                       (when (subed-srt--backward-subtitle-id)
-                         (subed-srt--subtitle-msecs-stop))))
-         (msecs-min (if ignore-spacing nil (if msecs-prev (+ msecs-prev subed-subtitle-spacing) 0)))
-         (msecs-max (if ignore-spacing nil (subed-srt--subtitle-msecs-stop))))
+         (msecs-new (when msecs-start (+ msecs-start msecs))))
     (when msecs-new
-      (when (and msecs-min (< msecs-new msecs-min))
-        (setq msecs-new msecs-min))
-      (when (and msecs-max (> msecs-new msecs-max))
-        (setq msecs-new msecs-max))
+      (if (> msecs 0)
+          ;; Adding to start time
+          (unless ignore-negative-duration
+            (let ((msecs-stop (subed-srt--subtitle-msecs-stop)))
+              (setq msecs-new (min msecs-new msecs-stop))))
+        ;; Subtracting from start time
+        (unless ignore-spacing
+          (let* ((msecs-prev-stop (save-excursion (when (subed-srt--backward-subtitle-id)
+                                                    (subed-srt--subtitle-msecs-stop))))
+                 (msecs-min (if msecs-prev-stop
+                                (+ msecs-prev-stop subed-subtitle-spacing) 0)))
+            (when msecs-min
+              (setq msecs-new (max msecs-new msecs-min))))))
       ;; msecs-new must be bigger than the current start time if we are adding
       ;; or smaller if we are subtracting.
       (when (or (and (> msecs 0) (> msecs-new msecs-start))   ;; Adding
@@ -349,31 +359,39 @@ nil if nothing was adjusted."
             (subed--run-subtitle-time-adjusted-hook)
             (- msecs-new msecs-start)))))))
 
-(defun subed-srt--adjust-subtitle-stop (msecs &optional ignore-spacing)
+(defun subed-srt--adjust-subtitle-stop (msecs &optional
+                                              ignore-negative-duration
+                                              ignore-spacing)
   "Add MSECS milliseconds to stop time (use negative value to subtract).
 
-If the adjustment would result in overlapping subtitles, reduce
-MSECS so that there are at least `subed-subtitle-spacing'
-milliseconds between subtitles.  If IGNORE-SPACING is non-nil
-this limitation is disabled.
+Unless IGNORE-NEGATIVE-DURATION is non-nil, increase MSECS so
+that the stop time isn't smaller than the start time.
+Zero-length subtiltes are always allowed.
+
+Unless IGNORE-SPACING is non-nil, if the adjustment would result
+in gaps between subtitles being smaller than
+`subed-subtitle-spacing', reduce MSECS so that this doesn't
+happen.
 
 Return the number of milliseconds the stop time was adjusted or
-nil if nothing was adjusted."
+nil if nothing changed."
   (subed-disable-sync-point-to-player-temporarily)
   (let* ((msecs-stop (subed-srt--subtitle-msecs-stop))
-         (msecs-new (when msecs-stop (+ msecs-stop msecs)))
-         (msecs-next (save-excursion
-                       (when (subed-srt--forward-subtitle-id)
-                         (subed-srt--subtitle-msecs-start))))
-         (msecs-min (if ignore-spacing nil (subed-srt--subtitle-msecs-start)))
-         (msecs-max (if ignore-spacing nil (when msecs-next
-                                             (- msecs-next subed-subtitle-spacing)))))
-    (message "min:%S max:%S" msecs-min msecs-max)
+         (msecs-new (when msecs-stop (+ msecs-stop msecs))))
     (when msecs-new
-      (when (and msecs-min (< msecs-new msecs-min))
-        (setq msecs-new msecs-min))
-      (when (and msecs-max (> msecs-new msecs-max))
-        (setq msecs-new msecs-max))
+      (if (> msecs 0)
+          ;; Adding to stop time
+          (unless ignore-spacing
+            (let* ((msecs-next-start (save-excursion (when (subed-srt--forward-subtitle-id)
+                                                       (subed-srt--subtitle-msecs-start))))
+                   (msecs-max (when msecs-next-start
+                                (- msecs-next-start subed-subtitle-spacing))))
+              (when msecs-max
+                (setq msecs-new (min msecs-new msecs-max)))))
+        ;; Subtracting from stop time
+        (unless ignore-negative-duration
+          (let ((msecs-start (subed-srt--subtitle-msecs-start)))
+            (setq msecs-new (max msecs-new msecs-start)))))
       ;; msecs-new must be bigger than the current stop time if we are adding or
       ;; smaller if we are subtracting.
       (when (or (and (> msecs 0) (> msecs-new msecs-stop))   ;; Adding
