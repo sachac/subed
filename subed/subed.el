@@ -634,10 +634,14 @@ and therefore gets ARGS, which is ignored."
 (defun subed-guess-video-file ()
   "Find video file with same base name as the opened file in the buffer.
 
-The file extension of the function `buffer-file-name' is replaced
-with each item in `subed-video-extensions' and the first existing
-file is returned. It also checks for an existing video file with
-the base name stripped from an eventual language code.
+The file extension of the return value of the function
+`buffer-file-name' is replaced with each item in
+`subed-video-extensions' and the first existing file is returned.
+
+Language codes are also handled; e.g. \"foo.en.srt\" or
+\"foo.estonian.srt\" -> \"foo.{mkv,mp4,...}\" (this actually
+simply removes the extension from the extension-stripped file
+name).
 
 Return nil if function `buffer-file-name' returns nil."
   (when (buffer-file-name)
