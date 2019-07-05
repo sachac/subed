@@ -415,7 +415,7 @@ following manner:
   \\[universal-argument] \\[universal-argument] \\[subed-subtitle-insert]   Insert 2 subtitles before the current subtitle"
   (interactive "P")
   (save-match-data
-    (let* ((number-of-subs (cond ((eq arg nil) 1)      ;; M-i
+    (let* ((number-of-subs (cond ((not arg) 1)         ;; M-i
                                  ((integerp arg) arg)  ;; C-u N M-i  /  C-u - N M-i
                                  ;; C-u [C-u ...] M-i  /  C-u - [C-u ...] M-i
                                  ((consp arg) (* (truncate (log (abs (car arg)) 4)) ;; ([-]64) -> 3
