@@ -260,7 +260,7 @@ See \"List of events\" in mpv(1)."
 (defun subed-mpv-unpause ()
   "Start playback."
   (interactive)
-  (when (eq subed-mpv-is-playing nil)
+  (when (not subed-mpv-is-playing)
     (when (subed-mpv--client-send `(set_property pause no))
       (subed-mpv--handle-event '((event . "unpause"))))))
 
