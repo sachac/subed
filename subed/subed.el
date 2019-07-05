@@ -365,7 +365,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
   (unless (subed-replay-adjusted-subtitle-p)
     (add-hook 'subed-subtitle-time-adjusted-hook #'subed--replay-adjusted-subtitle :append :local)
     (subed-debug "Enabled replaying adjusted subtitle: %s" subed-subtitle-time-adjusted-hook)
-    (when (not quiet)
+    (unless quiet
       (message "Enabled replaying adjusted subtitle"))))
 
 (defun subed-disable-replay-adjusted-subtitle (&optional quiet)
@@ -376,7 +376,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
   (when (subed-replay-adjusted-subtitle-p)
     (remove-hook 'subed-subtitle-time-adjusted-hook #'subed--replay-adjusted-subtitle :local)
     (subed-debug "Disabled replaying adjusted subtitle: %s" subed-subtitle-time-adjusted-hook)
-    (when (not quiet)
+    (unless quiet
       (message "Disabled replaying adjusted subtitle"))))
 
 (defun subed-toggle-replay-adjusted-subtitle ()
@@ -406,7 +406,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
   (unless (subed-sync-point-to-player-p)
     (add-hook 'subed-mpv-playback-position-hook #'subed--sync-point-to-player :append :local)
     (subed-debug "Enabled syncing point to playback position: %s" subed-mpv-playback-position-hook)
-    (when (not quiet)
+    (unless quiet
       (message "Enabled syncing point to playback position"))))
 
 (defun subed-disable-sync-point-to-player (&optional quiet)
@@ -417,7 +417,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
   (when (subed-sync-point-to-player-p)
     (remove-hook 'subed-mpv-playback-position-hook #'subed--sync-point-to-player :local)
     (subed-debug "Disabled syncing point to playback position: %s" subed-mpv-playback-position-hook)
-    (when (not quiet)
+    (unless quiet
       (message "Disabled syncing point to playback position"))))
 
 (defun subed-toggle-sync-point-to-player ()
@@ -475,7 +475,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
     (subed--sync-player-to-point)
     (add-hook 'subed-subtitle-motion-hook #'subed--sync-player-to-point :append :local)
     (subed-debug "Enabled syncing playback position to point: %s" subed-subtitle-motion-hook)
-    (when (not quiet)
+    (unless quiet
       (message "Enabled syncing playback position to point"))))
 
 (defun subed-disable-sync-player-to-point (&optional quiet)
@@ -486,7 +486,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
   (when (subed-sync-player-to-point-p)
     (remove-hook 'subed-subtitle-motion-hook #'subed--sync-player-to-point :local)
     (subed-debug "Disabled syncing playback position to point: %s" subed-subtitle-motion-hook)
-    (when (not quiet)
+    (unless quiet
       (message "Disabled syncing playback position to point"))))
 
 (defun subed-toggle-sync-player-to-point ()
@@ -527,7 +527,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
         (setq subed--subtitle-loop-start nil
               subed--subtitle-loop-stop nil)
         (subed-debug "Disabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop)
-        (when (not quiet)
+        (unless quiet
           (message "Disabled looping")))
     (subed--set-subtitle-loop (subed-subtitle-id))
     (add-hook 'subed-mpv-playback-position-hook #'subed--ensure-subtitle-loop :append :local)
@@ -578,7 +578,7 @@ resumed automatically unless the player was paused already.
 If QUIET is non-nil, do not display a message in the minibuffer."
   (unless (subed-pause-while-typing-p)
     (add-hook 'after-change-functions #'subed--pause-while-typing :append :local)
-    (when (not quiet)
+    (unless quiet
       (subed-debug "%S" subed-playback-speed-while-typing)
       (if (<= subed-playback-speed-while-typing 0)
           (message "Playback will pause while subtitle texts are edited")
@@ -591,7 +591,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 If QUIET is non-nil, do not display a message in the minibuffer."
   (when (subed-pause-while-typing-p)
     (remove-hook 'after-change-functions #'subed--pause-while-typing :local)
-    (when (not quiet)
+    (unless quiet
       (message "Playback speed will not change while subtitle texts are edited"))))
 
 (defun subed-toggle-pause-while-typing ()
