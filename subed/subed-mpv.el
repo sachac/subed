@@ -272,7 +272,7 @@ See \"List of events\" in mpv(1)."
 (defun subed-mpv-playback-speed (factor)
   "Play video slower (FACTOR < 1) or faster (FACTOR > 1)."
   (interactive)
-  (when (not (eq subed-mpv-playback-speed factor))
+  (unless (eq subed-mpv-playback-speed factor)
     (when (subed-mpv--client-send `(set_property speed ,factor))
       (setq subed-mpv-playback-speed factor))))
 
