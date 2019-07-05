@@ -136,7 +136,7 @@ default.
 Return new `subed-milliseconds-adjust' value."
   (cond ((integerp arg)
           (setq subed-milliseconds-adjust arg))                     ;; Custom adjustment
-        ((not (eq nil arg))
+        (arg
          (custom-reevaluate-setting #'subed-milliseconds-adjust)))  ;; Reset to default
   subed-milliseconds-adjust)
 
