@@ -230,7 +230,7 @@ string."
 
 (defun subed-mpv--client-handle-json (json-string)
   "Process server response JSON-STRING."
-  (let* ((json-data (condition-case err
+  (let* ((json-data (condition-case nil
                         (json-read-from-string json-string)
                       (error
                        (subed-debug "Unable to parse JSON response:\n%S" json-string)
