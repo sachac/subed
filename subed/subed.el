@@ -670,6 +670,7 @@ Return nil if function `buffer-file-name' returns nil."
   (add-hook 'before-save-hook #'subed-sort :append :local)
   (add-hook 'after-save-hook #'subed-mpv-reload-subtitles :append :local)
   (add-hook 'kill-buffer-hook #'subed-mpv-kill :append :local)
+  (add-hook 'kill-emacs-hook #'subed-mpv-kill :append :local)
   (when subed-auto-find-video
     (let ((video-file (subed-guess-video-file)))
       (when video-file
