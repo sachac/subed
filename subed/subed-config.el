@@ -198,8 +198,8 @@ If set to zero or smaller, playback is paused."
 remembers whether it was originally enabled by the user.")
 
 
-(defcustom subed-mpv-socket-base "/tmp/subed-mpv-socket"
-  "Path to Unix IPC socket that is passed to mpv --input-ipc-server."
+(defcustom subed-mpv-socket-dir (concat (temporary-file-directory) "subed-mpv-socket")
+  "Path to Unix IPC socket that is passed to mpv's --input-ipc-server option."
   :type 'file
   :group 'subed)
 
