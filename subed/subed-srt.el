@@ -320,7 +320,7 @@ Return point or nil if there is no previous subtitle."
                                                ignore-spacing)
   "Add MSECS milliseconds to start time (use negative value to subtract).
 
-Unless IGNORE-NEGATIVE-DURATION is non-nil, recude MSECS so that
+Unless IGNORE-NEGATIVE-DURATION is non-nil, reduce MSECS so that
 the start time isn't larger than the stop time.  Zero-length
 subtiltes are always allowed.
 
