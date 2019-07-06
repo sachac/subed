@@ -103,6 +103,10 @@ Pass ARGS as command line arguments.  \"--idle\" and
   (when (and subed-mpv--server-proc (process-live-p subed-mpv--server-proc))
     (delete-process subed-mpv--server-proc)
     (subed-debug "Killed mpv process"))
+  (let ((socket-file (subed-mpv--socket)))
+    (when (file-exists-p socket-file)
+      (subed-debug "Removing IPC socket: %s" socket-file)
+      (ignore-errors (delete-file socket-file))))
   (setq subed-mpv--server-proc nil))
 
 (defun subed-mpv--server-started-p ()
