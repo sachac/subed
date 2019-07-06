@@ -676,7 +676,7 @@ Return nil if function `buffer-file-name' returns nil."
         (subed-debug "Auto-discovered video file: %s" video-file)
         (condition-case err
             (subed-mpv-find-video video-file)
-          (error (message "%s -- Set subed-auto-find-video to nil to suppress this message."
+          (error (message "%s -- Set subed-auto-find-video to nil to avoid this error."
                           (car (cdr err))))))))
   (subed-enable-pause-while-typing :quiet)
   (subed-enable-sync-point-to-player :quiet)
