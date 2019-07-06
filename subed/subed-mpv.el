@@ -81,10 +81,14 @@ See also `subed-mpv-socket-dir'."
 Pass ARGS as command line arguments.  \"--idle\" and
 \"--input-ipc-server\" are hardcoded."
   (subed-mpv--server-stop)
-  (let ((argv (append (list subed-mpv-executable
-                            (format "--input-ipc-server=%s" (subed-mpv--socket))
-                            "--idle")
-                      args)))
+  (let* ((socket-file (subed-mpv--socket))
+         (argv (append (list subed-mpv-executable
+                             (format "--input-ipc-server=%s" socket-file)
+                             "--idle")
+                       args)))
+    (when (file-exists-p socket-file)
+      (error "An mpv instance for %s is already running: %s"
+             (subed--buffer-file-name) socket-file))
     (subed-debug "Running %s" argv)
     (condition-case err
         (setq subed-mpv--server-proc (make-process :command argv
