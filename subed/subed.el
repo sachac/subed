@@ -255,8 +255,78 @@ See `subed-increase-start-time' about ARG."
     (replace-match (subed-srt--msecs-to-timestamp subed-mpv-playback-position))
     (subed--run-subtitle-time-adjusted-hook)))
 
+
 ;;; Moving subtitles
 ;;; (adjusting start and stop time by the same amount)
+
+(defun subed--get-move-subtitle-func (msecs)
+  "Return subtitle moving function.
+
+When moving subtitles forward (MSECS > 0), we must adjust the
+stop time first and adjust the start time by the same amount the
+stop time was adjusted.  This ensures that subtitle length
+doesn't change if we can't move MSECS milliseconds forward
+because we'd overlap with the next subtitle.
+
+When moving subtitles backward (MSECS < 0), it's the same thing
+but we move the start time first."
+  (if (> msecs 0)
+      (lambda (msecs &optional ignore-limits)
+        (let ((msecs (subed-adjust-subtitle-stop msecs
+                                                 :ignore-negative-duration
+                                                 ignore-limits)))
+          (when msecs (subed-adjust-subtitle-start msecs
+                                                   :ignore-negative-duration
+                                                   ignore-limits))))
+  (lambda (msecs &optional ignore-limits)
+    (let ((msecs (subed-adjust-subtitle-start msecs
+                                              :ignore-negative-duration
+                                              ignore-limits)))
+      (when msecs (subed-adjust-subtitle-stop msecs
+                                              :ignore-negative-duration
+                                              ignore-limits))))))
+
+(defun subed--move-current-subtitle (msecs)
+  "Move subtitle on point by MSECS milliseconds."
+  (unless (= msecs 0)
+    (subed-with-subtitle-replay-disabled
+      (cl-flet ((move-subtitle (subed--get-move-subtitle-func msecs)))
+        (move-subtitle msecs)))))
+
+(defun subed--move-subtitles-in-region (msecs beg end)
+  "Move subtitles in region specified by BEG and END by MSECS milliseconds."
+  (unless (= msecs 0)
+    (subed-with-subtitle-replay-disabled
+      (cl-flet ((move-subtitle (subed--get-move-subtitle-func msecs)))
+        ;; When moving subtitles forward, the first step is to move the last
+        ;; subtitle because:
+        ;;     a) We need to check if we can move at all and abort if not.
+        ;;     b) We may have to reduce MSECS if we can move but not by the full
+        ;;        amount. The goal is that all subtitles are moved by the same
+        ;;        amount and the spacing between subtitles doesn't change.
+        ;; All other subtitles must be moved without any checks because we only
+        ;; ensure that the active region as a whole can be moved, not it's
+        ;; individual parts, which may be too close together or even overlap.
+        ;; Moving subtitles backward is basically the same thing but vice versa.
+        (catch 'bumped-into-subtitle
+          (if (> msecs 0)
+              (save-excursion
+                ;; Moving forward - Start on last subtitle to see if/how far
+                ;; we can move forward.
+                (goto-char end)
+                (unless (setq msecs (move-subtitle msecs))
+                  (throw 'bumped-into-subtitle t))
+                (subed-backward-subtitle-id)
+                (subed-for-each-subtitle beg (point) :reverse
+                  (move-subtitle msecs :ignore-spacing)))
+            ;; Start on first subtitle to see if/how far we can move backward.
+            (save-excursion
+              (goto-char beg)
+              (unless (setq msecs (move-subtitle msecs))
+                (throw 'bumped-into-subtitle t))
+              (subed-forward-subtitle-id)
+              (subed-for-each-subtitle (point) end
+                (move-subtitle msecs :ignore-spacing)))))))))
 
 (defun subed-move-subtitles (msecs &optional beg end)
   "Move subtitles between BEG and END MSECS milliseconds forward.
@@ -265,17 +335,9 @@ If END is nil, move all subtitles from BEG to end of buffer.
 If BEG is nil, move only the current subtitle.
 After subtitles are moved, replay the first moved subtitle if
 replaying is enabled."
-  (subed-with-subtitle-replay-disabled
-    (subed-for-each-subtitle beg end
-      (if (> msecs 0)
-          ;; Moving subtitles forward may reduce MSECS if there isn't enough
-          ;; room for the full movement.  Using the MSECS the stop time was
-          ;; moved to move the start time ensures that subtitle length doesn't
-          ;; change.
-          (let ((msecs (subed-adjust-subtitle-stop msecs)))
-            (when msecs (subed-adjust-subtitle-start msecs)))
-        (let ((msecs (subed-adjust-subtitle-start msecs)))
-          (when msecs (subed-adjust-subtitle-stop msecs))))))
+  (cond ((and beg end) (subed--move-subtitles-in-region msecs beg end))
+        (beg (subed--move-subtitles-in-region msecs beg (point-max)))
+        (t (subed--move-current-subtitle msecs)))
   (when (subed-replay-adjusted-subtitle-p)
     (save-excursion
       (when beg (goto-char beg))
