@@ -215,6 +215,10 @@ hardcoded."
   :type '(repeat string)
   :group 'subed)
 
+(defun subed--buffer-file-name ()
+  "Return base name of buffer file name or a default name."
+  (file-name-nondirectory (or (buffer-file-name) "unnamed")))
+
 
 ;; Hooks
 
