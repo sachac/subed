@@ -64,10 +64,16 @@
 
 (defun subed-mpv--socket ()
   "Path to mpv's RPC socket for a particular buffer.
-See also `subed-mpv-socket-base'."
-  (format "/tmp/subed-mpv-socket:%s-%s"
-          (file-name-base (or (buffer-file-name) "unnamed"))
-          (buffer-hash)))
+See also `subed-mpv-socket-dir'."
+  (unless (file-exists-p subed-mpv-socket-dir)
+    (condition-case err
+        (make-directory subed-mpv-socket-dir :create-parents)
+      (file-error
+       (error "%s" (mapconcat #'identity (cdr err) ": ")))))
+  (concat (file-name-as-directory subed-mpv-socket-dir)
+          (format "%s:%s"
+                  (file-name-base (or (buffer-file-name) "unnamed"))
+                  (buffer-hash))))
 
 (defun subed-mpv--server-start (&rest args)
   "Run mpv in JSON IPC mode.
