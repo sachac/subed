@@ -664,7 +664,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
     (subed-enable-pause-while-typing)))
 
 (defvar-local subed--unpause-after-typing-timer nil)
-(defun subed--pause-while-typing (&rest args)
+(defun subed--pause-while-typing (&rest _args)
   "Pause or slow down playback for `subed-unpause-after-typing-delay' seconds.
 
 This function is meant to be an item in `after-change-functions'
