@@ -782,7 +782,7 @@ Key bindings:
     (subed-mode-enable)))
 
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.srt$" . subed-mode-enable))
+(add-to-list 'auto-mode-alist '("\\.srt\\'" . subed-mode-enable))
 
 (provide 'subed)
 ;;; subed.el ends here
