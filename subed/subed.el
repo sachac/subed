@@ -3,7 +3,7 @@
 ;; Version: 0.0
 ;; Keywords: convenience, files, hypermedia, multimedia
 ;; URL: https://github.com/rndusr/subed
-;; Package-Requires: ((emacs "24.3"))
+;; Package-Requires: ((emacs "25"))
 
 ;;; License:
 ;;
