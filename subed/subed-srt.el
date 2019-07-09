@@ -388,7 +388,7 @@ following manner:
                                     ;; We're inserting between subtitles or
                                     ;; before the first one
                                     (when (subed-srt--backward-subtitle-id)
-                                           (subed-srt--subtitle-msecs-stop))
+                                      (subed-srt--subtitle-msecs-stop))
                                   ;; We're append after the last subtitle
                                   (subed-srt--subtitle-msecs-stop))))
              ;; nil when there's no next subtitle

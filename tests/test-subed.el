@@ -917,8 +917,8 @@
       (expect 'run-at-time :to-have-been-called-with
               subed-point-sync-delay-after-motion nil
               '(closure (t) nil
-                (setq subed--point-sync-delay-after-motion-timer nil)
-                (subed-enable-sync-point-to-player :quiet))))
+                        (setq subed--point-sync-delay-after-motion-timer nil)
+                        (subed-enable-sync-point-to-player :quiet))))
     (it "cancels previously scheduled re-enabling of point-to-player syncing."
       (subed-disable-sync-point-to-player-temporarily)
       (expect 'cancel-timer :not :to-have-been-called-with "mock timer")

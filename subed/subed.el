@@ -160,9 +160,9 @@ Before BODY is run, point is placed on the subtitle's ID."
                                  (let ((sub-end (save-excursion (subed-jump-to-subtitle-end))))
                                    (when (< sub-end begm)
                                      (throw 'first-subtitle-reached t)))
-                                   (progn ,@body)
-                                   (unless (subed-backward-subtitle-id)
-                                     (throw 'first-subtitle-reached t)))))
+                                 (progn ,@body)
+                                 (unless (subed-backward-subtitle-id)
+                                   (throw 'first-subtitle-reached t)))))
            ;; Iterate forwards
            (save-excursion (goto-char begm)
                            (subed-jump-to-subtitle-id)
@@ -324,7 +324,7 @@ See `subed-increase-start-time' about ARG."
   (interactive)
   (subed-srt--jump-to-subtitle-time-start)
   (when (and subed-mpv-playback-position
-	     (looking-at subed-srt--regexp-timestamp))
+	         (looking-at subed-srt--regexp-timestamp))
     (replace-match (subed-srt--msecs-to-timestamp subed-mpv-playback-position))
     (subed--run-subtitle-time-adjusted-hook)))
 
@@ -333,7 +333,7 @@ See `subed-increase-start-time' about ARG."
   (interactive)
   (subed-srt--jump-to-subtitle-time-stop)
   (when (and subed-mpv-playback-position
-	     (looking-at subed-srt--regexp-timestamp))
+	         (looking-at subed-srt--regexp-timestamp))
     (replace-match (subed-srt--msecs-to-timestamp subed-mpv-playback-position))
     (subed--run-subtitle-time-adjusted-hook)))
 
@@ -360,13 +360,13 @@ but we move the start time first."
           (when msecs (subed-adjust-subtitle-time-start msecs
                                                         :ignore-negative-duration
                                                         ignore-limits))))
-  (lambda (msecs &optional ignore-limits)
-    (let ((msecs (subed-adjust-subtitle-time-start msecs
-                                                   :ignore-negative-duration
-                                                   ignore-limits)))
-      (when msecs (subed-adjust-subtitle-time-stop msecs
-                                                   :ignore-negative-duration
-                                                   ignore-limits))))))
+    (lambda (msecs &optional ignore-limits)
+      (let ((msecs (subed-adjust-subtitle-time-start msecs
+                                                     :ignore-negative-duration
+                                                     ignore-limits)))
+        (when msecs (subed-adjust-subtitle-time-stop msecs
+                                                     :ignore-negative-duration
+                                                     ignore-limits))))))
 
 (defun subed--move-current-subtitle (msecs)
   "Move subtitle on point by MSECS milliseconds."
@@ -791,14 +791,14 @@ Return nil if function `buffer-file-name' returns nil."
   (when (buffer-file-name)
     (catch 'found-videofile
       (let* ((file-base (file-name-sans-extension (buffer-file-name)))
-	     (file-stem (file-name-sans-extension file-base)))
-	(dolist (extension subed-video-extensions)
-	  (let ((file-base-video (format "%s.%s" file-base extension))
-		(file-stem-video (format "%s.%s" file-stem extension)))
-	    (when (file-exists-p file-base-video)
-	      (throw 'found-videofile file-base-video))
-	    (when (file-exists-p file-stem-video)
-	      (throw 'found-videofile file-stem-video))))))))
+	         (file-stem (file-name-sans-extension file-base)))
+	    (dolist (extension subed-video-extensions)
+	      (let ((file-base-video (format "%s.%s" file-base extension))
+		        (file-stem-video (format "%s.%s" file-stem extension)))
+	        (when (file-exists-p file-base-video)
+	          (throw 'found-videofile file-base-video))
+	        (when (file-exists-p file-stem-video)
+	          (throw 'found-videofile file-stem-video))))))))
 
 
 ;;;###autoload
