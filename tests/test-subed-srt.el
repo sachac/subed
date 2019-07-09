@@ -895,6 +895,59 @@ Baz.
       (expect #'subed-srt--regenerate-ids :not :to-have-been-called)))
   )
 
+(describe "Killing a subtitle"
+  (it "removes it when it is the first one."
+    (with-temp-buffer
+      (insert mock-srt-data)
+      (subed-srt--jump-to-subtitle-text 1)
+      (subed-srt--subtitle-kill)
+      (expect (buffer-string) :to-equal (concat "2\n"
+                                                "00:02:02,234 --> 00:02:10,345\n"
+                                                "Bar.\n"
+                                                "\n"
+                                                "3\n"
+                                                "00:03:03,45 --> 00:03:15,5\n"
+                                                "Baz.\n"))))
+  (it "removes it when it is in the middle."
+    (with-temp-buffer
+      (insert mock-srt-data)
+      (subed-srt--jump-to-subtitle-text 2)
+      (subed-srt--subtitle-kill)
+      (expect (buffer-string) :to-equal (concat "1\n"
+                                                "00:01:01,000 --> 00:01:05,123\n"
+                                                "Foo.\n"
+                                                "\n"
+                                                "3\n"
+                                                "00:03:03,45 --> 00:03:15,5\n"
+                                                "Baz.\n"))))
+  (it "removes it when it is the last one."
+    (with-temp-buffer
+      (insert mock-srt-data)
+      (subed-srt--jump-to-subtitle-text 3)
+      (subed-srt--subtitle-kill)
+      (expect (buffer-string) :to-equal (concat "1\n"
+                                                "00:01:01,000 --> 00:01:05,123\n"
+                                                "Foo.\n"
+                                                "\n"
+                                                "2\n"
+                                                "00:02:02,234 --> 00:02:10,345\n"
+                                                "Bar.\n"))))
+  (it "removes the previous subtitle when point is right above an ID."
+    (with-temp-buffer
+      (insert mock-srt-data)
+      (subed-jump-to-subtitle-id 3)
+      (backward-char)
+      (expect (looking-at "^\n3\n") :to-be t)
+      (subed-srt--subtitle-kill)
+      (expect (buffer-string) :to-equal (concat "1\n"
+                                                "00:01:01,000 --> 00:01:05,123\n"
+                                                "Foo.\n"
+                                                "\n"
+                                                "3\n"
+                                                "00:03:03,45 --> 00:03:15,5\n"
+                                                "Baz.\n"))))
+  )
+
 (describe "Validating"
   (it "works in empty buffer."
     (with-temp-buffer
