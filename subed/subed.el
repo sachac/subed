@@ -43,8 +43,8 @@
 (defalias 'subed-subtitle-msecs-stop #'subed-srt--subtitle-msecs-stop)
 (defalias 'subed-subtitle-text #'subed-srt--subtitle-text)
 (defalias 'subed-subtitle-relative-point #'subed-srt--subtitle-relative-point)
-(defalias 'subed-adjust-subtitle-start #'subed-srt--adjust-subtitle-start)
-(defalias 'subed-adjust-subtitle-stop #'subed-srt--adjust-subtitle-stop)
+(defalias 'subed-set-subtitle-time-start #'subed-srt--set-subtitle-time-start)
+(defalias 'subed-set-subtitle-time-stop #'subed-srt--set-subtitle-time-stop)
 
 (defalias 'subed-jump-to-subtitle-id #'subed-srt--jump-to-subtitle-id)
 (defalias 'subed-jump-to-subtitle-time-start #'subed-srt--jump-to-subtitle-time-start)
@@ -190,6 +190,88 @@ Before BODY is run, point is placed on the subtitle's ID."
 
 ;;; Adjusting start/stop time individually
 
+(defun subed-adjust-subtitle-time-start (msecs &optional
+                                               ignore-negative-duration
+                                               ignore-spacing)
+  "Add MSECS milliseconds to start time (use negative value to subtract).
+
+Unless IGNORE-NEGATIVE-DURATION is non-nil, reduce MSECS so that
+the start time isn't larger than the stop time.  Zero-length
+subtiltes are always allowed.
+
+Unless IGNORE-SPACING is non-nil, if the adjustment would result
+in gaps between subtitles being smaller than
+`subed-subtitle-spacing', reduce MSECS so that this doesn't
+happen.
+
+Return the number of milliseconds the start time was adjusted or
+nil if nothing changed."
+  (subed-disable-sync-point-to-player-temporarily)
+  (let* ((msecs-start (subed-subtitle-msecs-start))
+         (msecs-new (when msecs-start (+ msecs-start msecs))))
+    (when msecs-new
+      (if (> msecs 0)
+          ;; Adding to start time
+          (unless ignore-negative-duration
+            (let ((msecs-stop (subed-subtitle-msecs-stop)))
+              (setq msecs-new (min msecs-new msecs-stop))))
+        ;; Subtracting from start time
+        (unless ignore-spacing
+          (let* ((msecs-prev-stop (save-excursion (when (subed-backward-subtitle-id)
+                                                    (subed-subtitle-msecs-stop))))
+                 (msecs-min (if msecs-prev-stop
+                                (+ msecs-prev-stop subed-subtitle-spacing) 0)))
+            (when msecs-min
+              (setq msecs-new (max msecs-new msecs-min))))))
+      ;; msecs-new must be bigger than the current start time if we are adding
+      ;; or smaller if we are subtracting.
+      (when (or (and (> msecs 0) (> msecs-new msecs-start))   ;; Adding
+                (and (< msecs 0) (< msecs-new msecs-start)))  ;; Subtracting
+        (subed-set-subtitle-time-start msecs-new)
+        (subed--run-subtitle-time-adjusted-hook)
+        (- msecs-new msecs-start)))))
+
+(defun subed-adjust-subtitle-time-stop (msecs &optional
+                                              ignore-negative-duration
+                                              ignore-spacing)
+  "Add MSECS milliseconds to stop time (use negative value to subtract).
+
+Unless IGNORE-NEGATIVE-DURATION is non-nil, increase MSECS so
+that the stop time isn't smaller than the start time.
+Zero-length subtiltes are always allowed.
+
+Unless IGNORE-SPACING is non-nil, if the adjustment would result
+in gaps between subtitles being smaller than
+`subed-subtitle-spacing', reduce MSECS so that this doesn't
+happen.
+
+Return the number of milliseconds the stop time was adjusted or
+nil if nothing changed."
+  (subed-disable-sync-point-to-player-temporarily)
+  (let* ((msecs-stop (subed-subtitle-msecs-stop))
+         (msecs-new (when msecs-stop (+ msecs-stop msecs))))
+    (when msecs-new
+      (if (> msecs 0)
+          ;; Adding to stop time
+          (unless ignore-spacing
+            (let* ((msecs-next-start (save-excursion (when (subed-forward-subtitle-id)
+                                                       (subed-subtitle-msecs-start))))
+                   (msecs-max (when msecs-next-start
+                                (- msecs-next-start subed-subtitle-spacing))))
+              (when msecs-max
+                (setq msecs-new (min msecs-new msecs-max)))))
+        ;; Subtracting from stop time
+        (unless ignore-negative-duration
+          (let ((msecs-start (subed-subtitle-msecs-start)))
+            (setq msecs-new (max msecs-new msecs-start)))))
+      ;; msecs-new must be bigger than the current stop time if we are adding or
+      ;; smaller if we are subtracting.
+      (when (or (and (> msecs 0) (> msecs-new msecs-stop))   ;; Adding
+                (and (< msecs 0) (< msecs-new msecs-stop)))  ;; Subtracting
+        (subed-set-subtitle-time-stop msecs-new)
+        (subed--run-subtitle-time-adjusted-hook)
+        (- msecs-new msecs-stop)))))
+
 (defun subed-increase-start-time (&optional arg)
   "Add `subed-milliseconds-adjust' milliseconds to start time.
 
@@ -208,7 +290,7 @@ Example usage:
        \\[universal-argument] \\[subed-increase-start-time]  Increase start time by 100ms (the default)
            \\[subed-increase-start-time]  Increase start time by 100ms (the default) again"
   (interactive "P")
-  (subed-adjust-subtitle-start (subed-get-milliseconds-adjust arg)))
+  (subed-adjust-subtitle-time-start (subed-get-milliseconds-adjust arg)))
 
 (defun subed-decrease-start-time (&optional arg)
   "Subtract `subed-milliseconds-adjust' milliseconds from start time.
@@ -217,7 +299,7 @@ Return new start time in milliseconds or nil if it didn't change.
 
 See `subed-increase-start-time' about ARG."
   (interactive "P")
-  (subed-adjust-subtitle-start (* -1 (subed-get-milliseconds-adjust arg))))
+  (subed-adjust-subtitle-time-start (* -1 (subed-get-milliseconds-adjust arg))))
 
 (defun subed-increase-stop-time (&optional arg)
   "Add `subed-milliseconds-adjust' milliseconds to stop time.
@@ -226,7 +308,7 @@ Return new stop time in milliseconds or nil if it didn't change.
 
 See `subed-increase-start-time' about ARG."
   (interactive "P")
-  (subed-adjust-subtitle-stop (subed-get-milliseconds-adjust arg)))
+  (subed-adjust-subtitle-time-stop (subed-get-milliseconds-adjust arg)))
 
 (defun subed-decrease-stop-time (&optional arg)
   "Subtract `subed-milliseconds-adjust' milliseconds from stop time.
@@ -235,7 +317,7 @@ Return new stop time in milliseconds or nil if it didn't change.
 
 See `subed-increase-start-time' about ARG."
   (interactive "P")
-  (subed-adjust-subtitle-stop (* -1 (subed-get-milliseconds-adjust arg))))
+  (subed-adjust-subtitle-time-stop (* -1 (subed-get-milliseconds-adjust arg))))
 
 (defun subed-copy-player-pos-to-start-time ()
   "Replace current subtitle's start timestamp with mpv player's current timestamp."
@@ -272,19 +354,19 @@ When moving subtitles backward (MSECS < 0), it's the same thing
 but we move the start time first."
   (if (> msecs 0)
       (lambda (msecs &optional ignore-limits)
-        (let ((msecs (subed-adjust-subtitle-stop msecs
-                                                 :ignore-negative-duration
-                                                 ignore-limits)))
-          (when msecs (subed-adjust-subtitle-start msecs
-                                                   :ignore-negative-duration
-                                                   ignore-limits))))
+        (let ((msecs (subed-adjust-subtitle-time-stop msecs
+                                                      :ignore-negative-duration
+                                                      ignore-limits)))
+          (when msecs (subed-adjust-subtitle-time-start msecs
+                                                        :ignore-negative-duration
+                                                        ignore-limits))))
   (lambda (msecs &optional ignore-limits)
-    (let ((msecs (subed-adjust-subtitle-start msecs
-                                              :ignore-negative-duration
-                                              ignore-limits)))
-      (when msecs (subed-adjust-subtitle-stop msecs
-                                              :ignore-negative-duration
-                                              ignore-limits))))))
+    (let ((msecs (subed-adjust-subtitle-time-start msecs
+                                                   :ignore-negative-duration
+                                                   ignore-limits)))
+      (when msecs (subed-adjust-subtitle-time-stop msecs
+                                                   :ignore-negative-duration
+                                                   ignore-limits))))))
 
 (defun subed--move-current-subtitle (msecs)
   "Move subtitle on point by MSECS milliseconds."
