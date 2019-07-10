@@ -896,7 +896,7 @@ Baz.
   )
 
 (describe "Killing a subtitle"
-  (it "removes it when it is the first one."
+  (it "removes the first subtitle."
     (with-temp-buffer
       (insert mock-srt-data)
       (subed-srt--jump-to-subtitle-text 1)
@@ -908,7 +908,7 @@ Baz.
                                                 "3\n"
                                                 "00:03:03,45 --> 00:03:15,5\n"
                                                 "Baz.\n"))))
-  (it "removes it when it is in the middle."
+  (it "removes it in between."
     (with-temp-buffer
       (insert mock-srt-data)
       (subed-srt--jump-to-subtitle-text 2)
@@ -920,7 +920,7 @@ Baz.
                                                 "3\n"
                                                 "00:03:03,45 --> 00:03:15,5\n"
                                                 "Baz.\n"))))
-  (it "removes it when it is the last one."
+  (it "removes the last subtitle."
     (with-temp-buffer
       (insert mock-srt-data)
       (subed-srt--jump-to-subtitle-text 3)
