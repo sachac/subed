@@ -425,25 +425,18 @@ following manner:
 (defun subed-srt--subtitle-kill ()
   "Remove subtitle at point."
   (interactive)
-  (let ((beg (save-excursion
-               (subed-srt--jump-to-subtitle-id)
-               (point)))
-        (end (save-excursion
-               (subed-srt--jump-to-subtitle-id)
-               (when (subed-srt--forward-subtitle-id)
-                 (point)))))
+  (let ((beg (save-excursion (subed-srt--jump-to-subtitle-id)
+                             (point)))
+        (end (save-excursion (subed-srt--jump-to-subtitle-id)
+                             (when (subed-srt--forward-subtitle-id)
+                               (point)))))
     (if (not end)
-        (progn
-          (let ((beg (save-excursion
-                       (goto-char beg)
-                       (subed-srt--backward-subtitle-text)
-                       (subed-srt--jump-to-subtitle-end)
-                       (1+ (point))))
-                (end (save-excursion
-                       (goto-char (point-max)))))
-            (delete-region beg end)))
-      (progn
-        (delete-region beg end))))
+        ;; Removing the last subtitle because forward-subtitle-id returned nil
+        (setq beg (save-excursion (goto-char beg)
+                                  (subed-srt--backward-subtitle-end)
+                                  (1+ (point)))
+              end (save-excursion (goto-char (point-max)))))
+    (delete-region beg end))
   (subed-srt--regenerate-ids-soon))
 
 
