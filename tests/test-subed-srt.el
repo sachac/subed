@@ -903,8 +903,7 @@ Baz.
       (subed-srt--subtitle-kill)
       (expect (buffer-string) :to-equal (concat "2\n"
                                                 "00:02:02,234 --> 00:02:10,345\n"
-                                                "Bar.\n"
-                                                "\n"
+                                                "Bar.\n\n"
                                                 "3\n"
                                                 "00:03:03,45 --> 00:03:15,5\n"
                                                 "Baz.\n"))))
@@ -915,8 +914,7 @@ Baz.
       (subed-srt--subtitle-kill)
       (expect (buffer-string) :to-equal (concat "1\n"
                                                 "00:01:01,000 --> 00:01:05,123\n"
-                                                "Foo.\n"
-                                                "\n"
+                                                "Foo.\n\n"
                                                 "3\n"
                                                 "00:03:03,45 --> 00:03:15,5\n"
                                                 "Baz.\n"))))
@@ -927,8 +925,7 @@ Baz.
       (subed-srt--subtitle-kill)
       (expect (buffer-string) :to-equal (concat "1\n"
                                                 "00:01:01,000 --> 00:01:05,123\n"
-                                                "Foo.\n"
-                                                "\n"
+                                                "Foo.\n\n"
                                                 "2\n"
                                                 "00:02:02,234 --> 00:02:10,345\n"
                                                 "Bar.\n"))))
