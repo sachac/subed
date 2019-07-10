@@ -69,7 +69,7 @@ Return nil if TIME-STRING doesn't match the pattern."
     (when (subed-srt--jump-to-subtitle-id)
       (string-to-number (current-word)))))
 
-(defun subed-srt--max-subtitle-id ()
+(defun subed-srt--subtitle-id-max ()
   "Return the ID of the last subtitle or nil if there are no subtitles."
   (save-excursion
     (goto-char (point-max))
