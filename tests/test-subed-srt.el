@@ -424,7 +424,7 @@ Baz.
         (expect (thing-at-point 'word) :to-equal nil)
         (expect (subed-srt--forward-subtitle-id) :to-be nil))
       (with-temp-buffer
-        (insert (concat mock-srt-data))
+        (insert mock-srt-data)
         (subed-srt--jump-to-subtitle-text 1)
         (expect (thing-at-point 'word) :to-equal "Foo")
         (expect (subed-srt--forward-subtitle-id) :to-be 39)
@@ -434,7 +434,7 @@ Baz.
         (expect (subed-srt--forward-subtitle-id) :to-be 77)
         (expect (thing-at-point 'word) :to-equal "3"))
       (with-temp-buffer
-        (insert (concat mock-srt-data))
+        (insert mock-srt-data)
         (subed-srt--jump-to-subtitle-text 3)
         (expect (thing-at-point 'word) :to-equal "Baz")
         (expect (subed-srt--forward-subtitle-id) :to-be nil)
@@ -462,13 +462,13 @@ Baz.
       (with-temp-buffer
         (expect (subed-srt--backward-subtitle-id) :to-be nil))
       (with-temp-buffer
-        (insert (concat mock-srt-data))
+        (insert mock-srt-data)
         (subed-srt--jump-to-subtitle-id 1)
         (expect (thing-at-point 'word) :to-equal "1")
         (expect (subed-srt--backward-subtitle-id) :to-be nil)
         (expect (thing-at-point 'word) :to-equal "1"))
       (with-temp-buffer
-        (insert (concat mock-srt-data))
+        (insert mock-srt-data)
         (subed-srt--jump-to-subtitle-text 1)
         (expect (thing-at-point 'word) :to-equal "Foo")
         (expect (subed-srt--backward-subtitle-id) :to-be nil)
