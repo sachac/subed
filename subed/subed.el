@@ -39,6 +39,7 @@
 (set 'subed-font-lock-keywords #'subed-srt-font-lock-keywords)
 
 (defalias 'subed-subtitle-id #'subed-srt--subtitle-id)
+(defalias 'subed-subtitle-id-max #'subed-srt--subtitle-id-max)
 (defalias 'subed-subtitle-msecs-start #'subed-srt--subtitle-msecs-start)
 (defalias 'subed-subtitle-msecs-stop #'subed-srt--subtitle-msecs-stop)
 (defalias 'subed-subtitle-text #'subed-srt--subtitle-text)
