@@ -149,25 +149,23 @@ Return point or nil if no subtitle ID could be found."
   (interactive)
   (save-match-data
     (if sub-id
-        (progn
-          ;; Look for a line that contains only the ID, preceded by one or more
-          ;; blank lines or the beginning of the buffer.
-          (let* ((orig-point (point))
-                 (regex (format "\\(%s\\|\\`\\)\\(%d\\)$" subed-srt--regexp-separator sub-id))
-                 (match-found (progn (goto-char (point-min))
-                                     (re-search-forward regex nil t))))
-            (goto-char orig-point)
-            (when match-found
-              (goto-char (match-beginning 3)))))
-      (progn
-        ;; Find one or more blank lines.
-        (re-search-forward "\\([[:blank:]]*\n\\)+" nil t)
-        ;; Find two or more blank lines or the beginning of the buffer, followed
-        ;; by line composed of only digits.
-        (let* ((regex (concat "\\(" subed-srt--regexp-separator "\\|\\`\\)\\([0-9]+\\)$"))
-               (match-found (re-search-backward regex nil t)))
+        ;; Look for a line that contains only the ID, preceded by one or more
+        ;; blank lines or the beginning of the buffer.
+        (let* ((orig-point (point))
+               (regex (format "\\(%s\\|\\`\\)\\(%d\\)$" subed-srt--regexp-separator sub-id))
+               (match-found (progn (goto-char (point-min))
+                                   (re-search-forward regex nil t))))
+          (goto-char orig-point)
           (when match-found
-            (goto-char (match-beginning 3))))))
+            (goto-char (match-beginning 3))))
+      ;; Find one or more blank lines.
+      (re-search-forward "\\([[:blank:]]*\n\\)+" nil t)
+      ;; Find two or more blank lines or the beginning of the buffer, followed
+      ;; by line composed of only digits.
+      (let* ((regex (concat "\\(" subed-srt--regexp-separator "\\|\\`\\)\\([0-9]+\\)$"))
+             (match-found (re-search-backward regex nil t)))
+        (when match-found
+          (goto-char (match-beginning 3)))))
     ;; Make extra sure we're on an ID, return nil if we're not
     (when (looking-at "^\\([0-9]+\\)$")
       (point))))
