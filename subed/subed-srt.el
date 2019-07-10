@@ -155,9 +155,9 @@ Return point or nil if no subtitle ID could be found."
                (regex (format "\\(%s\\|\\`\\)\\(%d\\)$" subed-srt--regexp-separator sub-id))
                (match-found (progn (goto-char (point-min))
                                    (re-search-forward regex nil t))))
-          (goto-char orig-point)
-          (when match-found
-            (goto-char (match-beginning 3))))
+          (if match-found
+              (goto-char (match-beginning 3))
+            (goto-char orig-point)))
       ;; Find one or more blank lines.
       (re-search-forward "\\([[:blank:]]*\n\\)+" nil t)
       ;; Find two or more blank lines or the beginning of the buffer, followed
