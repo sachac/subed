@@ -357,21 +357,15 @@
   (it "adjusts start and stop time by the same amount."
     (with-temp-buffer
       (insert (concat "1\n"
-                      "00:00:01,000 --> 00:00:01,600\n"
-                      "Foo.\n\n"
-                      "2\n"
-                      "00:00:02,000 --> 00:00:03,000\n"
-                      "Bar.\n"
-                      "3\n"
-                      "00:00:02,000 --> 00:00:03,000\n"
-                      "Bar.\n"))
-      (let ((orig-point (subed-jump-to-subtitle-id 2)))
+                      "00:00:01,000 --> 00:00:02,000\n"
+                      "Foo.\n"))
+      (let ((orig-point (subed-jump-to-subtitle-text 1)))
         (subed-move-subtitle-forward 100)
-        (expect (subed-subtitle-msecs-start) :to-equal 2100)
-        (expect (subed-subtitle-msecs-stop) :to-equal 3100)
+        (expect (subed-subtitle-msecs-start) :to-equal 1100)
+        (expect (subed-subtitle-msecs-stop) :to-equal 2100)
         (subed-move-subtitle-backward 200)
-        (expect (subed-subtitle-msecs-start) :to-equal 1900)
-        (expect (subed-subtitle-msecs-stop) :to-equal 2900)
+        (expect (subed-subtitle-msecs-start) :to-equal 900)
+        (expect (subed-subtitle-msecs-stop) :to-equal 1900)
         (expect (point) :to-equal orig-point))))
   (it "adjusts start and stop time by the same amount when bumping into next subtitle."
     (with-temp-buffer
