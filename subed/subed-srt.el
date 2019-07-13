@@ -41,7 +41,7 @@
 ;;; Parsing
 
 (defconst subed-srt--regexp-timestamp "\\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\),\\([0-9]+\\)")
-(defconst subed-srt--regexp-separator "\\([[:blank:]]*\n\\)+[[:blank:]]*\n")
+(defconst subed-srt--regexp-separator "\\(?:[[:blank:]]*\n\\)+[[:blank:]]*\n")
 
 (defun subed-srt--timestamp-to-msecs (time-string)
   "Find HH:MM:SS,MS pattern in TIME-STRING and convert it to milliseconds.
@@ -156,7 +156,7 @@ Return point or nil if no subtitle ID could be found."
                (match-found (progn (goto-char (point-min))
                                    (re-search-forward regex nil t))))
           (if match-found
-              (goto-char (match-beginning 3))
+              (goto-char (match-beginning 2))
             (goto-char orig-point)))
       ;; Find one or more blank lines.
       (re-search-forward "\\([[:blank:]]*\n\\)+" nil t)
@@ -165,7 +165,7 @@ Return point or nil if no subtitle ID could be found."
       (let* ((regex (concat "\\(" subed-srt--regexp-separator "\\|\\`\\)\\([0-9]+\\)$"))
              (match-found (re-search-backward regex nil t)))
         (when match-found
-          (goto-char (match-beginning 3)))))
+          (goto-char (match-beginning 2)))))
     ;; Make extra sure we're on an ID, return nil if we're not
     (when (looking-at "^\\([0-9]+\\)$")
       (point))))
