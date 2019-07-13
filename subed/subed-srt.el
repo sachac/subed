@@ -249,14 +249,14 @@ Return point or nil if there is no next subtitle."
   "Move point to previous subtitle's ID.
 Return point or nil if there is no previous subtitle."
   (interactive)
-  (let ((orig-point (point))
-        (orig-sub-id (subed-srt--subtitle-id)))
+  (let ((orig-point (point)))
     (when (subed-srt--jump-to-subtitle-id)
-      (forward-line -1)
-      (if (= (subed-srt--subtitle-id) orig-sub-id)
-          (progn (goto-char orig-point)
-                 nil)
-        (subed-srt--jump-to-subtitle-id)))))
+      (if (re-search-backward (concat "\\(" subed-srt--regexp-separator "\\|\\`[[:space:]]*\\)" "\\([0-9]+\\)\n") nil t)
+          (progn
+            (goto-char (match-beginning 2))
+            (point))
+        (goto-char orig-point)
+        nil))))
 
 (defun subed-srt--forward-subtitle-text ()
   "Move point to next subtitle's text.
