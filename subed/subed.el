@@ -36,7 +36,10 @@
 (require 'subed-mpv)
 
 ;; Abstraction layer to allow support for other subtitle formats
-(set 'subed-font-lock-keywords #'subed-srt-font-lock-keywords)
+(defcustom subed-font-lock-keywords subed-srt-font-lock-keywords
+  "The particular font-lock keywords in use by subed."
+  :type 'list
+  :group 'subed)
 
 (defalias 'subed-subtitle-id #'subed-srt--subtitle-id)
 (defalias 'subed-subtitle-id-max #'subed-srt--subtitle-id-max)
