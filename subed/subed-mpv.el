@@ -28,6 +28,15 @@
 
 (require 'json)
 
+(defvar subed-mpv-arguments)  ; from subed.el
+(defvar subed-mpv-socket-dir)  ; from subed.el
+(defvar subed-mpv-executable)  ; from subed.el
+(defvar subed-video-extensions)  ; from subed.el
+(defvar subed-debugging-enabled-p)  ; from subed.el
+(defvar subed-playback-speed-while-not-typing)  ; from subed.el
+(declare-function subed--buffer-file-name "subed.el" ())
+(declare-function subed-debug "subed.el" (msg &rest args))
+
 (defvar-local subed-mpv-is-playing nil
   "Whether mpv is currently playing or paused.")
 
