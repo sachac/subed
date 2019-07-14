@@ -41,6 +41,9 @@
   :type 'list
   :group 'subed)
 
+(defvar-local subed-regexp-timestamp subed-srt--regexp-timestamp)
+(defvar-local subed-msecs-to-timestamp #'subed-srt--msecs-to-timestamp)
+
 (defalias 'subed-subtitle-id #'subed-srt--subtitle-id)
 (defalias 'subed-subtitle-id-max #'subed-srt--subtitle-id-max)
 (defalias 'subed-subtitle-msecs-start #'subed-srt--subtitle-msecs-start)
@@ -330,19 +333,19 @@ See `subed-increase-start-time' about ARG."
 (defun subed-copy-player-pos-to-start-time ()
   "Replace current subtitle's start timestamp with mpv player's current timestamp."
   (interactive)
-  (subed-srt--jump-to-subtitle-time-start)
+  (subed-jump-to-subtitle-time-start)
   (when (and subed-mpv-playback-position
-	         (looking-at subed-srt--regexp-timestamp))
-    (replace-match (subed-srt--msecs-to-timestamp subed-mpv-playback-position))
+             (looking-at subed-regexp-timestamp))
+    (replace-match (funcall subed-msecs-to-timestamp subed-mpv-playback-position))
     (subed--run-subtitle-time-adjusted-hook)))
 
 (defun subed-copy-player-pos-to-stop-time ()
   "Replace current subtitle's stop timestamp with mpv player's current timestamp."
   (interactive)
-  (subed-srt--jump-to-subtitle-time-stop)
+  (subed-jump-to-subtitle-time-stop)
   (when (and subed-mpv-playback-position
-	         (looking-at subed-srt--regexp-timestamp))
-    (replace-match (subed-srt--msecs-to-timestamp subed-mpv-playback-position))
+             (looking-at subed-regexp-timestamp))
+    (replace-match (funcall subed-msecs-to-timestamp subed-mpv-playback-position))
     (subed--run-subtitle-time-adjusted-hook)))
 
 
@@ -534,13 +537,13 @@ following manner:
       (let*
           ;; Find out how much time there is available
           ((msecs-min (save-excursion (if insert-before-current
-                                          (when (subed-srt--backward-subtitle-id)
-                                            (subed-srt--subtitle-msecs-stop))
-                                        (subed-srt--subtitle-msecs-stop))))
+                                          (when (funcall subed-backward-subtitle-id)
+                                            (funcall subed-subtitle-msecs-stop))
+                                        (funcall subed-subtitle-msecs-stop))))
            (msecs-max (save-excursion (if insert-before-current
-                                          (subed-srt--subtitle-msecs-start)
-                                        (when (subed-srt--forward-subtitle-id)
-                                          (subed-srt--subtitle-msecs-start)))))
+                                          (subed-subtitle-msecs-start)
+                                        (when (subed-forward-subtitle-id)
+                                          (subed-subtitle-msecs-start)))))
            (msecs-avail (cond ((and msecs-min msecs-max) (- msecs-max msecs-min))
                               (msecs-max msecs-max)
                               (t nil)))  ;; Unlimited
@@ -614,7 +617,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 
 (defun subed--replay-adjusted-subtitle (msecs-start)
   "Seek player to MSECS-START."
-  (subed-debug "Replaying subtitle at: %s" (subed-srt--msecs-to-timestamp msecs-start))
+  (subed-debug "Replaying subtitle at: %s" (subed-msecs-to-timestamp msecs-start))
   (subed-mpv-jump msecs-start))
 
 
@@ -658,7 +661,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
   (when (and (not (use-region-p))
              (subed-jump-to-subtitle-text-at-msecs msecs))
     (subed-debug "Synchronized point to playback position: %s -> #%s"
-                 (subed-srt--msecs-to-timestamp msecs) (subed-subtitle-id))
+                 (subed-msecs-to-timestamp msecs) (subed-subtitle-id))
     ;; post-command-hook is not triggered because we didn't move interactively.
     ;; But there's not really a difference, e.g. the minor mode `hl-line' breaks
     ;; unless we call its post-command function, so we do it manually.
@@ -767,11 +770,11 @@ If QUIET is non-nil, do not display a message in the minibuffer."
         subed--subtitle-loop-stop (+ (subed-subtitle-msecs-stop sub-id)
                                      (* subed-loop-seconds-after 1000)))
   (subed-debug "Set loop: %s - %s"
-               (subed-srt--msecs-to-timestamp subed--subtitle-loop-start)
-               (subed-srt--msecs-to-timestamp subed--subtitle-loop-stop))
+               (funcall subed-msecs-to-timestamp subed--subtitle-loop-start)
+               (funcall subed-msecs-to-timestamp subed--subtitle-loop-stop))
   (message "Looping over %s - %s"
-           (subed-srt--msecs-to-timestamp subed--subtitle-loop-start)
-           (subed-srt--msecs-to-timestamp subed--subtitle-loop-stop)))
+           (funcall subed-msecs-to-timestamp subed--subtitle-loop-start)
+           (funcall subed-msecs-to-timestamp subed--subtitle-loop-stop)))
 
 (defun subed--ensure-subtitle-loop (cur-msecs)
   "Jump to current subtitle start time if CUR-MSECS is after stop time."
@@ -780,9 +783,9 @@ If QUIET is non-nil, do not display a message in the minibuffer."
     (when (or (< cur-msecs subed--subtitle-loop-start)
               (> cur-msecs subed--subtitle-loop-stop))
       (subed-debug "%s -> Looping over %s - %s"
-                   (subed-srt--msecs-to-timestamp cur-msecs)
-                   (subed-srt--msecs-to-timestamp subed--subtitle-loop-start)
-                   (subed-srt--msecs-to-timestamp subed--subtitle-loop-stop))
+                   (funcall subed-msecs-to-timestamp cur-msecs)
+                   (funcall subed-msecs-to-timestamp subed--subtitle-loop-start)
+                   (funcall subed-msecs-to-timestamp subed--subtitle-loop-stop))
       (subed-mpv-jump subed--subtitle-loop-start))))
 
 
