@@ -167,7 +167,7 @@ If set to zero or smaller, playback is paused."
   :group 'subed)
 
 (defcustom subed-default-subtitle-length 1000
-  "How long to make subtitles in milliseconds when inserted after the last subtitle."
+  "How long to make inserted subtitles in milliseconds."
   :type 'float
   :group 'subed)
 
