@@ -162,7 +162,7 @@ If set to zero or smaller, playback is paused."
 
 
 (defcustom subed-subtitle-spacing 100
-  "Milliseconds between subtitles when adjusting or inserting subtitles."
+  "Minimum time in milliseconds between subtitles when start/stop time is changed."
   :type 'integer
   :group 'subed)
 
