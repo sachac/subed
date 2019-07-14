@@ -345,86 +345,66 @@ Return the new subtitle stop time in milliseconds."
       (when (looking-at subed-srt--regexp-timestamp)
         (replace-match (subed-srt--msecs-to-timestamp msecs))))))
 
-(defun subed-srt--subtitle-insert (&optional arg)
-  "Insert subtitle(s).
+(defun subed-srt--make-subtitle (&optional id start stop text)
+  "Generate new subtitle string.
 
-ARG, usually provided by `universal-argument', is used in the
-following manner:
-          \\[subed-subtitle-insert]   Insert 1 subtitle after the current subtitle
-      \\[universal-argument] \\[subed-subtitle-insert]   Insert 1 subtitle before the current subtitle
-    \\[universal-argument] 5 \\[subed-subtitle-insert]   Insert 5 subtitles after the current subtitle
-  \\[universal-argument] - 5 \\[subed-subtitle-insert]   Insert 5 subtitles before the current subtitle
-  \\[universal-argument] \\[universal-argument] \\[subed-subtitle-insert]   Insert 2 subtitles before the current subtitle"
+ID, START default to 0.
+STOP defaults to (+ START `subed-subtitle-spacing')
+TEXT defaults to an empty string.
+
+A newline is appended to TEXT, meaning you'll get two trailing
+newlines if TEXT is nil or empty."
   (interactive "P")
+  (format "%s\n%s --> %s\n%s\n"
+          (or id 0)
+          (subed-srt--msecs-to-timestamp (or start 0))
+          (subed-srt--msecs-to-timestamp (or stop (+ (or start 0)
+                                                     subed-default-subtitle-length)))
+          (or text "")))
+
+(defun subed-srt--prepend-subtitle (&optional id start stop text)
+  "Insert new subtitle before the subtitle at point.
+
+ID, START default to 0.
+STOP defaults to (+ START `subed-subtitle-spacing')
+TEXT defaults to an empty string.
+
+Move point to the text of the inserted subtitle.
+Return new point."
+  (interactive "P")
+  (subed-srt--jump-to-subtitle-id)
+  (insert (subed-srt--make-subtitle id start stop text))
   (save-match-data
-    (let* ((number-of-subs (cond ((not arg) 1)         ;; M-i
-                                 ((integerp arg) arg)  ;; C-u N M-i  /  C-u - N M-i
-                                 ;; C-u [C-u ...] M-i  /  C-u - [C-u ...] M-i
-                                 ((consp arg) (* (truncate (log (abs (car arg)) 4)) ;; ([-]64) -> 3
-                                                 (/ (car arg) (abs (car arg)))))    ;; Restore sign
-                                 (t 1)))            ;; C-u - M-i (Is there anything else is left?)
-           (insert-before (or (< number-of-subs 0)  ;; C-u - N M-i
-                              (eq arg '-)           ;; C-u - M-i
-                              (consp arg)))         ;; C-u [C-u ...] M-i
-           ;; Ensure number-of-subs is positive, now that we figured out `insert-before'
-           (number-of-subs (abs number-of-subs)))
-      (subed-debug "Inserting %s subtitle(s) %s the current" number-of-subs (if insert-before "before" "after"))
-      (subed-srt--jump-to-subtitle-id)
-      ;; Move to the ID of the subtitle we're prepending subtitles to so that we
-      ;; can do (insert "<new subtitle>")
-      (if insert-before
-          (subed-srt--jump-to-subtitle-id)
-        (when (and (not (subed-srt--forward-subtitle-id)) ;; Appending after last subtitle
-                   (> (buffer-size) 0))                  ;; Buffer is not empty
-          ;; There is no ID because we're appending to the last subtitle.  We just
-          ;; have to make sure there is a subtitle delimiter ("\n\n") after the
-          ;; last subtitle and point is where the new ID will go.
-          (subed-srt--jump-to-subtitle-end)
-          (forward-line)
-          (insert "\n")))
-      ;; Insert subtitles
-      (save-excursion
-        ;; Find out how much time we have per subtitle
-        (let*
-            ;; nil when there's no previous subtitle
-            ((prev-stop-msecs (save-excursion
-                                (if (looking-at "^[0-9]$")
-                                    ;; We're inserting between subtitles or
-                                    ;; before the first one
-                                    (when (subed-srt--backward-subtitle-id)
-                                      (subed-srt--subtitle-msecs-stop))
-                                  ;; We're append after the last subtitle
-                                  (subed-srt--subtitle-msecs-stop))))
-             ;; nil when there's no next subtitle
-             (next-start-msecs (when (looking-at "^[0-9]$")
-                                 (subed-srt--subtitle-msecs-start)))
-             ;; nil when there's no next subtitle
-             (available-msecs (when next-start-msecs
-                                (- next-start-msecs (or prev-stop-msecs 0))))
-             ;; Calculate milliseconds per inserted subtitle or use default value
-             ;; if we're appending to the last subtitle
-             (sub-msecs (if available-msecs (/ available-msecs number-of-subs)
-                          (* subed-default-subtitle-length 1000))))
-          (dotimes (i number-of-subs)
-            (let* ((start-msecs (+ (or prev-stop-msecs 0) (* sub-msecs i)))
-                   (stop-msecs (+ start-msecs sub-msecs))
-                   ;; Apply `subed-subtitle-spacing'
-                   (start-msecs-spaced (if (= i 0)
-                                           (+ start-msecs subed-subtitle-spacing)
-                                         (+ start-msecs (/ subed-subtitle-spacing 2))))
-                   (stop-msecs-spaced (if (= i (1- number-of-subs))
-                                          (- stop-msecs subed-subtitle-spacing)
-                                        (- stop-msecs (/ subed-subtitle-spacing 2)))))
-              (insert (format "0\n%s --> %s\n\n\n"
-                              (subed-srt--msecs-to-timestamp start-msecs-spaced)
-                              (subed-srt--msecs-to-timestamp stop-msecs-spaced))))))
-        ;; If we're not on an ID, that means we added one or more subtitles after
-        ;; the last one and we can remove the trailing extra newline
-        (when (looking-at "^[[:blank:]]*$")
-          (forward-line -1)
-          (kill-whole-line)))
-      (subed-srt--regenerate-ids-soon)
-      (subed-srt--jump-to-subtitle-text))))
+    (when (looking-at "\\([[:space:]]*\\|^\\)[0-9]+$")
+      (insert "\n")))
+  (forward-line -2)
+  (subed-srt--jump-to-subtitle-text))
+
+(defun subed-srt--append-subtitle (&optional id start stop text)
+  "Insert new subtitle after the subtitle at point.
+
+ID, START default to 0.
+STOP defaults to (+ START `subed-subtitle-spacing')
+TEXT defaults to an empty string.
+
+Move point to the text of the inserted subtitle.
+Return new point."
+  (interactive "P")
+  (unless (subed-srt--forward-subtitle-id)
+    ;; Point is on last subtitle or buffer is empty
+    (subed-srt--jump-to-subtitle-end)
+    ;; Moved point to end of last subtitle; ensure separator exists
+    (while (not (looking-at "\\(\\`\\|[[:blank:]]*\n[[:blank:]]*\n\\)"))
+      (save-excursion (insert ?\n)))
+    ;; Move to end of separator
+    (goto-char (match-end 0)))
+  (insert (subed-srt--make-subtitle id start stop text))
+  ;; Complete separator with another newline unless we inserted at the end
+  (save-match-data
+    (when (looking-at "\\([[:space:]]*\\|^\\)[0-9]+$")
+      (insert ?\n)))
+  (forward-line -2)
+  (subed-srt--jump-to-subtitle-text))
 
 (defun subed-srt--subtitle-kill ()
   "Remove subtitle at point."

@@ -41,7 +41,7 @@
     (define-key subed-mode-map (kbd "C-M-p") #'subed-move-subtitle-backward)
     (define-key subed-mode-map (kbd "C-M-f") #'subed-shift-subtitle-forward)
     (define-key subed-mode-map (kbd "C-M-b") #'subed-shift-subtitle-backward)
-    (define-key subed-mode-map (kbd "M-i") #'subed-subtitle-insert)
+    (define-key subed-mode-map (kbd "M-i") #'subed-insert-subtitle)
     (define-key subed-mode-map (kbd "M-k") #'subed-subtitle-kill)
     (define-key subed-mode-map (kbd "M-s") #'subed-sort)
     (define-key subed-mode-map (kbd "M-SPC") #'subed-mpv-toggle-pause)
@@ -166,8 +166,8 @@ If set to zero or smaller, playback is paused."
   :type 'integer
   :group 'subed)
 
-(defcustom subed-default-subtitle-length 1.0
-  "How long to make subtitles in seconds when inserted after the last subtitle."
+(defcustom subed-default-subtitle-length 1000
+  "How long to make subtitles in milliseconds when inserted after the last subtitle."
   :type 'float
   :group 'subed)
 

@@ -675,224 +675,445 @@ Baz.
 
   )
 
-(describe "Inserting"
-  (before-each
-    (spy-on 'subed-srt--regenerate-ids-soon))
-  (describe "in an empty buffer,"
-    (describe "appending"
-      (it "a single subtile."
-        (cl-loop for arg in (list nil 1) do
-                 (with-temp-buffer
-                   (subed-srt--subtitle-insert arg)
-                   (expect (buffer-string) :to-equal (concat "0\n"
-                                                             "00:00:00,100 --> 00:00:00,900\n\n"))
-                   (expect (point) :to-equal 33))))
-      (it "multiple subtiles."
-        (cl-loop for arg in (list 2) do
-                 (with-temp-buffer
-                   (subed-srt--subtitle-insert arg)
-                   (expect (buffer-string) :to-equal (concat "0\n"
-                                                             "00:00:00,100 --> 00:00:00,950\n\n\n"
-                                                             "0\n"
-                                                             "00:00:01,050 --> 00:00:01,900\n\n"))
-                   (expect (point) :to-equal 33)))))
-    (describe "prepending"
-      (it "a single subtile."
-        (cl-loop for arg in (list '- -1 (list 4)) do
-                 (with-temp-buffer
-                   (subed-srt--subtitle-insert arg)
-                   (expect (buffer-string) :to-equal (concat "0\n"
-                                                             "00:00:00,100 --> 00:00:00,900\n\n"))
-                   (expect (point) :to-equal 33))))
-      (it "multiple subtiles."
-        (cl-loop for arg in (list -2 (list -16)) do
-                 (with-temp-buffer
-                   (subed-srt--subtitle-insert arg)
-                   (expect (buffer-string) :to-equal (concat "0\n"
-                                                             "00:00:00,100 --> 00:00:00,950\n\n\n"
-                                                             "0\n"
-                                                             "00:00:01,050 --> 00:00:01,900\n\n"))
-                   (expect (point) :to-equal 33)))))
+(describe "Inserting a subtitle"
+  (describe "in an empty buffer"
+    (describe "before"
+      (it "passing nothing."
+        (with-temp-buffer
+          (expect (subed-srt--prepend-subtitle) :to-equal 33)
+          (expect (buffer-string) :to-equal (concat "0\n"
+                                                    "00:00:00,000 --> 00:00:01,000\n\n"))
+          (expect (point) :to-equal 33)))
+      (it "passing ID."
+        (with-temp-buffer
+          (expect (subed-srt--prepend-subtitle 2) :to-equal 33)
+          (expect (buffer-string) :to-equal (concat "2\n"
+                                                    "00:00:00,000 --> 00:00:01,000\n\n"))
+          (expect (point) :to-equal 33)))
+      (it "passing ID and start time."
+        (with-temp-buffer
+          (expect (subed-srt--prepend-subtitle 3 60000) :to-equal 33)
+          (expect (buffer-string) :to-equal (concat "3\n"
+                                                    "00:01:00,000 --> 00:01:01,000\n\n"))
+          (expect (point) :to-equal 33)))
+      (it "passing ID, start time and stop time."
+        (with-temp-buffer
+          (expect (subed-srt--prepend-subtitle 4 60000 65000) :to-equal 33)
+          (expect (buffer-string) :to-equal (concat "4\n"
+                                                    "00:01:00,000 --> 00:01:05,000\n\n"))
+          (expect (point) :to-equal 33)))
+      (it "passing ID, start time, stop time and text."
+        (with-temp-buffer
+          (expect (subed-srt--prepend-subtitle 5 60000 65000 "Foo, bar\nbaz.") :to-equal 33)
+          (expect (buffer-string) :to-equal (concat "5\n"
+                                                    "00:01:00,000 --> 00:01:05,000\n"
+                                                    "Foo, bar\nbaz.\n"))
+          (expect (point) :to-equal 33)))
+      )
+    (describe "after"
+      (it "passing nothing."
+        (with-temp-buffer
+          (expect (subed-srt--append-subtitle) :to-equal 33)
+          (expect (buffer-string) :to-equal (concat "0\n"
+                                                    "00:00:00,000 --> 00:00:01,000\n\n"))
+          (expect (point) :to-equal 33)))
+      (it "passing ID."
+        (with-temp-buffer
+          (expect (subed-srt--append-subtitle 2) :to-equal 33)
+          (expect (buffer-string) :to-equal (concat "2\n"
+                                                    "00:00:00,000 --> 00:00:01,000\n\n"))
+          (expect (point) :to-equal 33)))
+      (it "passing ID and start time."
+        (with-temp-buffer
+          (expect (subed-srt--append-subtitle 3 60000) :to-equal 33)
+          (expect (buffer-string) :to-equal (concat "3\n"
+                                                    "00:01:00,000 --> 00:01:01,000\n\n"))
+          (expect (point) :to-equal 33)))
+      (it "passing ID, start time and stop time."
+        (with-temp-buffer
+          (expect (subed-srt--append-subtitle 4 60000 65000) :to-equal 33)
+          (expect (buffer-string) :to-equal (concat "4\n"
+                                                    "00:01:00,000 --> 00:01:05,000\n\n"))
+          (expect (point) :to-equal 33)))
+      (it "passing ID, start time, stop time and text."
+        (with-temp-buffer
+          (expect (subed-srt--append-subtitle 5 60000 65000 "Foo, bar\nbaz.") :to-equal 33)
+          (expect (buffer-string) :to-equal (concat "5\n"
+                                                    "00:01:00,000 --> 00:01:05,000\n"
+                                                    "Foo, bar\nbaz.\n"))
+          (expect (point) :to-equal 33)))
+      )
     )
   (describe "in a non-empty buffer"
     (describe "before the current subtitle"
-      (it "a single subtitle."
-        (cl-loop for arg in (list '- -1 (list 4)) do
-                 (with-temp-buffer
-                   (insert mock-srt-data)
-                   (subed-srt--jump-to-subtitle-text 2)
-                   (subed-srt--subtitle-insert arg)
-                   (expect (buffer-string) :to-equal (concat "1\n"
-                                                             "00:01:01,000 --> 00:01:05,123\n"
-                                                             "Foo.\n\n"
-                                                             "0\n"
-                                                             "00:01:05,223 --> 00:02:02,134\n"
-                                                             "\n\n"
-                                                             "2\n"
-                                                             "00:02:02,234 --> 00:02:10,345\n"
-                                                             "Bar.\n\n"
-                                                             "3\n"
-                                                             "00:03:03,45 --> 00:03:15,5\n"
-                                                             "Baz.\n"))
-                   (expect (point) :to-equal 71))))
-      (it "multiple subtitles."
-        (cl-loop for arg in (list -2 (list 16)) do
-                 (with-temp-buffer
-                   (insert mock-srt-data)
-                   (subed-srt--jump-to-subtitle-text 2)
-                   (subed-srt--subtitle-insert arg)
-                   (expect (buffer-string) :to-equal (concat "1\n"
-                                                             "00:01:01,000 --> 00:01:05,123\n"
-                                                             "Foo.\n\n"
-                                                             "0\n"
-                                                             "00:01:05,223 --> 00:01:33,628\n"
-                                                             "\n\n"
-                                                             "0\n"
-                                                             "00:01:33,728 --> 00:02:02,133\n"
-                                                             "\n\n"
-                                                             "2\n"
-                                                             "00:02:02,234 --> 00:02:10,345\n"
-                                                             "Bar.\n\n"
-                                                             "3\n"
-                                                             "00:03:03,45 --> 00:03:15,5\n"
-                                                             "Baz.\n"))
-                   (expect (point) :to-equal 71))))
+      (describe "with point on the first subtitle"
+        (it "passing nothing."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n"))
+            (subed-srt--jump-to-subtitle-time-stop)
+            (expect (subed-srt--prepend-subtitle) :to-equal 33)
+            (expect (buffer-string) :to-equal (concat "0\n"
+                                                      "00:00:00,000 --> 00:00:01,000\n"
+                                                      "\n\n"
+                                                      "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n"))
+            (expect (point) :to-equal 33)))
+        (it "passing ID."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n"))
+            (subed-srt--jump-to-subtitle-time-stop)
+            (expect (subed-srt--prepend-subtitle 7) :to-equal 33)
+            (expect (buffer-string) :to-equal (concat "7\n"
+                                                      "00:00:00,000 --> 00:00:01,000\n"
+                                                      "\n\n"
+                                                      "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n"))
+            (expect (point) :to-equal 33)))
+        (it "passing ID and start time."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n"))
+            (subed-srt--jump-to-subtitle-time-stop)
+            (expect (subed-srt--prepend-subtitle 6 1500) :to-equal 33)
+            (expect (buffer-string) :to-equal (concat "6\n"
+                                                      "00:00:01,500 --> 00:00:02,500\n"
+                                                      "\n\n"
+                                                      "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n"))
+            (expect (point) :to-equal 33)))
+        (it "passing ID, start time and stop time."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n"))
+            (subed-srt--jump-to-subtitle-time-stop)
+            (expect (subed-srt--prepend-subtitle 5 1500 2000) :to-equal 33)
+            (expect (buffer-string) :to-equal (concat "5\n"
+                                                      "00:00:01,500 --> 00:00:02,000\n"
+                                                      "\n\n"
+                                                      "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n"))
+            (expect (point) :to-equal 33)))
+        (it "passing ID, start time, stop time and text."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n"))
+            (subed-srt--jump-to-subtitle-time-stop)
+            (expect (subed-srt--prepend-subtitle 4 1500 3000 "Bar.") :to-equal 33)
+            (expect (buffer-string) :to-equal (concat "4\n"
+                                                      "00:00:01,500 --> 00:00:03,000\n"
+                                                      "Bar.\n\n"
+                                                      "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n"))
+            (expect (point) :to-equal 33)))
+        )
+      (describe "with point on a non-first subtitle"
+        (it "passing nothing."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n\n"
+                            "2\n"
+                            "00:00:10,000 --> 00:00:12,000\n"
+                            "Bar.\n"))
+            (subed-srt--jump-to-subtitle-text 2)
+            (expect (subed-srt--prepend-subtitle) :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n\n"
+                                                      "0\n"
+                                                      "00:00:00,000 --> 00:00:01,000\n"
+                                                      "\n\n"
+                                                      "2\n"
+                                                      "00:00:10,000 --> 00:00:12,000\n"
+                                                      "Bar.\n"))
+            (expect (point) :to-equal 71)))
+        (it "passing ID."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n\n"
+                            "2\n"
+                            "00:00:10,000 --> 00:00:12,000\n"
+                            "Bar.\n"))
+            (subed-srt--jump-to-subtitle-text 2)
+            (expect (subed-srt--prepend-subtitle 9) :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n\n"
+                                                      "9\n"
+                                                      "00:00:00,000 --> 00:00:01,000\n"
+                                                      "\n\n"
+                                                      "2\n"
+                                                      "00:00:10,000 --> 00:00:12,000\n"
+                                                      "Bar.\n"))
+            (expect (point) :to-equal 71)))
+        (it "passing ID and start time."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n\n"
+                            "2\n"
+                            "00:00:10,000 --> 00:00:12,000\n"
+                            "Bar.\n"))
+            (subed-srt--jump-to-subtitle-text 2)
+            (expect (subed-srt--prepend-subtitle 9 7000) :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n\n"
+                                                      "9\n"
+                                                      "00:00:07,000 --> 00:00:08,000\n"
+                                                      "\n\n"
+                                                      "2\n"
+                                                      "00:00:10,000 --> 00:00:12,000\n"
+                                                      "Bar.\n"))
+            (expect (point) :to-equal 71)))
+        (it "passing ID, start time and stop time."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n\n"
+                            "2\n"
+                            "00:00:10,000 --> 00:00:12,000\n"
+                            "Bar.\n"))
+            (subed-srt--jump-to-subtitle-text 2)
+            (expect (subed-srt--prepend-subtitle 9 7000 7123) :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n\n"
+                                                      "9\n"
+                                                      "00:00:07,000 --> 00:00:07,123\n"
+                                                      "\n\n"
+                                                      "2\n"
+                                                      "00:00:10,000 --> 00:00:12,000\n"
+                                                      "Bar.\n"))
+            (expect (point) :to-equal 71)))
+        (it "passing ID, start time, stop time and text."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n\n"
+                            "2\n"
+                            "00:00:10,000 --> 00:00:12,000\n"
+                            "Bar.\n"))
+            (subed-srt--jump-to-subtitle-text 2)
+            (expect (subed-srt--prepend-subtitle 9 7000 7123 "Baz.") :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n\n"
+                                                      "9\n"
+                                                      "00:00:07,000 --> 00:00:07,123\n"
+                                                      "Baz.\n\n"
+                                                      "2\n"
+                                                      "00:00:10,000 --> 00:00:12,000\n"
+                                                      "Bar.\n"))
+            (expect (point) :to-equal 71)))
+        )
       )
     (describe "after the current subtitle"
-      (it "a single subtitle."
-        (cl-loop for arg in (list nil 1) do
-                 (with-temp-buffer
-                   (insert mock-srt-data)
-                   (subed-srt--jump-to-subtitle-text 1)
-                   (subed-srt--subtitle-insert arg)
-                   (expect (buffer-string) :to-equal (concat "1\n"
-                                                             "00:01:01,000 --> 00:01:05,123\n"
-                                                             "Foo.\n\n"
-                                                             "0\n"
-                                                             "00:01:05,223 --> 00:02:02,134\n"
-                                                             "\n\n"
-                                                             "2\n"
-                                                             "00:02:02,234 --> 00:02:10,345\n"
-                                                             "Bar.\n\n"
-                                                             "3\n"
-                                                             "00:03:03,45 --> 00:03:15,5\n"
-                                                             "Baz.\n"))
-                   (expect (point) :to-equal 71))))
-      (it "multiple subtitles."
-        (cl-loop for arg in (list 2) do
-                 (with-temp-buffer
-                   (insert mock-srt-data)
-                   (subed-srt--jump-to-subtitle-text 1)
-                   (subed-srt--subtitle-insert arg)
-                   (expect (buffer-string) :to-equal (concat "1\n"
-                                                             "00:01:01,000 --> 00:01:05,123\n"
-                                                             "Foo.\n\n"
-                                                             "0\n"
-                                                             "00:01:05,223 --> 00:01:33,628\n"
-                                                             "\n\n"
-                                                             "0\n"
-                                                             "00:01:33,728 --> 00:02:02,133\n"
-                                                             "\n\n"
-                                                             "2\n"
-                                                             "00:02:02,234 --> 00:02:10,345\n"
-                                                             "Bar.\n\n"
-                                                             "3\n"
-                                                             "00:03:03,45 --> 00:03:15,5\n"
-                                                             "Baz.\n"))
-                   (expect (point) :to-equal 71))))
+      (describe "with point on the last subtitle"
+        (it "passing nothing."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n"))
+            (subed-srt--jump-to-subtitle-text)
+            (expect (subed-srt--append-subtitle) :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n\n"
+                                                      "0\n"
+                                                      "00:00:00,000 --> 00:00:01,000\n"
+                                                      "\n"))
+            (expect (point) :to-equal 71)))
+        (it "passing ID."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n"))
+            (subed-srt--jump-to-subtitle-text)
+            (expect (subed-srt--append-subtitle 5) :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n\n"
+                                                      "5\n"
+                                                      "00:00:00,000 --> 00:00:01,000\n"
+                                                      "\n"))
+            (expect (point) :to-equal 71)))
+        (it "passing ID and start time."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n"))
+            (subed-srt--jump-to-subtitle-text)
+            (expect (subed-srt--append-subtitle 5 12345) :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n\n"
+                                                      "5\n"
+                                                      "00:00:12,345 --> 00:00:13,345\n"
+                                                      "\n"))
+            (expect (point) :to-equal 71)))
+        (it "passing ID, start time and stop time."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n"))
+            (subed-srt--jump-to-subtitle-text)
+            (expect (subed-srt--append-subtitle 5 12345 15000) :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n\n"
+                                                      "5\n"
+                                                      "00:00:12,345 --> 00:00:15,000\n"
+                                                      "\n"))
+            (expect (point) :to-equal 71)))
+        (it "passing ID, start time, stop time and text."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Foo.\n"))
+            (subed-srt--jump-to-subtitle-text)
+            (expect (subed-srt--append-subtitle 5 12345 15000 "Bar.") :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Foo.\n\n"
+                                                      "5\n"
+                                                      "00:00:12,345 --> 00:00:15,000\n"
+                                                      "Bar.\n"))
+            (expect (point) :to-equal 71)))
+        )
+      (describe "with point on a non-last subtitle"
+        (it "passing nothing."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:01,000 --> 00:00:02,000\n"
+                            "Foo.\n\n"
+                            "2\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Bar.\n"))
+            (subed-srt--jump-to-subtitle-time-start 1)
+            (expect (subed-srt--append-subtitle) :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:01,000 --> 00:00:02,000\n"
+                                                      "Foo.\n\n"
+                                                      "0\n"
+                                                      "00:00:00,000 --> 00:00:01,000\n"
+                                                      "\n\n"
+                                                      "2\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Bar.\n"))
+            (expect (point) :to-equal 71)))
+        (it "passing ID."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:01,000 --> 00:00:02,000\n"
+                            "Foo.\n\n"
+                            "2\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Bar.\n"))
+            (subed-srt--jump-to-subtitle-time-start 1)
+            (expect (subed-srt--append-subtitle 7) :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:01,000 --> 00:00:02,000\n"
+                                                      "Foo.\n\n"
+                                                      "7\n"
+                                                      "00:00:00,000 --> 00:00:01,000\n"
+                                                      "\n\n"
+                                                      "2\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Bar.\n"))
+            (expect (point) :to-equal 71)))
+        (it "passing ID and start time."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:01,000 --> 00:00:02,000\n"
+                            "Foo.\n\n"
+                            "2\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Bar.\n"))
+            (subed-srt--jump-to-subtitle-time-start 1)
+            (expect (subed-srt--append-subtitle 7 2500) :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:01,000 --> 00:00:02,000\n"
+                                                      "Foo.\n\n"
+                                                      "7\n"
+                                                      "00:00:02,500 --> 00:00:03,500\n"
+                                                      "\n\n"
+                                                      "2\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Bar.\n"))
+            (expect (point) :to-equal 71)))
+        (it "passing ID, start time and stop time."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:01,000 --> 00:00:02,000\n"
+                            "Foo.\n\n"
+                            "2\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Bar.\n"))
+            (subed-srt--jump-to-subtitle-time-start 1)
+            (expect (subed-srt--append-subtitle 7 2500 4000) :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:01,000 --> 00:00:02,000\n"
+                                                      "Foo.\n\n"
+                                                      "7\n"
+                                                      "00:00:02,500 --> 00:00:04,000\n"
+                                                      "\n\n"
+                                                      "2\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Bar.\n"))
+            (expect (point) :to-equal 71)))
+        (it "passing ID, start time, stop time and text."
+          (with-temp-buffer
+            (insert (concat "1\n"
+                            "00:00:01,000 --> 00:00:02,000\n"
+                            "Foo.\n\n"
+                            "2\n"
+                            "00:00:05,000 --> 00:00:06,000\n"
+                            "Bar.\n"))
+            (subed-srt--jump-to-subtitle-time-start 1)
+            (expect (subed-srt--append-subtitle 7 2500 4000 "Baz.") :to-equal 71)
+            (expect (buffer-string) :to-equal (concat "1\n"
+                                                      "00:00:01,000 --> 00:00:02,000\n"
+                                                      "Foo.\n\n"
+                                                      "7\n"
+                                                      "00:00:02,500 --> 00:00:04,000\n"
+                                                      "Baz.\n\n"
+                                                      "2\n"
+                                                      "00:00:05,000 --> 00:00:06,000\n"
+                                                      "Bar.\n"))
+            (expect (point) :to-equal 71)))
+        )
       )
-    (describe "before the first subtitle"
-      (it "a single subtitle."
-        (cl-loop for arg in (list '- -1 (list 4)) do
-                 (with-temp-buffer
-                   (insert mock-srt-data)
-                   (subed-srt--jump-to-subtitle-text 1)
-                   (subed-srt--subtitle-insert arg)
-                   (expect (buffer-string) :to-equal (concat "0\n"
-                                                             "00:00:00,100 --> 00:01:00,900\n"
-                                                             "\n\n"
-                                                             "1\n"
-                                                             "00:01:01,000 --> 00:01:05,123\n"
-                                                             "Foo.\n\n"
-                                                             "2\n"
-                                                             "00:02:02,234 --> 00:02:10,345\n"
-                                                             "Bar.\n\n"
-                                                             "3\n"
-                                                             "00:03:03,45 --> 00:03:15,5\n"
-                                                             "Baz.\n"))
-                   (expect (point) :to-equal 33))))
-      (it "multiple subtitles."
-        (cl-loop for arg in (list -2 (list 16)) do
-                 (with-temp-buffer
-                   (insert mock-srt-data)
-                   (subed-srt--jump-to-subtitle-text 1)
-                   (subed-srt--subtitle-insert arg)
-                   (expect (buffer-string) :to-equal (concat "0\n"
-                                                             "00:00:00,100 --> 00:00:30,450\n"
-                                                             "\n\n"
-                                                             "0\n"
-                                                             "00:00:30,550 --> 00:01:00,900\n"
-                                                             "\n\n"
-                                                             "1\n"
-                                                             "00:01:01,000 --> 00:01:05,123\n"
-                                                             "Foo.\n\n"
-                                                             "2\n"
-                                                             "00:02:02,234 --> 00:02:10,345\n"
-                                                             "Bar.\n\n"
-                                                             "3\n"
-                                                             "00:03:03,45 --> 00:03:15,5\n"
-                                                             "Baz.\n"))
-                   (expect (point) :to-equal 33))))
-      )
-    (describe "after the last subtitle"
-      (it "a single subtitle."
-        (cl-loop for arg in (list nil 1) do
-                 (with-temp-buffer
-                   (insert mock-srt-data)
-                   (subed-srt--jump-to-subtitle-text 3)
-                   (subed-srt--subtitle-insert arg)
-                   (expect (buffer-string) :to-equal (concat "1\n"
-                                                             "00:01:01,000 --> 00:01:05,123\n"
-                                                             "Foo.\n\n"
-                                                             "2\n"
-                                                             "00:02:02,234 --> 00:02:10,345\n"
-                                                             "Bar.\n\n"
-                                                             "3\n"
-                                                             "00:03:03,45 --> 00:03:15,5\n"
-                                                             "Baz.\n\n"
-                                                             "0\n"
-                                                             "00:03:15,600 --> 00:03:16,400\n"
-                                                             "\n"))
-                   (expect (point) :to-equal 144))))
-      (it "multiple subtitles."
-        (cl-loop for arg in (list 2) do
-                 (with-temp-buffer
-                   (insert mock-srt-data)
-                   (subed-srt--jump-to-subtitle-text 3)
-                   (subed-srt--subtitle-insert arg)
-                   (expect (buffer-string) :to-equal (concat "1\n"
-                                                             "00:01:01,000 --> 00:01:05,123\n"
-                                                             "Foo.\n\n"
-                                                             "2\n"
-                                                             "00:02:02,234 --> 00:02:10,345\n"
-                                                             "Bar.\n\n"
-                                                             "3\n"
-                                                             "00:03:03,45 --> 00:03:15,5\n"
-                                                             "Baz.\n\n"
-                                                             "0\n"
-                                                             "00:03:15,600 --> 00:03:16,450\n"
-                                                             "\n\n"
-                                                             "0\n"
-                                                             "00:03:16,550 --> 00:03:17,400\n"
-                                                             "\n"))
-                   (expect (point) :to-equal 144))))
-      )
+    (it "when point is on empty text."
+      (with-temp-buffer
+        (insert (concat "1\n"
+                        "00:00:01,000 --> 00:00:02,000\n"
+                        "\n"))
+        (subed-jump-to-subtitle-text)
+        ;; (expect (subed-srt--append-subtitle) :to-equal 67)
+        (subed-srt--append-subtitle)
+        (expect (buffer-string) :to-equal (concat "1\n"
+                                                  "00:00:01,000 --> 00:00:02,000\n"
+                                                  "\n\n"
+                                                  "0\n"
+                                                  "00:00:00,000 --> 00:00:01,000\n"
+                                                  "\n"))
+        ;; (expect (point) :to-equal 67)
+        ))
     )
-  (it "schedules ID regeneration."
-    (with-temp-buffer
-      (subed-srt--subtitle-insert)
-      (expect #'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
-      (expect #'subed-srt--regenerate-ids :not :to-have-been-called)))
   )
 
 (describe "Killing a subtitle"

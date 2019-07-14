@@ -47,15 +47,14 @@
 (defalias 'subed-subtitle-msecs-stop #'subed-srt--subtitle-msecs-stop)
 (defalias 'subed-subtitle-text #'subed-srt--subtitle-text)
 (defalias 'subed-subtitle-relative-point #'subed-srt--subtitle-relative-point)
-(defalias 'subed-set-subtitle-time-start #'subed-srt--set-subtitle-time-start)
-(defalias 'subed-set-subtitle-time-stop #'subed-srt--set-subtitle-time-stop)
 
 (defalias 'subed-jump-to-subtitle-id #'subed-srt--jump-to-subtitle-id)
 (defalias 'subed-jump-to-subtitle-time-start #'subed-srt--jump-to-subtitle-time-start)
 (defalias 'subed-jump-to-subtitle-time-stop #'subed-srt--jump-to-subtitle-time-stop)
-(defalias 'subed-jump-to-subtitle-text-at-msecs #'subed-srt--jump-to-subtitle-text-at-msecs)
 (defalias 'subed-jump-to-subtitle-text #'subed-srt--jump-to-subtitle-text)
 (defalias 'subed-jump-to-subtitle-end #'subed-srt--jump-to-subtitle-end)
+(defalias 'subed-jump-to-subtitle-id-at-msecs #'subed-srt--jump-to-subtitle-id-at-msecs)
+(defalias 'subed-jump-to-subtitle-text-at-msecs #'subed-srt--jump-to-subtitle-text-at-msecs)
 
 (defalias 'subed-forward-subtitle-id #'subed-srt--forward-subtitle-id)
 (defalias 'subed-backward-subtitle-id #'subed-srt--backward-subtitle-id)
@@ -66,9 +65,14 @@
 (defalias 'subed-forward-subtitle-time-stop #'subed-srt--forward-subtitle-time-stop)
 (defalias 'subed-backward-subtitle-time-stop #'subed-srt--backward-subtitle-time-stop)
 
-(defalias 'subed-subtitle-insert #'subed-srt--subtitle-insert)
+(defalias 'subed-set-subtitle-time-start #'subed-srt--set-subtitle-time-start)
+(defalias 'subed-set-subtitle-time-stop #'subed-srt--set-subtitle-time-stop)
+(defalias 'subed-prepend-subtitle #'subed-srt--prepend-subtitle)
+(defalias 'subed-append-subtitle #'subed-srt--append-subtitle)
 (defalias 'subed-subtitle-kill #'subed-srt--subtitle-kill)
 (defalias 'subed-sanitize #'subed-srt--sanitize)
+(defalias 'subed-regenerate-ids #'subed-srt--regenerate-ids)
+(defalias 'subed-regenerate-ids-soon #'subed-srt--regenerate-ids-soon)
 (defalias 'subed-sort #'subed-srt--sort)
 
 
@@ -497,6 +501,80 @@ See `subed-move-subtitle-forward' about ARG."
         (msecs (* -1 (subed-get-milliseconds-adjust arg)))
         (beg (if (use-region-p) (region-beginning) (point))))
     (subed-move-subtitles msecs beg)))
+
+
+;;; Inserting
+
+(defun subed-insert-subtitle (&optional arg)
+  "Insert subtitle(s).
+
+ARG, usually provided by `universal-argument', is used in the
+following manner:
+          \\[subed-insert-subtitle]   Insert 1 subtitle after the current subtitle
+      \\[universal-argument] \\[subed-insert-subtitle]   Insert 1 subtitle before the current subtitle
+    \\[universal-argument] 5 \\[subed-insert-subtitle]   Insert 5 subtitles after the current subtitle
+  \\[universal-argument] - 5 \\[subed-insert-subtitle]   Insert 5 subtitles before the current subtitle
+  \\[universal-argument] \\[universal-argument] \\[subed-insert-subtitle]   Insert 2 subtitles before the current subtitle"
+  (interactive "P")
+  ;; Parse arg
+  (atomic-change-group
+    (let* ((number-of-subs (cond ((not arg) 1)         ;; M-i
+                                 ((integerp arg) arg)  ;; C-u N M-i  /  C-u - N M-i
+                                 ;; C-u [C-u ...] M-i  /  C-u - [C-u ...] M-i
+                                 ((consp arg) (* (truncate (log (abs (car arg)) 4)) ;; ([-]64) -> 3
+                                                 (/ (car arg) (abs (car arg)))))    ;; Restore sign
+                                 (t 1)))            ;; C-u - M-i
+           (insert-before-current (or (< number-of-subs 0)  ;; C-u - N M-i
+                                      (eq arg '-)           ;; C-u - M-i
+                                      (consp arg)))         ;; C-u [C-u ...] M-i
+           ;; Ensure number-of-subs is positive, now that we figured out `insert-before-current'
+           (number-of-subs (abs number-of-subs)))
+      (subed-debug "Inserting %s subtitle(s) %s the current"
+                   number-of-subs (if insert-before-current "before" "after"))
+      (let*
+          ;; Find out how much time there is available
+          ((msecs-min (save-excursion (if insert-before-current
+                                          (when (subed-srt--backward-subtitle-id)
+                                            (subed-srt--subtitle-msecs-stop))
+                                        (subed-srt--subtitle-msecs-stop))))
+           (msecs-max (save-excursion (if insert-before-current
+                                          (subed-srt--subtitle-msecs-start)
+                                        (when (subed-srt--forward-subtitle-id)
+                                          (subed-srt--subtitle-msecs-start)))))
+           (msecs-avail (cond ((and msecs-min msecs-max) (- msecs-max msecs-min))
+                              (msecs-max msecs-max)
+                              (t nil)))  ;; Unlimited
+           (msecs-per-sub (if msecs-avail
+                              (min (/ msecs-avail number-of-subs)
+                                   subed-default-subtitle-length)
+                            subed-default-subtitle-length)))
+        (subed-debug "  Available time: min=%S max=%S avail=%S sublen=%S" msecs-min msecs-max msecs-avail msecs-per-sub)
+        (cl-flet ((insert-subtitle (if insert-before-current
+                                       #'subed-prepend-subtitle
+                                     #'subed-append-subtitle)))
+          (dotimes (i number-of-subs)
+            (let* ((multiplier (if insert-before-current
+                                   (- number-of-subs i)
+                                 (1+ i)))
+                   (msecs-start (if msecs-avail
+                                    ;; Inserting anywhere before the last subtitle
+                                    (+ (or msecs-min 0)
+                                       (* multiplier (/ msecs-avail (1+ number-of-subs))))
+                                  (if msecs-min
+                                      ;; Inserting after the last subtitle
+                                      (+ msecs-min
+                                         subed-subtitle-spacing
+                                         (* (1- multiplier) (+ msecs-per-sub subed-subtitle-spacing)))
+                                    ;; Inserting in empty buffer
+                                    (* (1- multiplier) (+ msecs-per-sub subed-subtitle-spacing)))))
+                   (msecs-stop (+ msecs-start msecs-per-sub)))
+              (subed-debug "  Inserting new subtitle at %S - %S" msecs-start msecs-stop)
+              (insert-subtitle nil msecs-start msecs-stop nil)))))
+      (unless insert-before-current
+        (dotimes (_ (1- number-of-subs))
+          (subed-backward-subtitle-text))))
+    (subed-regenerate-ids-soon))
+    (point))
 
 
 ;;; Replay time-adjusted subtitle
