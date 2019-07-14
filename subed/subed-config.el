@@ -42,7 +42,7 @@
     (define-key subed-mode-map (kbd "C-M-f") #'subed-shift-subtitle-forward)
     (define-key subed-mode-map (kbd "C-M-b") #'subed-shift-subtitle-backward)
     (define-key subed-mode-map (kbd "M-i") #'subed-insert-subtitle)
-    (define-key subed-mode-map (kbd "M-k") #'subed-subtitle-kill)
+    (define-key subed-mode-map (kbd "M-k") #'subed-kill-subtitle)
     (define-key subed-mode-map (kbd "M-s") #'subed-sort)
     (define-key subed-mode-map (kbd "M-SPC") #'subed-mpv-toggle-pause)
     (define-key subed-mode-map (kbd "C-c C-d") #'subed-toggle-debugging)

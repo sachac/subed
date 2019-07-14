@@ -406,7 +406,7 @@ Return new point."
   (forward-line -2)
   (subed-srt--jump-to-subtitle-text))
 
-(defun subed-srt--subtitle-kill ()
+(defun subed-srt--kill-subtitle ()
   "Remove subtitle at point."
   (interactive)
   (let ((beg (save-excursion (subed-srt--jump-to-subtitle-id)

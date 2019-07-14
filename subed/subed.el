@@ -69,7 +69,7 @@
 (defalias 'subed-set-subtitle-time-stop #'subed-srt--set-subtitle-time-stop)
 (defalias 'subed-prepend-subtitle #'subed-srt--prepend-subtitle)
 (defalias 'subed-append-subtitle #'subed-srt--append-subtitle)
-(defalias 'subed-subtitle-kill #'subed-srt--subtitle-kill)
+(defalias 'subed-kill-subtitle #'subed-srt--kill-subtitle)
 (defalias 'subed-sanitize #'subed-srt--sanitize)
 (defalias 'subed-regenerate-ids #'subed-srt--regenerate-ids)
 (defalias 'subed-regenerate-ids-soon #'subed-srt--regenerate-ids-soon)

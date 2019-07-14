@@ -1121,7 +1121,7 @@ Baz.
     (with-temp-buffer
       (insert mock-srt-data)
       (subed-srt--jump-to-subtitle-text 1)
-      (subed-srt--subtitle-kill)
+      (subed-srt--kill-subtitle)
       (expect (buffer-string) :to-equal (concat "2\n"
                                                 "00:02:02,234 --> 00:02:10,345\n"
                                                 "Bar.\n\n"
@@ -1132,7 +1132,7 @@ Baz.
     (with-temp-buffer
       (insert mock-srt-data)
       (subed-srt--jump-to-subtitle-text 2)
-      (subed-srt--subtitle-kill)
+      (subed-srt--kill-subtitle)
       (expect (buffer-string) :to-equal (concat "1\n"
                                                 "00:01:01,000 --> 00:01:05,123\n"
                                                 "Foo.\n\n"
@@ -1143,7 +1143,7 @@ Baz.
     (with-temp-buffer
       (insert mock-srt-data)
       (subed-srt--jump-to-subtitle-text 3)
-      (subed-srt--subtitle-kill)
+      (subed-srt--kill-subtitle)
       (expect (buffer-string) :to-equal (concat "1\n"
                                                 "00:01:01,000 --> 00:01:05,123\n"
                                                 "Foo.\n\n"
@@ -1157,7 +1157,7 @@ Baz.
         (subed-jump-to-subtitle-id 3)
         (backward-char)
         (expect (looking-at "^\n3\n") :to-be t)
-        (subed-srt--subtitle-kill)
+        (subed-srt--kill-subtitle)
         (expect (buffer-string) :to-equal (concat "1\n"
                                                   "00:01:01,000 --> 00:01:05,123\n"
                                                   "Foo.\n\n"
@@ -1170,7 +1170,7 @@ Baz.
         (subed-jump-to-subtitle-id 2)
         (backward-char)
         (expect (looking-at "^\n2\n") :to-be t)
-        (subed-srt--subtitle-kill)
+        (subed-srt--kill-subtitle)
         (expect (buffer-string) :to-equal (concat "2\n"
                                                   "00:02:02,234 --> 00:02:10,345\n"
                                                   "Bar.\n\n"
