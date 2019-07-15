@@ -32,52 +32,47 @@
 ;;; Code:
 
 (require 'subed-config)
-(require 'subed-srt)
 (require 'subed-mpv)
 
 ;; Abstraction layer to allow support for other subtitle formats
-(defcustom subed-font-lock-keywords subed-srt-font-lock-keywords
-  "The particular font-lock keywords in use by subed."
-  :type 'list
-  :group 'subed)
+;; These *must* be defined by major modes that derive from subed.
+(defvar-local subed-font-lock-keywords nil)
+(defvar-local subed-regexp-timestamp nil)
+(defvar-local subed-msecs-to-timestamp nil)
 
-(defvar-local subed-regexp-timestamp subed-srt--regexp-timestamp)
-(defvar-local subed-msecs-to-timestamp #'subed-srt--msecs-to-timestamp)
+(defvar-local subed-subtitle-id nil)
+(defvar-local subed-subtitle-id-max nil)
+(defvar-local subed-subtitle-msecs-start nil)
+(defvar-local subed-subtitle-msecs-stop nil)
+(defvar-local subed-subtitle-text nil)
+(defvar-local subed-subtitle-relative-point nil)
 
-(defalias 'subed-subtitle-id #'subed-srt--subtitle-id)
-(defalias 'subed-subtitle-id-max #'subed-srt--subtitle-id-max)
-(defalias 'subed-subtitle-msecs-start #'subed-srt--subtitle-msecs-start)
-(defalias 'subed-subtitle-msecs-stop #'subed-srt--subtitle-msecs-stop)
-(defalias 'subed-subtitle-text #'subed-srt--subtitle-text)
-(defalias 'subed-subtitle-relative-point #'subed-srt--subtitle-relative-point)
+(defvar-local subed-jump-to-subtitle-id nil)
+(defvar-local subed-jump-to-subtitle-time-start nil)
+(defvar-local subed-jump-to-subtitle-time-stop nil)
+(defvar-local subed-jump-to-subtitle-text nil)
+(defvar-local subed-jump-to-subtitle-end nil)
+(defvar-local subed-jump-to-subtitle-id-at-msecs nil)
+(defvar-local subed-jump-to-subtitle-text-at-msecs nil)
 
-(defalias 'subed-jump-to-subtitle-id #'subed-srt--jump-to-subtitle-id)
-(defalias 'subed-jump-to-subtitle-time-start #'subed-srt--jump-to-subtitle-time-start)
-(defalias 'subed-jump-to-subtitle-time-stop #'subed-srt--jump-to-subtitle-time-stop)
-(defalias 'subed-jump-to-subtitle-text #'subed-srt--jump-to-subtitle-text)
-(defalias 'subed-jump-to-subtitle-end #'subed-srt--jump-to-subtitle-end)
-(defalias 'subed-jump-to-subtitle-id-at-msecs #'subed-srt--jump-to-subtitle-id-at-msecs)
-(defalias 'subed-jump-to-subtitle-text-at-msecs #'subed-srt--jump-to-subtitle-text-at-msecs)
+(defvar-local subed-forward-subtitle-id nil)
+(defvar-local subed-backward-subtitle-id nil)
+(defvar-local subed-forward-subtitle-text nil)
+(defvar-local subed-backward-subtitle-text nil)
+(defvar-local subed-forward-subtitle-time-start nil)
+(defvar-local subed-backward-subtitle-time-start nil)
+(defvar-local subed-forward-subtitle-time-stop nil)
+(defvar-local subed-backward-subtitle-time-stop nil)
 
-(defalias 'subed-forward-subtitle-id #'subed-srt--forward-subtitle-id)
-(defalias 'subed-backward-subtitle-id #'subed-srt--backward-subtitle-id)
-(defalias 'subed-forward-subtitle-text #'subed-srt--forward-subtitle-text)
-(defalias 'subed-backward-subtitle-text #'subed-srt--backward-subtitle-text)
-(defalias 'subed-forward-subtitle-time-start #'subed-srt--forward-subtitle-time-start)
-(defalias 'subed-backward-subtitle-time-start #'subed-srt--backward-subtitle-time-start)
-(defalias 'subed-forward-subtitle-time-stop #'subed-srt--forward-subtitle-time-stop)
-(defalias 'subed-backward-subtitle-time-stop #'subed-srt--backward-subtitle-time-stop)
-
-(defalias 'subed-set-subtitle-time-start #'subed-srt--set-subtitle-time-start)
-(defalias 'subed-set-subtitle-time-stop #'subed-srt--set-subtitle-time-stop)
-(defalias 'subed-prepend-subtitle #'subed-srt--prepend-subtitle)
-(defalias 'subed-append-subtitle #'subed-srt--append-subtitle)
-(defalias 'subed-kill-subtitle #'subed-srt--kill-subtitle)
-(defalias 'subed-sanitize #'subed-srt--sanitize)
-(defalias 'subed-regenerate-ids #'subed-srt--regenerate-ids)
-(defalias 'subed-regenerate-ids-soon #'subed-srt--regenerate-ids-soon)
-(defalias 'subed-sort #'subed-srt--sort)
-
+(defvar-local subed-set-subtitle-time-start nil)
+(defvar-local subed-set-subtitle-time-stop nil)
+(defvar-local subed-prepend-subtitle nil)
+(defvar-local subed-append-subtitle nil)
+(defvar-local subed-kill-subtitle nil)
+(defvar-local subed-sanitize nil)
+(defvar-local subed-regenerate-ids nil)
+(defvar-local subed-regenerate-ids-soon nil)
+(defvar-local subed-sort nil)
 
 ;;; Debugging
 
@@ -133,10 +128,10 @@
 This also works if the buffer changes (e.g. when sorting
 subtitles) as long the subtitle IDs don't change."
   (save-excursion
-    `(let ((sub-id (subed-subtitle-id))
-           (sub-pos (subed-subtitle-relative-point)))
+    `(let ((sub-id (funcall subed-subtitle-id))
+           (sub-pos (funcall subed-subtitle-relative-point)))
        (progn ,@body)
-       (subed-jump-to-subtitle-id sub-id)
+       (funcall subed-jump-to-subtitle-id sub-id)
        ;; Subtitle text may have changed and we may not be able to move to the
        ;; exact original position
        (condition-case nil
@@ -154,7 +149,7 @@ Before BODY is run, point is placed on the subtitle's ID."
   `(atomic-change-group
      (if (not ,beg)
          ;; Run body on subtitle at point
-         (save-excursion (subed-jump-to-subtitle-id)
+         (save-excursion (funcall subed-jump-to-subtitle-id)
                          ,@body)
        (let ((begm (make-marker))
              (endm (make-marker)))
@@ -164,25 +159,25 @@ Before BODY is run, point is placed on the subtitle's ID."
          (if ,reverse
              ;; Iterate backwards
              (save-excursion (goto-char endm)
-                             (subed-jump-to-subtitle-id)
+                             (funcall subed-jump-to-subtitle-id)
                              (catch 'first-subtitle-reached
                                (while t
                                  ;; The subtitle includes every character up to the next subtitle's ID (or eob)
-                                 (let ((sub-end (save-excursion (subed-jump-to-subtitle-end))))
+                                 (let ((sub-end (save-excursion (funcall subed-jump-to-subtitle-end))))
                                    (when (< sub-end begm)
                                      (throw 'first-subtitle-reached t)))
                                  (progn ,@body)
-                                 (unless (subed-backward-subtitle-id)
+                                 (unless (funcall subed-backward-subtitle-id)
                                    (throw 'first-subtitle-reached t)))))
            ;; Iterate forwards
            (save-excursion (goto-char begm)
-                           (subed-jump-to-subtitle-id)
+                           (funcall subed-jump-to-subtitle-id)
                            (catch 'last-subtitle-reached
                              (while t
                                (when (> (point) endm)
                                  (throw 'last-subtitle-reached t))
                                (progn ,@body)
-                               (unless (subed-forward-subtitle-id)
+                               (unless (funcall subed-forward-subtitle-id)
                                  (throw 'last-subtitle-reached t))))))))))
 
 (defmacro subed-with-subtitle-replay-disabled (&rest body)
@@ -218,18 +213,18 @@ happen.
 Return the number of milliseconds the start time was adjusted or
 nil if nothing changed."
   (subed-disable-sync-point-to-player-temporarily)
-  (let* ((msecs-start (subed-subtitle-msecs-start))
+  (let* ((msecs-start (funcall subed-subtitle-msecs-start))
          (msecs-new (when msecs-start (+ msecs-start msecs))))
     (when msecs-new
       (if (> msecs 0)
           ;; Adding to start time
           (unless ignore-negative-duration
-            (let ((msecs-stop (subed-subtitle-msecs-stop)))
+            (let ((msecs-stop (funcall subed-subtitle-msecs-stop)))
               (setq msecs-new (min msecs-new msecs-stop))))
         ;; Subtracting from start time
         (unless ignore-spacing
-          (let* ((msecs-prev-stop (save-excursion (when (subed-backward-subtitle-id)
-                                                    (subed-subtitle-msecs-stop))))
+          (let* ((msecs-prev-stop (save-excursion (when (funcall subed-backward-subtitle-id)
+                                                    (funcall subed-subtitle-msecs-stop))))
                  (msecs-min (if msecs-prev-stop
                                 (+ msecs-prev-stop subed-subtitle-spacing) 0)))
             (when msecs-min
@@ -238,7 +233,7 @@ nil if nothing changed."
       ;; or smaller if we are subtracting.
       (when (or (and (> msecs 0) (> msecs-new msecs-start))   ;; Adding
                 (and (< msecs 0) (< msecs-new msecs-start)))  ;; Subtracting
-        (subed-set-subtitle-time-start msecs-new)
+        (funcall subed-set-subtitle-time-start msecs-new)
         (subed--run-subtitle-time-adjusted-hook)
         (- msecs-new msecs-start)))))
 
@@ -259,27 +254,27 @@ happen.
 Return the number of milliseconds the stop time was adjusted or
 nil if nothing changed."
   (subed-disable-sync-point-to-player-temporarily)
-  (let* ((msecs-stop (subed-subtitle-msecs-stop))
+  (let* ((msecs-stop (funcall subed-subtitle-msecs-stop))
          (msecs-new (when msecs-stop (+ msecs-stop msecs))))
     (when msecs-new
       (if (> msecs 0)
           ;; Adding to stop time
           (unless ignore-spacing
-            (let* ((msecs-next-start (save-excursion (when (subed-forward-subtitle-id)
-                                                       (subed-subtitle-msecs-start))))
+            (let* ((msecs-next-start (save-excursion (when (funcall subed-forward-subtitle-id)
+                                                       (funcall subed-subtitle-msecs-start))))
                    (msecs-max (when msecs-next-start
                                 (- msecs-next-start subed-subtitle-spacing))))
               (when msecs-max
                 (setq msecs-new (min msecs-new msecs-max)))))
         ;; Subtracting from stop time
         (unless ignore-negative-duration
-          (let ((msecs-start (subed-subtitle-msecs-start)))
+          (let ((msecs-start (funcall subed-subtitle-msecs-start)))
             (setq msecs-new (max msecs-new msecs-start)))))
       ;; msecs-new must be bigger than the current stop time if we are adding or
       ;; smaller if we are subtracting.
       (when (or (and (> msecs 0) (> msecs-new msecs-stop))   ;; Adding
                 (and (< msecs 0) (< msecs-new msecs-stop)))  ;; Subtracting
-        (subed-set-subtitle-time-stop msecs-new)
+        (funcall subed-set-subtitle-time-stop msecs-new)
         (subed--run-subtitle-time-adjusted-hook)
         (- msecs-new msecs-stop)))))
 
@@ -333,7 +328,7 @@ See `subed-increase-start-time' about ARG."
 (defun subed-copy-player-pos-to-start-time ()
   "Replace current subtitle's start timestamp with mpv player's current timestamp."
   (interactive)
-  (subed-jump-to-subtitle-time-start)
+  (funcall subed-jump-to-subtitle-time-start)
   (when (and subed-mpv-playback-position
              (looking-at subed-regexp-timestamp))
     (replace-match (funcall subed-msecs-to-timestamp subed-mpv-playback-position))
@@ -342,7 +337,7 @@ See `subed-increase-start-time' about ARG."
 (defun subed-copy-player-pos-to-stop-time ()
   "Replace current subtitle's stop timestamp with mpv player's current timestamp."
   (interactive)
-  (subed-jump-to-subtitle-time-stop)
+  (funcall subed-jump-to-subtitle-time-stop)
   (when (and subed-mpv-playback-position
              (looking-at subed-regexp-timestamp))
     (replace-match (funcall subed-msecs-to-timestamp subed-mpv-playback-position))
@@ -409,7 +404,7 @@ but we move the start time first."
                 (goto-char end)
                 (unless (setq msecs (move-subtitle msecs))
                   (throw 'bumped-into-subtitle t))
-                (subed-backward-subtitle-id)
+                (funcall subed-backward-subtitle-id)
                 (subed-for-each-subtitle beg (point) :reverse
                   (move-subtitle msecs :ignore-spacing)))
             ;; Start on first subtitle to see if/how far we can move backward.
@@ -417,7 +412,7 @@ but we move the start time first."
               (goto-char beg)
               (unless (setq msecs (move-subtitle msecs))
                 (throw 'bumped-into-subtitle t))
-              (subed-forward-subtitle-id)
+              (funcall subed-forward-subtitle-id)
               (subed-for-each-subtitle (point) end
                 (move-subtitle msecs :ignore-spacing)))))))))
 
@@ -434,7 +429,7 @@ replaying is enabled."
   (when (subed-replay-adjusted-subtitle-p)
     (save-excursion
       (when beg (goto-char beg))
-      (subed-mpv-jump (subed-subtitle-msecs-start)))))
+      (subed-mpv-jump (funcall subed-subtitle-msecs-start)))))
 
 (defun subed-move-subtitle-forward (&optional arg)
   "Move subtitle `subed-milliseconds-adjust' forward.
@@ -541,9 +536,9 @@ following manner:
                                             (funcall subed-subtitle-msecs-stop))
                                         (funcall subed-subtitle-msecs-stop))))
            (msecs-max (save-excursion (if insert-before-current
-                                          (subed-subtitle-msecs-start)
-                                        (when (subed-forward-subtitle-id)
-                                          (subed-subtitle-msecs-start)))))
+                                          (funcall subed-subtitle-msecs-start)
+                                        (when (funcall subed-forward-subtitle-id)
+                                          (funcall subed-subtitle-msecs-start)))))
            (msecs-avail (cond ((and msecs-min msecs-max) (- msecs-max msecs-min))
                               (msecs-max msecs-max)
                               (t nil)))  ;; Unlimited
@@ -553,8 +548,8 @@ following manner:
                             subed-default-subtitle-length)))
         (subed-debug "  Available time: min=%S max=%S avail=%S sublen=%S" msecs-min msecs-max msecs-avail msecs-per-sub)
         (cl-flet ((insert-subtitle (if insert-before-current
-                                       #'subed-prepend-subtitle
-                                     #'subed-append-subtitle)))
+                                       subed-prepend-subtitle
+                                     subed-append-subtitle)))
           (dotimes (i number-of-subs)
             (let* ((multiplier (if insert-before-current
                                    (- number-of-subs i)
@@ -575,8 +570,8 @@ following manner:
               (insert-subtitle nil msecs-start msecs-stop nil)))))
       (unless insert-before-current
         (dotimes (_ (1- number-of-subs))
-          (subed-backward-subtitle-text))))
-    (subed-regenerate-ids-soon))
+          (funcall subed-backward-subtitle-text))))
+    (funcall subed-regenerate-ids-soon))
     (point))
 
 
@@ -617,7 +612,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 
 (defun subed--replay-adjusted-subtitle (msecs-start)
   "Seek player to MSECS-START."
-  (subed-debug "Replaying subtitle at: %s" (subed-msecs-to-timestamp msecs-start))
+  (subed-debug "Replaying subtitle at: %s" (funcall subed-msecs-to-timestamp msecs-start))
   (subed-mpv-jump msecs-start))
 
 
@@ -659,9 +654,9 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 (defun subed--sync-point-to-player (msecs)
   "Move point to subtitle at MSECS."
   (when (and (not (use-region-p))
-             (subed-jump-to-subtitle-text-at-msecs msecs))
+             (funcall subed-jump-to-subtitle-text-at-msecs msecs))
     (subed-debug "Synchronized point to playback position: %s -> #%s"
-                 (subed-msecs-to-timestamp msecs) (subed-subtitle-id))
+                 (funcall subed-msecs-to-timestamp msecs) (funcall subed-subtitle-id))
     ;; post-command-hook is not triggered because we didn't move interactively.
     ;; But there's not really a difference, e.g. the minor mode `hl-line' breaks
     ;; unless we call its post-command function, so we do it manually.
@@ -728,14 +723,14 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 (defun subed--sync-player-to-point ()
   "Seek player to currently focused subtitle."
   (subed-debug "Seeking player to subtitle at point %s" (point))
-  (let ((cur-sub-start (subed-subtitle-msecs-start))
-        (cur-sub-stop (subed-subtitle-msecs-stop)))
+  (let ((cur-sub-start (funcall subed-subtitle-msecs-start))
+        (cur-sub-stop (funcall subed-subtitle-msecs-stop)))
     (when (and subed-mpv-playback-position cur-sub-start cur-sub-stop
                (or (< subed-mpv-playback-position cur-sub-start)
                    (> subed-mpv-playback-position cur-sub-stop)))
       (subed-mpv-jump cur-sub-start)
       (subed-debug "Synchronized playback position to point: #%s -> %s"
-                   (subed-subtitle-id) cur-sub-start))))
+                   (funcall subed-subtitle-id) cur-sub-start))))
 
 
 ;;; Loop over single subtitle
@@ -758,16 +753,16 @@ If QUIET is non-nil, do not display a message in the minibuffer."
         (subed-debug "Disabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop)
         (unless quiet
           (message "Disabled looping")))
-    (subed--set-subtitle-loop (subed-subtitle-id))
+    (subed--set-subtitle-loop (funcall subed-subtitle-id))
     (add-hook 'subed-mpv-playback-position-hook #'subed--ensure-subtitle-loop :append :local)
     (add-hook 'subed-subtitle-motion-hook #'subed--set-subtitle-loop :append :local)
     (subed-debug "Enabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop)))
 
 (defun subed--set-subtitle-loop (&optional sub-id)
   "Set loop positions to start/stop time of SUB-ID or current subtitle."
-  (setq subed--subtitle-loop-start (- (subed-subtitle-msecs-start sub-id)
+  (setq subed--subtitle-loop-start (- (funcall subed-subtitle-msecs-start sub-id)
                                       (* subed-loop-seconds-before 1000))
-        subed--subtitle-loop-stop (+ (subed-subtitle-msecs-stop sub-id)
+        subed--subtitle-loop-stop (+ (funcall subed-subtitle-msecs-stop sub-id)
                                      (* subed-loop-seconds-after 1000)))
   (subed-debug "Set loop: %s - %s"
                (funcall subed-msecs-to-timestamp subed--subtitle-loop-start)
@@ -890,13 +885,12 @@ Return nil if function `buffer-file-name' returns nil."
 (defun subed-mode-enable ()
   "Enable subed mode."
   (interactive)
-  (kill-all-local-variables)
   (setq-local font-lock-defaults '(subed-font-lock-keywords))
   (setq-local paragraph-start "^[[:alnum:]\n]+")
   (setq-local paragraph-separate "\n\n")
   (use-local-map subed-mode-map)
   (add-hook 'post-command-hook #'subed--post-command-handler :append :local)
-  (add-hook 'before-save-hook #'subed-sort :append :local)
+  (add-hook 'before-save-hook subed-sort :append :local)
   (add-hook 'after-save-hook #'subed-mpv-reload-subtitles :append :local)
   (add-hook 'kill-buffer-hook #'subed-mpv-kill :append :local)
   (add-hook 'kill-emacs-hook #'subed-mpv-kill :append :local)
@@ -912,10 +906,7 @@ Return nil if function `buffer-file-name' returns nil."
   (subed-enable-sync-point-to-player :quiet)
   (subed-enable-sync-player-to-point :quiet)
   (subed-enable-replay-adjusted-subtitle :quiet)
-  (setq major-mode 'subed-mode
-        mode-name "subed")
-  (setq subed-mode--enabled-p t)
-  (run-mode-hooks 'subed-mode-hook))
+  (setq subed-mode--enabled-p t))
 
 (defun subed-mode-disable ()
   "Disable subed mode."
@@ -928,28 +919,19 @@ Return nil if function `buffer-file-name' returns nil."
   (subed-disable-debugging)
   (kill-all-local-variables)
   (remove-hook 'post-command-hook #'subed--post-command-handler :local)
-  (remove-hook 'before-save-hook #'subed-sort :local)
+  (remove-hook 'before-save-hook subed-sort :local)
   (remove-hook 'after-save-hook #'subed-mpv-reload-subtitles :local)
   (remove-hook 'kill-buffer-hook #'subed-mpv-kill :local)
   (setq subed-mode--enabled-p nil))
 
 ;;;###autoload
-(defun subed-mode ()
-  "Major mode for editing subtitles.
-
-This function enables or disables `subed-mode'.  See also
-`subed-mode-enable' and `subed-mode-disable'.
-
-Key bindings:
-\\{subed-mode-map}"
-  (interactive)
-  ;; Use 'enabled property of this function to store enabled/disabled status
-  (if subed-mode--enabled-p
-      (subed-mode-disable)
-    (subed-mode-enable)))
-
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.srt\\'" . subed-mode-enable))
+(define-derived-mode subed-mode text-mode "Subed Mode"
+  "Parent mode for editing subtitle files.
+This major-mode is only meant to be derived from child modes
+that override the abstraction layer at the top of this file.
+Those child modes must call subed-mode-enable once they have
+configured their abstraction layer."
+  :group 'subed)
 
 (provide 'subed)
 ;;; subed.el ends here

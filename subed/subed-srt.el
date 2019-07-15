@@ -27,11 +27,8 @@
 
 ;;; Code:
 
-(defvar subed-subtitle-spacing)  ; from subed.el
-(defvar subed-default-subtitle-length)  ; from subed.el
-(declare-function subed-save-excursion "subed.el" t t)  ; macro
-(declare-function subed-debug "subed.el" (msg &rest args))
-(declare-function subed--right-pad "subed.el" (string length fillchar))
+(require 'subed)
+(require 'subed-config)
 
 ;;; Syntax highlighting
 
@@ -550,6 +547,57 @@ scheduled call is canceled and another call is scheduled in
                 ;; startkeyfun (return sort value of current record/subtitle)
                 #'subed-srt--subtitle-msecs-start))
     (subed-srt--regenerate-ids)))
+
+(defvar subed-srt-mode-map subed-mode-map)
+
+(define-derived-mode subed-srt-mode subed-mode "Subed-SRT Mode"
+  "Major mode for editing .srt subtitle files using Subed.
+
+Key bindings:
+\\{subed-srt-mode-map}"
+  :group 'subed
+  ;; Modify the subed abstraction layer for srt files:
+  (setq-local subed-font-lock-keywords subed-srt-font-lock-keywords)
+  (setq-local subed-regexp-timestamp subed-srt--regexp-timestamp)
+  (setq-local subed-msecs-to-timestamp #'subed-srt--msecs-to-timestamp)
+
+  (setq-local subed-subtitle-id #'subed-srt--subtitle-id)
+  (setq-local subed-subtitle-id-max #'subed-srt--subtitle-id-max)
+  (setq-local subed-subtitle-msecs-start #'subed-srt--subtitle-msecs-start)
+  (setq-local subed-subtitle-msecs-stop #'subed-srt--subtitle-msecs-stop)
+  (setq-local subed-subtitle-text #'subed-srt--subtitle-text)
+  (setq-local subed-subtitle-relative-point #'subed-srt--subtitle-relative-point)
+
+  (setq-local subed-jump-to-subtitle-id #'subed-srt--jump-to-subtitle-id)
+  (setq-local subed-jump-to-subtitle-time-start #'subed-srt--jump-to-subtitle-time-start)
+  (setq-local subed-jump-to-subtitle-time-stop #'subed-srt--jump-to-subtitle-time-stop)
+  (setq-local subed-jump-to-subtitle-text #'subed-srt--jump-to-subtitle-text)
+  (setq-local subed-jump-to-subtitle-end #'subed-srt--jump-to-subtitle-end)
+  (setq-local subed-jump-to-subtitle-id-at-msecs #'subed-srt--jump-to-subtitle-id-at-msecs)
+  (setq-local subed-jump-to-subtitle-text-at-msecs #'subed-srt--jump-to-subtitle-text-at-msecs)
+
+  (setq-local subed-forward-subtitle-id #'subed-srt--forward-subtitle-id)
+  (setq-local subed-backward-subtitle-id #'subed-srt--backward-subtitle-id)
+  (setq-local subed-forward-subtitle-text #'subed-srt--forward-subtitle-text)
+  (setq-local subed-backward-subtitle-text #'subed-srt--backward-subtitle-text)
+  (setq-local subed-forward-subtitle-time-start #'subed-srt--forward-subtitle-time-start)
+  (setq-local subed-backward-subtitle-time-start #'subed-srt--backward-subtitle-time-start)
+  (setq-local subed-forward-subtitle-time-stop #'subed-srt--forward-subtitle-time-stop)
+  (setq-local subed-backward-subtitle-time-stop #'subed-srt--backward-subtitle-time-stop)
+
+  (setq-local subed-set-subtitle-time-start #'subed-srt--set-subtitle-time-start)
+  (setq-local subed-set-subtitle-time-stop #'subed-srt--set-subtitle-time-stop)
+  (setq-local subed-prepend-subtitle #'subed-srt--prepend-subtitle)
+  (setq-local subed-append-subtitle #'subed-srt--append-subtitle)
+  (setq-local subed-kill-subtitle #'subed-srt--kill-subtitle)
+  (setq-local subed-sanitize #'subed-srt--sanitize)
+  (setq-local subed-regenerate-ids #'subed-srt--regenerate-ids)
+  (setq-local subed-regenerate-ids-soon #'subed-srt--regenerate-ids-soon)
+  (setq-local subed-sort #'subed-srt--sort)
+  (subed-mode-enable))
+
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.srt\\'" . subed-srt-mode))
 
 (provide 'subed-srt)
 ;;; subed-srt.el ends here
