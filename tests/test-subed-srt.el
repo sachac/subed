@@ -1,6 +1,6 @@
 ;; -*- eval: (buttercup-minor-mode) -*-
 (add-to-list 'load-path "./subed")
-(require 'subed)
+(require 'subed-srt)
 
 (defvar mock-srt-data
   "1
@@ -108,8 +108,8 @@ Baz.
     (it "handles lack of digits in milliseconds gracefully."
       (with-temp-buffer
         (insert mock-srt-data)
-        (subed-jump-to-subtitle-id 3)
-        (expect (save-excursion (subed-jump-to-subtitle-time-start)
+        (subed-srt--jump-to-subtitle-id 3)
+        (expect (save-excursion (subed-srt--jump-to-subtitle-time-start)
                                 (thing-at-point 'line)) :to-equal "00:03:03,45 --> 00:03:15,5\n")
         (expect (subed-srt--subtitle-msecs-start) :to-equal (+ (* 3 60 1000) (*  3 1000) 450))
         (expect (subed-srt--subtitle-msecs-stop)  :to-equal (+ (* 3 60 1000) (* 15 1000) 500))))
@@ -665,14 +665,13 @@ Baz.
   (it "when milliseconds lack digits."
     (with-temp-buffer
       (insert mock-srt-data)
-      (subed-jump-to-subtitle-id 3)
+      (subed-srt--jump-to-subtitle-id 3)
       (subed-srt--set-subtitle-time-start (+ (* 1 60 60 1000) (* 2 60 1000) (* 3 1000) 4) 3)
-      (expect (save-excursion (subed-jump-to-subtitle-time-start)
+      (expect (save-excursion (subed-srt--jump-to-subtitle-time-start)
                               (thing-at-point 'line)) :to-equal "01:02:03,004 --> 00:03:15,5\n")
       (subed-srt--set-subtitle-time-stop (+ (* 2 60 60 1000) (* 3 60 1000) (* 4 1000) 60) 3)
-      (expect (save-excursion (subed-jump-to-subtitle-time-start)
+      (expect (save-excursion (subed-srt--jump-to-subtitle-time-start)
                               (thing-at-point 'line)) :to-equal "01:02:03,004 --> 02:03:04,060\n")))
-
   )
 
 (describe "Inserting a subtitle"
@@ -1102,17 +1101,15 @@ Baz.
         (insert (concat "1\n"
                         "00:00:01,000 --> 00:00:02,000\n"
                         "\n"))
-        (subed-jump-to-subtitle-text)
-        ;; (expect (subed-srt--append-subtitle) :to-equal 67)
-        (subed-srt--append-subtitle)
+        (subed-srt--jump-to-subtitle-text)
+        (expect (subed-srt--append-subtitle) :to-equal 67)
         (expect (buffer-string) :to-equal (concat "1\n"
                                                   "00:00:01,000 --> 00:00:02,000\n"
                                                   "\n\n"
                                                   "0\n"
                                                   "00:00:00,000 --> 00:00:01,000\n"
                                                   "\n"))
-        ;; (expect (point) :to-equal 67)
-        ))
+        (expect (point) :to-equal 67)))
     )
   )
 
@@ -1154,7 +1151,7 @@ Baz.
     (it "of the last subtitle."
       (with-temp-buffer
         (insert mock-srt-data)
-        (subed-jump-to-subtitle-id 3)
+        (subed-srt--jump-to-subtitle-id 3)
         (backward-char)
         (expect (looking-at "^\n3\n") :to-be t)
         (subed-srt--kill-subtitle)
@@ -1167,7 +1164,7 @@ Baz.
     (it "of a non-last subtitle."
       (with-temp-buffer
         (insert mock-srt-data)
-        (subed-jump-to-subtitle-id 2)
+        (subed-srt--jump-to-subtitle-id 2)
         (backward-char)
         (expect (looking-at "^\n2\n") :to-be t)
         (subed-srt--kill-subtitle)
@@ -1235,9 +1232,21 @@ Baz.
       (expect (point) :to-equal 73)))
   )
 
+(describe "Renumbering"
+  (it "ensures consecutive subtitle IDs."
+    (with-temp-buffer
+      (insert mock-srt-data)
+      (goto-char (point-min))
+      (while (looking-at "^[0-9]$")
+        (replace-match "123"))
+      (expect (buffer-string) :not :to-equal mock-srt-data)
+      (subed-srt--regenerate-ids)
+      (expect (buffer-string) :to-equal mock-srt-data))))
+
 (describe "Sanitizing"
   (it "removes trailing tabs and spaces from all lines."
     (with-temp-buffer
+      (subed-srt-mode)  ;; Make subed-save-excursion work
       (insert mock-srt-data)
       (goto-char (point-min))
       (while (re-search-forward "\n" nil t)
@@ -1246,6 +1255,7 @@ Baz.
       (subed-srt--sanitize)
       (expect (buffer-string) :to-equal mock-srt-data))
     (with-temp-buffer
+      (subed-srt-mode)  ;; Make subed-save-excursion work
       (insert mock-srt-data)
       (goto-char (point-min))
       (while (re-search-forward "\n" nil t)
@@ -1255,6 +1265,7 @@ Baz.
       (expect (buffer-string) :to-equal mock-srt-data)))
   (it "removes leading tabs and spaces from all lines."
     (with-temp-buffer
+      (subed-srt-mode)  ;; Make subed-save-excursion work
       (insert mock-srt-data)
       (goto-char (point-min))
       (while (re-search-forward "\n" nil t)
@@ -1263,6 +1274,7 @@ Baz.
       (subed-srt--sanitize)
       (expect (buffer-string) :to-equal mock-srt-data))
     (with-temp-buffer
+      (subed-srt-mode)  ;; Make subed-save-excursion work
       (insert mock-srt-data)
       (goto-char (point-min))
       (while (re-search-forward "\n" nil t)
@@ -1272,6 +1284,7 @@ Baz.
       (expect (buffer-string) :to-equal mock-srt-data)))
   (it "removes excessive empty lines between subtitles."
     (with-temp-buffer
+      (subed-srt-mode)  ;; Make subed-save-excursion work
       (insert mock-srt-data)
       (goto-char (point-min))
       (while (re-search-forward "\n\n" nil t)
@@ -1281,6 +1294,7 @@ Baz.
       (expect (buffer-string) :to-equal mock-srt-data)))
   (it "ensures double newline between subtitles if text of previous subtitle is empty."
     (with-temp-buffer
+      (subed-srt-mode)  ;; Make subed-save-excursion work
       (insert mock-srt-data)
       (subed-srt--jump-to-subtitle-text 1)
       (kill-whole-line)
@@ -1305,6 +1319,7 @@ Baz.
                                                 "Baz.\n"))))
   (it "removes empty lines from beginning of buffer."
     (with-temp-buffer
+      (subed-srt-mode)  ;; Make subed-save-excursion work
       (insert mock-srt-data)
       (goto-char (point-min))
       (insert " \n\t\n")
@@ -1313,6 +1328,7 @@ Baz.
       (expect (buffer-string) :to-equal mock-srt-data)))
   (it "removes empty lines from end of buffer."
     (with-temp-buffer
+      (subed-srt-mode)  ;; Make subed-save-excursion work
       (insert mock-srt-data)
       (goto-char (point-max))
       (insert " \n\t\n\n")
@@ -1321,6 +1337,7 @@ Baz.
       (expect (buffer-string) :to-equal mock-srt-data)))
   (it "ensures a single newline after the last subtitle."
     (with-temp-buffer
+      (subed-srt-mode)  ;; Make subed-save-excursion work
       (insert mock-srt-data)
       (goto-char (point-max))
       (while (eq (char-before (point-max)) ?\n)
@@ -1330,6 +1347,7 @@ Baz.
       (expect (buffer-string) :to-equal mock-srt-data)))
   (it "ensures single newline after last subtitle if text is empty."
     (with-temp-buffer
+      (subed-srt-mode)  ;; Make subed-save-excursion work
       (insert mock-srt-data)
       (subed-srt--jump-to-subtitle-text 3)
       (kill-whole-line)
@@ -1354,6 +1372,7 @@ Baz.
                                                 "\n"))))
   (it "ensures single space before and after time separators."
     (with-temp-buffer
+      (subed-srt-mode)  ;; Make subed-save-excursion work
       (insert mock-srt-data)
       (goto-char (point-min))
       (re-search-forward " --> ")
@@ -1367,20 +1386,10 @@ Baz.
       (expect (buffer-string) :to-equal mock-srt-data)))
   )
 
-(describe "Renumbering"
-  (it "ensures consecutive subtitle IDs."
-    (with-temp-buffer
-      (insert mock-srt-data)
-      (goto-char (point-min))
-      (while (looking-at "^[0-9]$")
-        (replace-match "123"))
-      (expect (buffer-string) :not :to-equal mock-srt-data)
-      (subed-srt--regenerate-ids)
-      (expect (buffer-string) :to-equal mock-srt-data))))
-
 (describe "Sorting"
   (it "orders subtitles by start time."
     (with-temp-buffer
+      (subed-srt-mode)  ;; Make subed-save-excursion work
       (insert mock-srt-data)
       (goto-char (point-min))
       (re-search-forward "01:01")
@@ -1408,6 +1417,7 @@ Baz.
   (describe "preserves point in the current subtitle"
     (it "when subtitle text is non-empty."
       (with-temp-buffer
+        (subed-srt-mode)  ;; Make subed-save-excursion work
         (insert mock-srt-data)
         (goto-char (point-min))
         (re-search-forward "01:01")
@@ -1418,6 +1428,7 @@ Baz.
         (expect (current-word) :to-equal "Foo")))
     (it "when subtitle text is empty."
       (with-temp-buffer
+        (subed-srt-mode)  ;; Make subed-save-excursion work
         (insert "1\n00:12:01,000 --> 00:01:05,123\n")
         (goto-char (point-max))
         (subed-srt--sort)
