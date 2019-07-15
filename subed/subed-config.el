@@ -231,7 +231,7 @@ The functions are called with the subtitle's start time.")
 The functions are called with the subtitle's start time."
   (when subed-subtitle-time-adjusted-hook
     (run-hook-with-args 'subed-subtitle-time-adjusted-hook
-                        (subed-subtitle-msecs-start))))
+                        (funcall subed-subtitle-msecs-start))))
 
 (defvar-local subed-point-motion-hook nil
   "Functions to call after point changed.")
