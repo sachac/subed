@@ -802,7 +802,7 @@
         (expect 'subed-mpv-jump :to-have-been-called-with '60800))))
   )
 
-(describe "Inserting"
+(describe "Inserting evenly spaced"
   (before-each
     (spy-on 'subed-regenerate-ids-soon))
   (describe "in an empty buffer,"
@@ -858,7 +858,7 @@
       )
     )
   (describe "in a non-empty buffer"
-    (describe "before a non-first subtitle"
+    (describe "prepending between subtitles"
       (it "a single subtitle."
         (cl-loop for arg in (list '- -1 (list 4)) do
                  (with-temp-buffer
@@ -909,7 +909,7 @@
                    (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
                    (spy-calls-reset 'subed-regenerate-ids-soon))))
       )
-    (describe "after a non-last subtitle"
+    (describe "appending between subtitles"
       (it "a single subtitle."
         (cl-loop for arg in (list nil 1) do
                  (with-temp-buffer
@@ -960,7 +960,7 @@
                    (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
                    (spy-calls-reset 'subed-regenerate-ids-soon))))
       )
-    (describe "before the first subtitle"
+    (describe "prepending to the first subtitle"
       (it "a single subtitle."
         (cl-loop for arg in (list '- -1 (list 4)) do
                  (with-temp-buffer
@@ -999,7 +999,7 @@
                    (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
                    (spy-calls-reset 'subed-regenerate-ids-soon))))
       )
-    (describe "after the last subtitle"
+    (describe "appending to the last subtitle"
       (it "a single subtitle."
         (cl-loop for arg in (list nil 1) do
                  (with-temp-buffer
