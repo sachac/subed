@@ -1103,16 +1103,14 @@ Baz.
                         "00:00:01,000 --> 00:00:02,000\n"
                         "\n"))
         (subed-jump-to-subtitle-text)
-        ;; (expect (subed-srt--append-subtitle) :to-equal 67)
-        (subed-srt--append-subtitle)
+        (expect (subed-srt--append-subtitle) :to-equal 67)
         (expect (buffer-string) :to-equal (concat "1\n"
                                                   "00:00:01,000 --> 00:00:02,000\n"
                                                   "\n\n"
                                                   "0\n"
                                                   "00:00:00,000 --> 00:00:01,000\n"
                                                   "\n"))
-        ;; (expect (point) :to-equal 67)
-        ))
+        (expect (point) :to-equal 67)))
     )
   )
 
