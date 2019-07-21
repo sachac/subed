@@ -505,8 +505,66 @@ See `subed-move-subtitle-forward' about ARG."
 
 ;;; Inserting
 
+(defun subed--insert-subtitle-info (arg)
+  "Provide information for inserting subtitles.
+ARG is the user-given argument.
+Return a list of values in the following order:
+  number-of-subs insert-before-current (t or nil) buffer-is-empty
+  msecs-min msecs-max msecs-avail msecs-per-sub msecs-between
+  insert-subtitle-func"
+  (let* ((number-of-subs (cond ((not arg) 1)         ;; M-i
+                               ((integerp arg) arg)  ;; C-u N M-i  /  C-u - N M-i
+                               ;; C-u [C-u ...] M-i  /  C-u - [C-u ...] M-i
+                               ((consp arg) (* (truncate (log (abs (car arg)) 4)) ;; ([-]64) -> 3
+                                               (/ (car arg) (abs (car arg)))))    ;; Restore sign
+                               (t 1)))  ;; C-u - M-i
+         (insert-before-current (or (< number-of-subs 0)  ;; C-u - N M-i
+                                    (eq arg '-)           ;; C-u - M-i
+                                    (consp arg)))         ;; C-u [C-u ...] M-i
+         ;; Ensure number-of-subs is positive, now that we figured out `insert-before-current'
+         (number-of-subs (abs number-of-subs))
+         (buffer-is-empty (if (subed-subtitle-id) nil t))
+         ;; Find out how much time there is available
+         (msecs-min (save-excursion (if insert-before-current
+                                        (if (subed-backward-subtitle-id)
+                                          (subed-subtitle-msecs-stop) 0)
+                                      (subed-subtitle-msecs-stop))))
+         (msecs-max (save-excursion (if insert-before-current
+                                        (subed-subtitle-msecs-start)
+                                      (when (subed-forward-subtitle-id)
+                                        (subed-subtitle-msecs-start)))))
+         (msecs-avail (cond ((and msecs-min msecs-max) (- msecs-max msecs-min))
+                            (msecs-max msecs-max)
+                            (t nil)))  ;; Unlimited
+         (msecs-per-sub (if msecs-avail
+                            (min subed-default-subtitle-length
+                                 (max 0 (/ (- msecs-avail (* (1+ number-of-subs) subed-subtitle-spacing))
+                                           number-of-subs)))
+                          subed-default-subtitle-length))
+         (msecs-between (if (or (not msecs-avail)
+                                (>= msecs-avail (* (1+ number-of-subs) subed-subtitle-spacing)))
+                            subed-subtitle-spacing
+                          0))
+         (insert-subtitle-func (if insert-before-current
+                                   #'subed-prepend-subtitle
+                                 #'subed-append-subtitle)))
+    (subed-debug "Inserting %s subtitle(s) %s the current in %sempty buffer"
+                 number-of-subs
+                 (if insert-before-current "before" "after")
+                 (if buffer-is-empty "" "non-"))
+    (subed-debug "  Available time: min=%S max=%S avail=%S sublen=%S/%S"
+                 msecs-min msecs-max msecs-avail msecs-per-sub subed-default-subtitle-length)
+    (list number-of-subs insert-before-current buffer-is-empty
+          msecs-min msecs-max msecs-avail msecs-per-sub msecs-between
+          insert-subtitle-func)))
+
 (defun subed-insert-subtitle (&optional arg)
-  "Insert subtitle(s).
+  "Insert subtitle(s) evenly spaced.
+
+The inserted subtitles are `subed-default-subtitle-length'
+milliseconds long.
+
+Subtitles are spread out evenly over the available time.
 
 ARG, usually provided by `universal-argument', is used in the
 following manner:
@@ -516,65 +574,98 @@ following manner:
   \\[universal-argument] - 5 \\[subed-insert-subtitle]   Insert 5 subtitles before the current subtitle
   \\[universal-argument] \\[universal-argument] \\[subed-insert-subtitle]   Insert 2 subtitles before the current subtitle"
   (interactive "P")
-  ;; Parse arg
   (atomic-change-group
-    (let* ((number-of-subs (cond ((not arg) 1)         ;; M-i
-                                 ((integerp arg) arg)  ;; C-u N M-i  /  C-u - N M-i
-                                 ;; C-u [C-u ...] M-i  /  C-u - [C-u ...] M-i
-                                 ((consp arg) (* (truncate (log (abs (car arg)) 4)) ;; ([-]64) -> 3
-                                                 (/ (car arg) (abs (car arg)))))    ;; Restore sign
-                                 (t 1)))            ;; C-u - M-i
-           (insert-before-current (or (< number-of-subs 0)  ;; C-u - N M-i
-                                      (eq arg '-)           ;; C-u - M-i
-                                      (consp arg)))         ;; C-u [C-u ...] M-i
-           ;; Ensure number-of-subs is positive, now that we figured out `insert-before-current'
-           (number-of-subs (abs number-of-subs)))
-      (subed-debug "Inserting %s subtitle(s) %s the current"
-                   number-of-subs (if insert-before-current "before" "after"))
-      (let*
-          ;; Find out how much time there is available
-          ((msecs-min (save-excursion (if insert-before-current
-                                          (when (subed-srt--backward-subtitle-id)
-                                            (subed-srt--subtitle-msecs-stop))
-                                        (subed-srt--subtitle-msecs-stop))))
-           (msecs-max (save-excursion (if insert-before-current
-                                          (subed-srt--subtitle-msecs-start)
-                                        (when (subed-srt--forward-subtitle-id)
-                                          (subed-srt--subtitle-msecs-start)))))
-           (msecs-avail (cond ((and msecs-min msecs-max) (- msecs-max msecs-min))
-                              (msecs-max msecs-max)
-                              (t nil)))  ;; Unlimited
-           (msecs-per-sub (if msecs-avail
-                              (min (/ msecs-avail number-of-subs)
-                                   subed-default-subtitle-length)
-                            subed-default-subtitle-length)))
-        (subed-debug "  Available time: min=%S max=%S avail=%S sublen=%S" msecs-min msecs-max msecs-avail msecs-per-sub)
-        (cl-flet ((insert-subtitle (if insert-before-current
-                                       #'subed-prepend-subtitle
-                                     #'subed-append-subtitle)))
-          (dotimes (i number-of-subs)
-            (let* ((multiplier (if insert-before-current
-                                   (- number-of-subs i)
-                                 (1+ i)))
-                   (msecs-start (if msecs-avail
-                                    ;; Inserting anywhere before the last subtitle
-                                    (+ (or msecs-min 0)
-                                       (* multiplier (/ msecs-avail (1+ number-of-subs))))
-                                  (if msecs-min
-                                      ;; Inserting after the last subtitle
-                                      (+ msecs-min
-                                         subed-subtitle-spacing
-                                         (* (1- multiplier) (+ msecs-per-sub subed-subtitle-spacing)))
-                                    ;; Inserting in empty buffer
-                                    (* (1- multiplier) (+ msecs-per-sub subed-subtitle-spacing)))))
-                   (msecs-stop (+ msecs-start msecs-per-sub)))
-              (subed-debug "  Inserting new subtitle at %S - %S" msecs-start msecs-stop)
-              (insert-subtitle nil msecs-start msecs-stop nil)))))
+    (cl-multiple-value-bind (number-of-subs insert-before-current buffer-is-empty
+                             msecs-min msecs-max msecs-avail msecs-per-sub msecs-between
+                             insert-subtitle-func)
+                            (subed--insert-subtitle-info arg)
+      (dotimes (i number-of-subs)
+        ;; Value constellations:
+        ;;     empty buffer, append           : min=0       max=nil     avail=nil
+        ;;     empty buffer, prepend          : min=0       max=nil     avail=nil
+        ;; non-empty buffer, prepend, betwixt : min=non-nil max=non-nil avail=non-nil
+        ;; non-empty buffer, append,  betwixt : min=non-nil max=non-nil avail=non-nil
+        ;; non-empty buffer, prepend to first : min=0       max=non-nil avail=non-nil
+        ;; non-empty buffer, append  to last  : min=non-nil max=nil     avail=nil
+        (let* ((multiplier (if insert-before-current
+                               (- number-of-subs i)
+                             (1+ i)))
+               (msecs-start (if msecs-avail
+                                ;; Inserting anywhere before the last subtitle
+                                (+ msecs-min
+                                   (if (< msecs-per-sub subed-default-subtitle-length)
+                                       ;; Use all available space between subtitles
+                                       (+ msecs-between
+                                          (* (1- multiplier) (+ msecs-between msecs-per-sub)))
+                                     ;; Leave extra space between subtitles
+                                     (* multiplier (/ msecs-avail (1+ number-of-subs)))))
+                              (if (and msecs-min (not msecs-max))
+                                  ;; Appending to last subtitle
+                                  (+ msecs-min
+                                     ;; If buffer is empty, start first subtitle at 0
+                                     (if (> msecs-min 0) msecs-between 0)
+                                     (* (1- multiplier) (+ msecs-per-sub msecs-between)))
+                                ;; Appending in empty buffer
+                                (* i (+ msecs-per-sub msecs-between)))))
+               (msecs-stop (+ msecs-start msecs-per-sub)))
+          (subed-debug "  Inserting new subtitle at %S - %S" msecs-start msecs-stop)
+          (funcall insert-subtitle-func nil msecs-start msecs-stop nil)))
       (unless insert-before-current
         (dotimes (_ (1- number-of-subs))
           (subed-backward-subtitle-text))))
     (subed-regenerate-ids-soon))
-    (point))
+  (point))
+
+(defun subed-insert-subtitle-adjacent (&optional arg)
+  "Insert subtitle(s) close to each other.
+
+The inserted subtitles are `subed-default-subtitle-length'
+milliseconds long.
+
+Subtitles are inserted `subed-subtitle-spacing' milliseconds
+before or after the current subtitle.  When inserting multiple
+subtitles, the gap between them is also `subed-subtitle-spacing'
+milliseconds long.
+
+ARG, usually provided by `universal-argument', is used in the
+following manner:
+          \\[subed-insert-subtitle]   Insert 1 subtitle after the current subtitle
+      \\[universal-argument] \\[subed-insert-subtitle]   Insert 1 subtitle before the current subtitle
+    \\[universal-argument] 5 \\[subed-insert-subtitle]   Insert 5 subtitles after the current subtitle
+  \\[universal-argument] - 5 \\[subed-insert-subtitle]   Insert 5 subtitles before the current subtitle
+  \\[universal-argument] \\[universal-argument] \\[subed-insert-subtitle]   Insert 2 subtitles before the current subtitle"
+  (interactive "P")
+  (atomic-change-group
+    (cl-multiple-value-bind (number-of-subs insert-before-current buffer-is-empty
+                             msecs-min msecs-max msecs-avail msecs-per-sub msecs-between
+                             insert-subtitle-func)
+                            (subed--insert-subtitle-info arg)
+      (dotimes (i number-of-subs)
+        ;; Value constellations:
+        ;;     empty buffer, append           : min=0       max=nil     avail=nil
+        ;;     empty buffer, prepend          : min=0       max=nil     avail=nil
+        ;; non-empty buffer, prepend, betwixt : min=non-nil max=non-nil avail=non-nil
+        ;; non-empty buffer, append,  betwixt : min=non-nil max=non-nil avail=non-nil
+        ;; non-empty buffer, prepend to first : min=0       max=non-nil avail=non-nil
+        ;; non-empty buffer, append  to last  : min=non-nil max=nil     avail=nil
+        (let* ((multiplier (if insert-before-current
+                               (- number-of-subs i 1)
+                             i))
+               (msecs-start (if buffer-is-empty
+                                (* multiplier (+ subed-subtitle-spacing msecs-per-sub))
+                              (if insert-before-current
+                                  (- msecs-max (* (1+ i) (+ subed-subtitle-spacing msecs-per-sub)))
+                                (+ msecs-min
+                                   subed-subtitle-spacing
+                                   (* i (+ msecs-per-sub subed-subtitle-spacing))))))
+               (msecs-stop (+ msecs-start msecs-per-sub)))
+          (subed-debug "  Inserting new subtitle at %S - %S" msecs-start msecs-stop)
+          (funcall insert-subtitle-func nil msecs-start msecs-stop nil)))
+      (unless insert-before-current
+        (dotimes (_ (1- number-of-subs))
+          (subed-backward-subtitle-text))))
+    (subed-regenerate-ids-soon))
+  (point))
 
 
 ;;; Replay time-adjusted subtitle
