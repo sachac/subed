@@ -1004,12 +1004,12 @@
         (cl-loop for arg in (list nil 1) do
                  (with-temp-buffer
                    (insert (concat "1\n"
-                                   "00:59:00,000 --> 00:01:00,000\n"
+                                   "00:00:59,000 --> 00:01:00,000\n"
                                    "Foo.\n"))
                    (subed-srt--jump-to-subtitle-text 1)
                    (expect (subed-insert-subtitle arg) :to-equal 71)
                    (expect (buffer-string) :to-equal (concat "1\n"
-                                                             "00:59:00,000 --> 00:01:00,000\n"
+                                                             "00:00:59,000 --> 00:01:00,000\n"
                                                              "Foo.\n\n"
                                                              "0\n"
                                                              "00:01:00,100 --> 00:01:01,100\n"
@@ -1021,12 +1021,12 @@
         (cl-loop for arg in (list 2) do
                  (with-temp-buffer
                    (insert (concat "1\n"
-                                   "00:59:00,000 --> 00:01:00,000\n"
+                                   "00:00:59,000 --> 00:01:00,000\n"
                                    "Foo.\n"))
                    (subed-srt--jump-to-subtitle-text 3)
                    (expect (subed-insert-subtitle arg) :to-equal 71)
                    (expect (buffer-string) :to-equal (concat "1\n"
-                                                             "00:59:00,000 --> 00:01:00,000\n"
+                                                             "00:00:59,000 --> 00:01:00,000\n"
                                                              "Foo.\n\n"
                                                              "0\n"
                                                              "00:01:00,100 --> 00:01:01,100\n"
