@@ -1561,7 +1561,9 @@
                                                              "0\n"
                                                              "00:01:01,200 --> 00:01:02,200\n"
                                                              "\n"))
-                   (expect (point) :to-equal 71))))
+                   (expect (point) :to-equal 71)
+                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-regenerate-ids-soon))))
       )
     (describe "when there is not enough time for the subtitles"
       (describe "to append"
@@ -1611,7 +1613,9 @@
                                                                "2\n"
                                                                "00:01:00,500 --> 00:01:05,000\n"
                                                                "Bar.\n"))
-                     (expect (point) :to-equal 71))))
+                     (expect (point) :to-equal 71)
+                     (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
+                     (spy-calls-reset 'subed-regenerate-ids-soon))))
         )
       (describe "to prepend"
         (describe "between subtitles"
