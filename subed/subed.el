@@ -652,12 +652,12 @@ following manner:
                                (- number-of-subs i 1)
                              i))
                (msecs-start (if buffer-is-empty
-                                (* multiplier (+ subed-subtitle-spacing msecs-per-sub))
+                                (* multiplier (+ msecs-between msecs-per-sub))
                               (if insert-before-current
-                                  (- msecs-max (* (1+ i) (+ subed-subtitle-spacing msecs-per-sub)))
+                                  (- msecs-max (* (1+ i) (+ msecs-between msecs-per-sub)))
                                 (+ msecs-min
-                                   subed-subtitle-spacing
-                                   (* i (+ msecs-per-sub subed-subtitle-spacing))))))
+                                   msecs-between
+                                   (* i (+ msecs-per-sub msecs-between))))))
                (msecs-stop (+ msecs-start msecs-per-sub)))
           (subed-debug "  Inserting new subtitle at %S - %S" msecs-start msecs-stop)
           (funcall insert-subtitle-func nil msecs-start msecs-stop nil)))
