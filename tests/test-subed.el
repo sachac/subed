@@ -353,6 +353,65 @@
       (expect (buffer-string) :to-equal "foo")))
   )
 
+(describe "Copy start/stop time from player"
+  :var (subed-mpv-playback-position)
+  (it "does nothing in an empty buffer."
+    (with-temp-buffer
+      (let ((subed-mpv-playback-position 12345))
+        (expect (subed-copy-player-pos-to-start-time) :to-be nil)
+        (expect (subed-copy-player-pos-to-stop-time) :to-be nil)
+        (expect (buffer-string) :to-equal ""))))
+  (it "does nothing if player position is unknown."
+    (with-temp-buffer
+      (insert (concat "1\n"
+                      "00:00:01,000 --> 00:00:02,000\n"
+                      "Foo.\n"))
+      (let ((subed-mpv-playback-position nil))
+        (expect (subed-copy-player-pos-to-start-time) :to-be nil)
+        (expect (subed-copy-player-pos-to-stop-time) :to-be nil)
+        (expect (buffer-string) :to-equal (concat "1\n"
+                                                  "00:00:01,000 --> 00:00:02,000\n"
+                                                  "Foo.\n")))))
+  (it "sets start/stop time when possible."
+    (with-temp-buffer
+      (insert (concat "1\n"
+                      "00:00:01,000 --> 00:00:02,000\n"
+                      "Foo.\n"))
+      (let ((subed-mpv-playback-position (+ 60000 2000 123)))
+        (expect (subed-copy-player-pos-to-start-time) :to-be subed-mpv-playback-position)
+        (expect (buffer-string) :to-equal (concat "1\n"
+                                                  "00:01:02,123 --> 00:00:02,000\n"
+                                                  "Foo.\n")))
+      (let ((subed-mpv-playback-position (+ 60000 5000 456)))
+        (expect (subed-copy-player-pos-to-stop-time) :to-be subed-mpv-playback-position)
+        (expect (buffer-string) :to-equal (concat "1\n"
+                                                  "00:01:02,123 --> 00:01:05,456\n"
+                                                  "Foo.\n")))))
+  (it "runs the appropriate hook."
+    (with-temp-buffer
+      (insert (concat "1\n"
+                      "00:00:01,000 --> 00:00:02,000\n"
+                      "Foo.\n"))
+      (let ((foo (setf (symbol-function 'foo) (lambda (msecs) ()))))
+        (spy-on 'foo)
+        (add-hook 'subed-subtitle-time-adjusted-hook 'foo)
+        (let ((subed-mpv-playback-position (+ 60000 2000 123)))
+          (expect (subed-copy-player-pos-to-start-time) :to-be subed-mpv-playback-position)
+          (expect (buffer-string) :to-equal (concat "1\n"
+                                                    "00:01:02,123 --> 00:00:02,000\n"
+                                                    "Foo.\n"))
+          (expect (spy-calls-args-for 'foo 0) :to-equal `(,(+ 60000 2000 123)))
+          (expect (spy-calls-count 'foo) :to-equal 1)))
+        (let ((subed-mpv-playback-position (+ 60000 5000 456)))
+          (expect (subed-copy-player-pos-to-stop-time) :to-be subed-mpv-playback-position)
+          (expect (buffer-string) :to-equal (concat "1\n"
+                                                    "00:01:02,123 --> 00:01:05,456\n"
+                                                    "Foo.\n"))
+          (expect (spy-calls-args-for 'foo 0) :to-equal `(,(+ 60000 2000 123)))
+          (expect (spy-calls-count 'foo) :to-equal 2)))
+        (remove-hook 'subed-subtitle-time-adjusted-hook 'foo))
+  )
+
 (describe "Moving"
   (it "adjusts start and stop time by the same amount."
     (with-temp-buffer
