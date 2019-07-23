@@ -333,7 +333,8 @@ See `subed-increase-start-time' about ARG."
   (when (and subed-mpv-playback-position
 	         (subed-subtitle-msecs-start))
     (subed-set-subtitle-time-start subed-mpv-playback-position)
-    (subed--run-subtitle-time-adjusted-hook)))
+    (subed--run-subtitle-time-adjusted-hook)
+    subed-mpv-playback-position))
 
 (defun subed-copy-player-pos-to-stop-time ()
   "Replace current subtitle's stop time with current playback time."
@@ -341,7 +342,8 @@ See `subed-increase-start-time' about ARG."
   (when (and subed-mpv-playback-position
 	         (subed-subtitle-msecs-stop))
     (subed-set-subtitle-time-stop subed-mpv-playback-position)
-    (subed--run-subtitle-time-adjusted-hook)))
+    (subed--run-subtitle-time-adjusted-hook)
+    subed-mpv-playback-position))
 
 
 ;;; Moving subtitles
