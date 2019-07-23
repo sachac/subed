@@ -25,8 +25,7 @@ SubRip ( ~.srt~).
      with all following subtitles.  This is basically a convenience shortcut for
      ~C-SPC M-> C-M-n/p~.
    - Sort and re-number subtitles and remove any extra spaces and newlines
-     (~M-s~).
-   - Every time the buffer is saved, the subtitles are sanitized and sorted.
+     (~M-s~).  This is done automatically every time the buffer is saved.
 
 *** mpv integration (optional)
    - Open videos with ~C-c C-v~ or automatically when entering subed-mode if the
