@@ -9,7 +9,9 @@ SubRip ( ~.srt~).
    - Quickly jump to next (~M-n~) and previous (~M-p~) subtitle text.
    - Quickly jump to the beginning (~C-M-a~) and end (~C-M-e~) of the current
      subtitle's text.
-   - Insert (~M-i~) and kill (~M-k~) subtitles.
+   - Insert subtitles evenly spaced throughout the available space (~M-i~) or
+     right next the current subtitle (~C-M-i~).
+   - Kill subtitles (~M-k~).
    - Adjust subtitle start (~M-[~ / ~M-]~) and stop (~M-{~ / ~M-}~) time.  A
      prefix argument sets the number of milliseconds for the current session
      (e.g. ~C-u 1000 M-[ M-[ M-[~ decreases start time by 3 seconds).
@@ -22,24 +24,26 @@ SubRip ( ~.srt~).
      ~C-SPC M-> C-M-n/p~.
    - Sort and re-number subtitles and remove any extra spaces and newlines
      (~M-s~).
+   - Every time the buffer is saved, the subtitles are sanitized and sorted.
 
 *** mpv integration (optional)
    - Open videos with ~C-c C-v~ or automatically when entering subed-mode if the
      video file is named like the subtitle file but with a video extension
      (e.g. ~.mkv~ or ~.avi~).
-   - Pause video playback without leaving Emacs (~M-SPC~).
-   - Every time the buffer is saved, the subtitles are sanitized, sorted, etc
-     and then reloaded in mpv.
+   - Subtitles are automatically reloaded in mpv when the buffer is saved.
    - Cursor and playback position are synchronized:
      - Playback in mpv seeks to the position of the current subtitle as the
        cursor moves between subtitles (~C-c ,~).
      - The cursor is moved to the currently relevant subtitle as the video is
        playing (~C-c .~).
+   - Copy the current playback position as start (~C-c [~) or stop (~C-c ]~)
+     time of the current subtitle.
    - Playback is paused or slowed down when a subtitle's text is edited (~C-c
      C-p~).
    - Loop over the current subtitle in mpv (~C-c C-l~).
    - When a subtitle's start or stop time changes, mpv seeks to the subtitle's
      start time (~C-c C-r~).
+   - Pause video playback without leaving Emacs (~M-SPC~).
 
 ** Installation
    For now, you have to install it manually.  For example, copy ~subed/*.el~ to
