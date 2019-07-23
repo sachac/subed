@@ -10,7 +10,9 @@ SubRip ( ~.srt~).
    - Quickly jump to the beginning (~C-M-a~) and end (~C-M-e~) of the current
      subtitle's text.
    - Insert subtitles evenly spaced throughout the available space (~M-i~) or
-     right next the current subtitle (~C-M-i~).
+     right next the current subtitle (~C-M-i~).  A prefix argument controls how
+     many subtitles to insert and whether they are inserted before or after the
+     current subtitle.
    - Kill subtitles (~M-k~).
    - Adjust subtitle start (~M-[~ / ~M-]~) and stop (~M-{~ / ~M-}~) time.  A
      prefix argument sets the number of milliseconds for the current session
