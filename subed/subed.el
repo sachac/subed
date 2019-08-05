@@ -127,7 +127,6 @@ This function enables or disables `subed-mode'.  See also
 Key bindings:
 \\{subed-mode-map}"
   (interactive)
-  ;; Use 'enabled property of this function to store enabled/disabled status
   (if subed-mode--enabled-p
       (subed-mode-disable)
     (subed-mode-enable)))
