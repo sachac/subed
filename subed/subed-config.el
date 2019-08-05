@@ -27,6 +27,12 @@
 
 ;;; Code:
 
+(defgroup subed nil
+  "Major mode for editing subtitles."
+  :group 'files
+  :group 'multimedia
+  :prefix "subed-")
+
 (defvar subed-mode-map
   (let ((subed-mode-map (make-keymap)))
     (define-key subed-mode-map (kbd "M-n") #'subed-forward-subtitle-text)
@@ -79,12 +85,6 @@
 
 
 ;; Variables
-
-(defgroup subed nil
-  "Major mode for editing subtitles."
-  :group 'languages
-  :group 'hypermedia
-  :prefix "subed-")
 
 (defvar-local subed-mode--enabled-p nil
   "Whether `subed-mode' is enabled.
