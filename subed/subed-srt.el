@@ -27,12 +27,6 @@
 
 ;;; Code:
 
-(defvar subed-subtitle-spacing)  ; from subed.el
-(defvar subed-default-subtitle-length)  ; from subed.el
-(declare-function subed-save-excursion "subed.el" t t)  ; macro
-(declare-function subed-debug "subed.el" (msg &rest args))
-(declare-function subed--right-pad "subed.el" (string length fillchar))
-
 ;;; Syntax highlighting
 
 (defconst subed-srt-font-lock-keywords
