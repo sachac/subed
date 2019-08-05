@@ -77,9 +77,7 @@
   "Enable subed mode."
   (interactive)
   (kill-all-local-variables)
-  (setq-local font-lock-defaults '(subed-font-lock-keywords))
-  (setq-local paragraph-start "^[[:alnum:]\n]+")
-  (setq-local paragraph-separate "\n\n")
+  (subed-srt--init)
   (use-local-map subed-mode-map)
   (add-hook 'post-command-hook #'subed--post-command-handler :append :local)
   (add-hook 'before-save-hook #'subed-sort :append :local)

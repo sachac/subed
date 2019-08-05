@@ -545,5 +545,12 @@ scheduled call is canceled and another call is scheduled in
                 #'subed-srt--subtitle-msecs-start))
     (subed-srt--regenerate-ids)))
 
+
+(defun subed-srt--init ()
+  "This function is called when subed-mode is entered for a SRT file."
+  (setq-local font-lock-defaults '(subed-srt-font-lock-keywords))
+  (setq-local paragraph-start "^[[:alnum:]\n]+")
+  (setq-local paragraph-separate "\n\n"))
+
 (provide 'subed-srt)
 ;;; subed-srt.el ends here
