@@ -622,7 +622,7 @@ following manner:
 ;;; Replay time-adjusted subtitle
 
 (defun subed-replay-adjusted-subtitle-p ()
-  "Whether the player jumps to start time if start or stop time is adjusted."
+  "Whether the player jumps to start time when start or stop time is adjusted."
   (member #'subed--replay-adjusted-subtitle subed-subtitle-time-adjusted-hook))
 
 (defun subed-enable-replay-adjusted-subtitle (&optional quiet)
