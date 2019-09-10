@@ -672,7 +672,6 @@ Baz.
       (subed-srt--set-subtitle-time-stop (+ (* 2 60 60 1000) (* 3 60 1000) (* 4 1000) 60) 3)
       (expect (save-excursion (subed-jump-to-subtitle-time-start)
                               (thing-at-point 'line)) :to-equal "01:02:03,004 --> 02:03:04,060\n")))
-
   )
 
 (describe "Inserting a subtitle"
