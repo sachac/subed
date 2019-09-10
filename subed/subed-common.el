@@ -92,7 +92,7 @@ subtitles) as long the subtitle IDs don't change."
          ('beginning-of-buffer nil)
          ('end-of-buffer nil)))))
 
-(defmacro subed-for-each-subtitle (&optional beg end reverse &rest body)
+(defmacro subed-for-each-subtitle (beg end reverse &rest body)
   "Run BODY for each subtitle between the region specified by BEG and END.
 If END is nil, it defaults to `point-max'.
 If BEG and END are both nil, run BODY only on the subtitle at point.
@@ -312,6 +312,7 @@ because we'd overlap with the next subtitle.
 When moving subtitles backward (MSECS < 0), it's the same thing
 but we move the start time first."
   (if (> msecs 0)
+      ;; Moving forward
       (lambda (msecs &optional ignore-limits)
         (let ((msecs (subed-adjust-subtitle-time-stop msecs
                                                       :ignore-negative-duration
@@ -319,6 +320,7 @@ but we move the start time first."
           (when msecs (subed-adjust-subtitle-time-start msecs
                                                         :ignore-negative-duration
                                                         ignore-limits))))
+    ;; Moving backward
     (lambda (msecs &optional ignore-limits)
       (let ((msecs (subed-adjust-subtitle-time-start msecs
                                                      :ignore-negative-duration
@@ -366,7 +368,7 @@ but we move the start time first."
               (unless (setq msecs (move-subtitle msecs))
                 (throw 'bumped-into-subtitle t))
               (subed-forward-subtitle-id)
-              (subed-for-each-subtitle (point) end
+              (subed-for-each-subtitle (point) end nil
                 (move-subtitle msecs :ignore-spacing)))))))))
 
 (defun subed-move-subtitles (msecs &optional beg end)
