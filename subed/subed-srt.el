@@ -359,7 +359,7 @@ newlines if TEXT is nil or empty."
 (defun subed-srt--prepend-subtitle (&optional id start stop text)
   "Insert new subtitle before the subtitle at point.
 
-ID, START default to 0.
+ID and START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
 
