@@ -33,6 +33,9 @@
   :group 'multimedia
   :prefix "subed-")
 
+(defvar-local subed--subtitle-format nil
+  "Short form of the name of the subtitle format in the current buffer (e.g. \"srt\").")
+
 (defvar subed-mode-map
   (let ((subed-mode-map (make-keymap)))
     (define-key subed-mode-map (kbd "M-n") #'subed-forward-subtitle-text)

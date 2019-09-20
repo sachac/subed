@@ -548,6 +548,7 @@ scheduled call is canceled and another call is scheduled in
 
 (defun subed-srt--init ()
   "This function is called when subed-mode is entered for a SRT file."
+  (setq-local subed--subtitle-format "srt")
   (setq-local font-lock-defaults '(subed-srt-font-lock-keywords))
   (setq-local paragraph-start "^[[:alnum:]\n]+")
   (setq-local paragraph-separate "\n\n"))
