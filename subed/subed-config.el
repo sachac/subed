@@ -36,6 +36,9 @@
 (defvar-local subed--subtitle-format nil
   "Short form of the name of the subtitle format in the current buffer (e.g. \"srt\").")
 
+(defvar subed--init-alist '(("srt" . subed-srt--init))
+  "Alist that maps file extensions to format-specific init functions.")
+
 (defvar subed-mode-map
   (let ((subed-mode-map (make-keymap)))
     (define-key subed-mode-map (kbd "M-n") #'subed-forward-subtitle-text)

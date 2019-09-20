@@ -131,8 +131,16 @@ Key bindings:
       (subed-mode-disable)
     (subed-mode-enable)))
 
+;; Internally, supported formats are listed in `subed--init-alist', which
+;; associates file extensions with format-specific init methods (e.g. "srt" ->
+;; subed-srt--init).  Here we map each file extension as a regexp to
+;; `subed-mode-enable', which will call the format-specific init method and do
+;; generic init stuff.
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.srt\\'" . subed-mode-enable))
+(dolist (item subed--init-alist)
+  (let ((file-ext-regex (car item)))
+    (add-to-list 'auto-mode-alist (cons (concat "\\." file-ext-regex "\\'")
+                                        'subed-mode-enable))))
 
 (provide 'subed)
 ;;; subed.el ends here
