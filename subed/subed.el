@@ -36,48 +36,89 @@
 (require 'subed-srt)
 (require 'subed-mpv)
 
+;;; Abstraction hack to support different subtitle formats
+;;
+;; We need subtitle format-specific functions for each individual buffer so it
+;; is possible to open a .srt and a .sub file in the same Emacs session.
+;; Buffer-local functions don't exist in Elisp, but we can store the format in a
+;; buffer-local variable.
+;;
+;; `subed-mode-enable' runs a format-specific init function based on the file
+;; extension.  The init function sets the buffer-local variable
+;; `subed--subtitle-format' which is then used by generic functions to assemble
+;; the names of format-specific functions on the fly (e.g. (concat "subed-"
+;; subed-subtitle-format "--subtitle-id")).
 
-(defalias 'subed-subtitle-id #'subed-srt--subtitle-id)
-(defalias 'subed-subtitle-id-max #'subed-srt--subtitle-id-max)
-(defalias 'subed-subtitle-msecs-start #'subed-srt--subtitle-msecs-start)
-(defalias 'subed-subtitle-msecs-stop #'subed-srt--subtitle-msecs-stop)
-(defalias 'subed-subtitle-text #'subed-srt--subtitle-text)
-(defalias 'subed-subtitle-relative-point #'subed-srt--subtitle-relative-point)
+(defvar subed--generic-function-suffixes
+  (list "subtitle-id" "subtitle-id-max" "subtitle-id-at-msecs"
+        "subtitle-msecs-start" "subtitle-msecs-stop"
+        "subtitle-text" "subtitle-relative-point"
+        "jump-to-subtitle-id" "jump-to-subtitle-id-at-msecs"
+        "jump-to-subtitle-time-start" "jump-to-subtitle-time-stop"
+        "jump-to-subtitle-text" "jump-to-subtitle-text-at-msecs"
+        "jump-to-subtitle-end"
+        "forward-subtitle-id" "backward-subtitle-id"
+        "forward-subtitle-text" "backward-subtitle-text"
+        "forward-subtitle-end" "backward-subtitle-end"
+        "forward-subtitle-time-start" "backward-subtitle-time-start"
+        "forward-subtitle-time-stop" "backward-subtitle-time-stop"
+        "set-subtitle-time-start" "set-subtitle-time-stop"
+        "prepend-subtitle" "append-subtitle"
+        "kill-subtitle" "regenerate-ids" "regenerate-ids-soon"
+        "sanitize" "validate" "sort"))
 
-(defalias 'subed-jump-to-subtitle-id #'subed-srt--jump-to-subtitle-id)
-(defalias 'subed-jump-to-subtitle-time-start #'subed-srt--jump-to-subtitle-time-start)
-(defalias 'subed-jump-to-subtitle-time-stop #'subed-srt--jump-to-subtitle-time-stop)
-(defalias 'subed-jump-to-subtitle-text #'subed-srt--jump-to-subtitle-text)
-(defalias 'subed-jump-to-subtitle-end #'subed-srt--jump-to-subtitle-end)
-(defalias 'subed-jump-to-subtitle-id-at-msecs #'subed-srt--jump-to-subtitle-id-at-msecs)
-(defalias 'subed-jump-to-subtitle-text-at-msecs #'subed-srt--jump-to-subtitle-text-at-msecs)
+(defun subed--get-generic-func (func-suffix)
+  "Return the generic/public function for FUNC-SUFFIX."
+  (intern (concat "subed-" func-suffix)))
 
-(defalias 'subed-forward-subtitle-id #'subed-srt--forward-subtitle-id)
-(defalias 'subed-backward-subtitle-id #'subed-srt--backward-subtitle-id)
-(defalias 'subed-forward-subtitle-text #'subed-srt--forward-subtitle-text)
-(defalias 'subed-backward-subtitle-text #'subed-srt--backward-subtitle-text)
-(defalias 'subed-forward-subtitle-time-start #'subed-srt--forward-subtitle-time-start)
-(defalias 'subed-backward-subtitle-time-start #'subed-srt--backward-subtitle-time-start)
-(defalias 'subed-forward-subtitle-time-stop #'subed-srt--forward-subtitle-time-stop)
-(defalias 'subed-backward-subtitle-time-stop #'subed-srt--backward-subtitle-time-stop)
+(defun subed--get-specific-func (func-suffix)
+  "Return the format-specific function for the current buffer for FUNC-SUFFIX."
+  (intern (concat "subed-" subed--subtitle-format "--" func-suffix)))
 
-(defalias 'subed-set-subtitle-time-start #'subed-srt--set-subtitle-time-start)
-(defalias 'subed-set-subtitle-time-stop #'subed-srt--set-subtitle-time-stop)
-(defalias 'subed-prepend-subtitle #'subed-srt--prepend-subtitle)
-(defalias 'subed-append-subtitle #'subed-srt--append-subtitle)
-(defalias 'subed-kill-subtitle #'subed-srt--kill-subtitle)
-(defalias 'subed-sanitize #'subed-srt--sanitize)
-(defalias 'subed-regenerate-ids #'subed-srt--regenerate-ids)
-(defalias 'subed-regenerate-ids-soon #'subed-srt--regenerate-ids-soon)
-(defalias 'subed-sort #'subed-srt--sort)
-
+(defun subed--init ()
+  "Call subtitle format-specific init function and (re-)alias generic functions."
+  ;; Call format-specific init function based on file extension and
+  ;; `subed--init-alist'.
+  (let* ((file-ext (file-name-extension (buffer-file-name)))
+         (init-func (alist-get file-ext subed--init-alist nil nil 'equal)))
+    (if (functionp init-func)
+        (funcall init-func)
+      (error "Missing init function: %S" init-func))
+    (unless subed--subtitle-format
+      (error "%S failed to set buffer-local variable: subed--subtitle-format"
+             init-func)))
+  ;; Define generic functions like `subed-subtitle-text'.
+  (cl-loop for func-suffix in subed--generic-function-suffixes do
+           (let ((generic-func (subed--get-generic-func func-suffix))
+                 (specific-func (subed--get-specific-func func-suffix)))
+             (unless (functionp specific-func)
+               (error "Missing subtitle format-specific function: %s" specific-func))
+             (if (functionp specific-func)
+               (let* ((argspec (help-function-arglist specific-func))
+                      (argvars (seq-filter (lambda (argvar)
+                                             (let ((first-char (substring (symbol-name argvar) 0 1)))
+                                               (not (equal first-char "&"))))
+                                           argspec)))
+                 (defalias generic-func
+                   `(lambda ,argspec
+                      ,(interactive-form specific-func) ;; (interactive ...) or nil
+                      (let (;; Get the format-specific function for the current
+                            ;; buffer.  We must do this every time the generic
+                            ;; function is called because the result depends on
+                            ;; the buffer-local variable `subed--subtitle-format'.
+                            (specific-func (subed--get-specific-func ,func-suffix))
+                            ;; Turn the list of variable names into a list of
+                            ;; corresponding values.
+                            (argvals (mapcar 'eval ',argvars)))
+                        (apply specific-func argvals)))
+                   (documentation specific-func t)))))))
 
 ;;;###autoload
 (defun subed-mode-enable ()
   "Enable subed mode."
   (interactive)
   (kill-all-local-variables)
-  (subed-srt--init)
+  (subed--init)
   (use-local-map subed-mode-map)
   (add-hook 'post-command-hook #'subed--post-command-handler :append :local)
   (add-hook 'before-save-hook #'subed-sort :append :local)
