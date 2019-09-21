@@ -63,6 +63,8 @@ SubRip ( ~.srt~).
      (add-hook 'subed-mode-hook (lambda () (setq-local fill-column 50)))
    #+END_SRC
 
+   ~C-h f subed-mode~ should get you started.
+
 ** License
    subed is free software: you can redistribute it and/or modify it under the
    terms of the GNU General Public License as published by the Free Software
