@@ -79,7 +79,8 @@
   "Call subtitle format-specific init function and (re-)alias generic functions."
   ;; Call format-specific init function based on file extension and
   ;; `subed--init-alist'.
-  (let* ((file-ext (file-name-extension (buffer-file-name)))
+  (let* ((file-ext (when (buffer-file-name)
+                     (file-name-extension (buffer-file-name))))
          (init-func (alist-get file-ext subed--init-alist nil nil 'equal)))
     (if (functionp init-func)
         (funcall init-func)
