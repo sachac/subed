@@ -26,8 +26,9 @@
 
 ;;; Commentary:
 ;;
-;; subed is a major mode for editing subtitles with Emacs and mpv.  See
-;; README.org or https://github.com/rndusr/subed for more information.
+;; subed is a major mode for editing subtitles with Emacs and mpv.  See C-h f
+;; subed-mode, the README.org file or https://github.com/rndusr/subed for more
+;; information.
 
 ;;; Code:
 
