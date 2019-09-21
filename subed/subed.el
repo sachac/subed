@@ -166,6 +166,15 @@
 This function enables or disables `subed-mode'.  See also
 `subed-mode-enable' and `subed-mode-disable'.
 
+subed uses the following terminology when it comes to changes in
+subtitles' timestamps:
+
+Adjust - Increase or decrease start or stop time of a subtitle
+  Move - Increase or decrease start and stop time of a subtitle
+         by the same amount
+ Shift - Increase or decrease start and stop time of the current
+         and all following subtitles by the same amount
+
 Key bindings:
 \\{subed-mode-map}"
   (interactive)
