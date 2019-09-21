@@ -63,8 +63,8 @@
         "forward-subtitle-time-start" "backward-subtitle-time-start"
         "forward-subtitle-time-stop" "backward-subtitle-time-stop"
         "set-subtitle-time-start" "set-subtitle-time-stop"
-        "prepend-subtitle" "append-subtitle"
-        "kill-subtitle" "regenerate-ids" "regenerate-ids-soon"
+        "prepend-subtitle" "append-subtitle" "kill-subtitle"
+        "regenerate-ids" "regenerate-ids-soon"
         "sanitize" "validate" "sort"))
 
 (defun subed--get-generic-func (func-suffix)
