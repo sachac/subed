@@ -517,7 +517,7 @@ Baz.
                         "3\n"
                         "00:00:05,000 --> 00:00:06,000\n"
                         "Baz.\n"))
-        (spy-on 'use-region-p :and-return-value t)
+        (setq mark-active t)
         (spy-on 'region-beginning :and-return-value (subed-jump-to-subtitle-text 2))
         (spy-on 'region-end :and-return-value (subed-jump-to-subtitle-time-start 3))
         (let ((orig-point (subed-jump-to-subtitle-text 2)))
@@ -548,7 +548,7 @@ Baz.
                         "3\n"
                         "00:00:05,000 --> 00:00:06,000\n"
                         "Baz.\n"))
-        (spy-on 'use-region-p :and-return-value t)
+        (setq mark-active t)
         (spy-on 'region-beginning :and-return-value (subed-jump-to-subtitle-text 1))
         (spy-on 'region-end :and-return-value (subed-jump-to-subtitle-time-stop 2))
         (let ((orig-point (subed-jump-to-subtitle-time-stop 3)))
@@ -580,7 +580,7 @@ Baz.
                           "3\n"
                           "00:00:12,000 --> 00:00:13,000\n"
                           "Baz.\n"))
-          (spy-on 'use-region-p :and-return-value t)
+          (setq mark-active t)
           (spy-on 'region-beginning :and-return-value (subed-jump-to-subtitle-id 1))
           (spy-on 'region-end :and-return-value (subed-jump-to-subtitle-text 2))
           (let ((orig-point (subed-jump-to-subtitle-time-start 1)))
@@ -603,7 +603,7 @@ Baz.
                           "3\n"
                           "00:00:10,000 --> 00:00:11,000\n"
                           "Baz.\n"))
-          (spy-on 'use-region-p :and-return-value t)
+          (setq mark-active t)
           (spy-on 'region-beginning :and-return-value (subed-jump-to-subtitle-id 2))
           (spy-on 'region-end :and-return-value (subed-jump-to-subtitle-text 3))
           (let ((orig-point (subed-jump-to-subtitle-time-start 2)))
@@ -629,7 +629,7 @@ Baz.
                         "3\n"
                         "00:00:11,000 --> 00:00:12,000\n"
                         "Baz.\n"))
-        (spy-on 'use-region-p :and-return-value t)
+        (setq mark-active t)
         (spy-on 'region-beginning :and-return-value (subed-jump-to-subtitle-id 1))
         (spy-on 'region-end :and-return-value (subed-jump-to-subtitle-text 2))
         (let ((orig-point (subed-jump-to-subtitle-text 1)))
@@ -652,7 +652,7 @@ Baz.
                         "3\n"
                         "00:00:11,000 --> 00:00:12,000\n"
                         "Baz.\n"))
-        (spy-on 'use-region-p :and-return-value t)
+        (setq mark-active t)
         (spy-on 'region-beginning :and-return-value (subed-jump-to-subtitle-id 2))
         (spy-on 'region-end :and-return-value (subed-jump-to-subtitle-text 3))
         (let ((orig-point (subed-jump-to-subtitle-id 3)))
@@ -677,7 +677,7 @@ Baz.
                         "3\n"
                         "00:00:05,000 --> 00:00:6,000\n"
                         "Baz.\n"))
-        (spy-on 'use-region-p :and-return-value t)
+        (setq mark-active t)
         (spy-on 'region-beginning :and-return-value (subed-jump-to-subtitle-id 1))
         (spy-on 'region-end :and-return-value (subed-jump-to-subtitle-text 2))
         (let ((orig-point (subed-jump-to-subtitle-time-start 3)))
@@ -700,7 +700,7 @@ Baz.
                         "3\n"
                         "00:00:05,000 --> 00:00:05,000\n"
                         "Baz.\n"))
-        (spy-on 'use-region-p :and-return-value t)
+        (setq mark-active t)
         (spy-on 'region-beginning :and-return-value (subed-jump-to-subtitle-id 2))
         (spy-on 'region-end :and-return-value (subed-jump-to-subtitle-text 3))
         (let ((orig-point (subed-jump-to-subtitle-time-stop 1)))
@@ -725,7 +725,7 @@ Baz.
                         "3\n"
                         "00:00:05,000 --> 00:00:6,000\n"
                         "Baz.\n"))
-        (spy-on 'use-region-p :and-return-value t)
+        (setq mark-active t)
         (spy-on 'region-beginning :and-return-value (subed-jump-to-subtitle-id 1))
         (spy-on 'region-end :and-return-value (subed-jump-to-subtitle-text 2))
         (let ((orig-point (subed-jump-to-subtitle-text 2)))
@@ -748,7 +748,7 @@ Baz.
                         "3\n"
                         "00:00:04,500 --> 00:00:04,490\n"
                         "Baz.\n"))
-        (spy-on 'use-region-p :and-return-value t)
+        (setq mark-active t)
         (spy-on 'region-beginning :and-return-value (subed-jump-to-subtitle-id 2))
         (spy-on 'region-end :and-return-value (subed-jump-to-subtitle-text 3))
         (let ((orig-point (subed-jump-to-subtitle-text 1)))
@@ -772,7 +772,7 @@ Baz.
                       "3\n"
                       "00:00:05,000 --> 00:00:06,000\n"
                       "Bar.\n"))
-      (spy-on 'use-region-p :and-return-value t)
+      (setq mark-active t)
       (spy-on 'region-beginning :and-return-value (subed-jump-to-subtitle-text 1))
       (spy-on 'region-end :and-return-value (subed-jump-to-subtitle-time-start 2))
       (let ((orig-point (subed-jump-to-subtitle-time-stop 1)))
@@ -803,7 +803,7 @@ Baz.
                       "3\n"
                       "00:00:05,500 --> 00:00:05,000\n"
                       "Bar.\n"))
-      (spy-on 'use-region-p :and-return-value t)
+      (setq mark-active t)
       (spy-on 'region-beginning :and-return-value (subed-jump-to-subtitle-text 2))
       (spy-on 'region-end :and-return-value (subed-jump-to-subtitle-time-start 3))
       (let ((orig-point (subed-jump-to-subtitle-text 1)))
@@ -871,7 +871,7 @@ Baz.
       (insert mock-srt-data)
       (let ((beg 15)
             (end (point-max)))
-        (spy-on 'use-region-p :and-return-value t)
+        (setq mark-active t)
         (spy-on 'region-beginning :and-return-value beg)
         (spy-on 'region-end :and-return-value end)
         (spy-on 'subed-replay-adjusted-subtitle-p :and-return-value t)

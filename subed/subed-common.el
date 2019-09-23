@@ -410,8 +410,8 @@ Example usage:
   (interactive "P")
   (let ((deactivate-mark nil)
         (msecs (subed-get-milliseconds-adjust arg))
-        (beg (when (use-region-p) (region-beginning)))
-        (end (when (use-region-p) (region-end))))
+        (beg (when mark-active (region-beginning)))
+        (end (when mark-active (region-end))))
     (subed-move-subtitles msecs beg end)))
 
 (defun subed-move-subtitle-backward (&optional arg)
@@ -421,8 +421,8 @@ See `subed-move-subtitle-forward' about ARG."
   (interactive "P")
   (let ((deactivate-mark nil)
         (msecs (* -1 (subed-get-milliseconds-adjust arg)))
-        (beg (when (use-region-p) (region-beginning)))
-        (end (when (use-region-p) (region-end))))
+        (beg (when mark-active (region-beginning)))
+        (end (when mark-active (region-end))))
     (subed-move-subtitles msecs beg end)))
 
 
@@ -438,9 +438,8 @@ between point and the end of the buffer.
 See `subed-move-subtitle-forward' about ARG."
   (interactive "P")
   (let ((deactivate-mark nil)
-        (msecs (subed-get-milliseconds-adjust arg))
-        (beg (if (use-region-p) (region-beginning) (point))))
-    (subed-move-subtitles msecs beg)))
+        (msecs (subed-get-milliseconds-adjust arg)))
+    (subed-move-subtitles msecs (point))))
 
 (defun subed-shift-subtitle-backward (&optional arg)
   "Shift subtitle `subed-milliseconds-adjust' backward.
@@ -451,9 +450,8 @@ between point and the end of the buffer.
 See `subed-move-subtitle-forward' about ARG."
   (interactive "P")
   (let ((deactivate-mark nil)
-        (msecs (* -1 (subed-get-milliseconds-adjust arg)))
-        (beg (if (use-region-p) (region-beginning) (point))))
-    (subed-move-subtitles msecs beg)))
+        (msecs (* -1 (subed-get-milliseconds-adjust arg))))
+    (subed-move-subtitles msecs (point))))
 
 
 ;;; Inserting
@@ -699,7 +697,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 
 (defun subed--sync-point-to-player (msecs)
   "Move point to subtitle at MSECS."
-  (when (and (not (use-region-p))
+  (when (and (not (use-region-p)) ;; Don't sync with active-mark in transient-mark-mode
              (subed-jump-to-subtitle-text-at-msecs msecs))
     (subed-debug "Synchronized point to playback position: %s -> #%s"
                  (subed-srt--msecs-to-timestamp msecs) (subed-subtitle-id))
