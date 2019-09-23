@@ -61,7 +61,7 @@
     (define-key subed-mode-map (kbd "C-c C-d") #'subed-toggle-debugging)
     (define-key subed-mode-map (kbd "C-c C-v") #'subed-mpv-find-video)
     (define-key subed-mode-map (kbd "C-c C-p") #'subed-toggle-pause-while-typing)
-    (define-key subed-mode-map (kbd "C-c C-l") #'subed-toggle-subtitle-loop)
+    (define-key subed-mode-map (kbd "C-c C-l") #'subed-toggle-loop-over-current-subtitle)
     (define-key subed-mode-map (kbd "C-c C-r") #'subed-toggle-replay-adjusted-subtitle)
     (define-key subed-mode-map (kbd "C-c [") #'subed-copy-player-pos-to-start-time)
     (define-key subed-mode-map (kbd "C-c ]") #'subed-copy-player-pos-to-stop-time)

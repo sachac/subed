@@ -781,28 +781,45 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 
 ;;; Loop over single subtitle
 
-(defun subed-subtitle-loop-p ()
+(defun subed-loop-over-current-subtitle-p ()
   "Whether the player is looping over the current subtitle."
   (or subed--subtitle-loop-start subed--subtitle-loop-stop))
 
-(defun subed-toggle-subtitle-loop (&optional quiet)
-  "Enable or disable looping in player over the current subtitle.
+(defun subed-enable-loop-over-current-subtitle (&optional quiet)
+  "Enable looping over the current subtitle in the player.
 
 If QUIET is non-nil, do not display a message in the minibuffer."
   (interactive)
-  (if (subed-subtitle-loop-p)
-      (progn
-        (remove-hook 'subed-mpv-playback-position-hook #'subed--ensure-subtitle-loop :local)
-        (remove-hook 'subed-subtitle-motion-hook #'subed--set-subtitle-loop :local)
-        (setq subed--subtitle-loop-start nil
-              subed--subtitle-loop-stop nil)
-        (subed-debug "Disabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop)
-        (unless quiet
-          (message "Disabled looping")))
+  (unless (subed-loop-over-current-subtitle-p)
     (subed--set-subtitle-loop (subed-subtitle-id))
     (add-hook 'subed-mpv-playback-position-hook #'subed--ensure-subtitle-loop :append :local)
     (add-hook 'subed-subtitle-motion-hook #'subed--set-subtitle-loop :append :local)
-    (subed-debug "Enabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop)))
+    (subed-debug "Enabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop)
+    (unless quiet
+      (message "Enabled looping over current subtitle"))))
+
+(defun subed-disable-loop-over-current-subtitle (&optional quiet)
+  "Disable looping over the current subtitle in the player.
+
+If QUIET is non-nil, do not display a message in the minibuffer."
+  (interactive)
+  (when (subed-loop-over-current-subtitle-p)
+    (remove-hook 'subed-mpv-playback-position-hook #'subed--ensure-subtitle-loop :local)
+    (remove-hook 'subed-subtitle-motion-hook #'subed--set-subtitle-loop :local)
+    (setq subed--subtitle-loop-start nil
+          subed--subtitle-loop-stop nil)
+    (subed-debug "Disabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop)
+    (unless quiet
+      (message "Disabled looping over current subtitle"))))
+
+(defun subed-toggle-loop-over-current-subtitle (&optional quiet)
+  "Enable or disable looping over the current subtitle in the player.
+
+If QUIET is non-nil, do not display a message in the minibuffer."
+  (interactive)
+  (if (subed-loop-over-current-subtitle-p)
+      (subed-disable-loop-over-current-subtitle quiet)
+    (subed-enable-loop-over-current-subtitle quiet)))
 
 (defun subed--set-subtitle-loop (&optional sub-id)
   "Set loop positions to start/stop time of SUB-ID or current subtitle."
