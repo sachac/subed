@@ -139,6 +139,7 @@
   (subed-enable-sync-point-to-player :quiet)
   (subed-enable-sync-player-to-point :quiet)
   (subed-enable-replay-adjusted-subtitle :quiet)
+  (subed-enable-loop-over-current-subtitle :quiet)
   (setq major-mode 'subed-mode
         mode-name "subed")
   (setq subed-mode--enabled-p t)
