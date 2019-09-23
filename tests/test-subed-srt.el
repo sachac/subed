@@ -1379,7 +1379,16 @@ Baz.
         (replace-match "123"))
       (expect (buffer-string) :not :to-equal mock-srt-data)
       (subed-srt--regenerate-ids)
-      (expect (buffer-string) :to-equal mock-srt-data))))
+      (expect (buffer-string) :to-equal mock-srt-data)))
+  (it "does not modify the kill-ring."
+    (with-temp-srt-buffer
+      (insert mock-srt-data)
+      (kill-new "asdf")
+      (goto-char (point-min))
+      (while (looking-at "^[0-9]$")
+        (replace-match "555"))
+      (subed-srt--regenerate-ids)
+      (expect (buffer-string) :to-equal mock-srt-data)
 
 (describe "Sorting"
   (it "orders subtitles by start time."
