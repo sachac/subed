@@ -1388,7 +1388,7 @@ Baz.
       (while (looking-at "^[0-9]$")
         (replace-match "555"))
       (subed-srt--regenerate-ids)
-      (expect (buffer-string) :to-equal mock-srt-data)
+      (expect (buffer-string) :to-equal mock-srt-data))))
 
 (describe "Sorting"
   (it "orders subtitles by start time."
