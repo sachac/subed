@@ -235,7 +235,6 @@ Baz.
                         "2\n"
                         "00:00:03,000 --> 00:00:04,000\n"
                         "Bar.\n\n"))
-        (insert mock-srt-data)
         (subed-jump-to-subtitle-id 2)
         (expect (subed-adjust-subtitle-time-start 999) :to-be 999)
         (expect (subed-subtitle-msecs-start) :to-be 3999)
