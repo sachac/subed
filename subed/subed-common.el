@@ -313,21 +313,21 @@ When moving subtitles backward (MSECS < 0), it's the same thing
 but we move the start time first."
   (if (> msecs 0)
       ;; Moving forward
-      (lambda (msecs &optional ignore-limits)
+      (lambda (msecs &optional ignore-spacing)
         (let ((msecs (subed-adjust-subtitle-time-stop msecs
                                                       :ignore-negative-duration
-                                                      ignore-limits)))
+                                                      ignore-spacing)))
           (when msecs (subed-adjust-subtitle-time-start msecs
                                                         :ignore-negative-duration
-                                                        ignore-limits))))
+                                                        ignore-spacing))))
     ;; Moving backward
-    (lambda (msecs &optional ignore-limits)
+    (lambda (msecs &optional ignore-spacing)
       (let ((msecs (subed-adjust-subtitle-time-start msecs
                                                      :ignore-negative-duration
-                                                     ignore-limits)))
+                                                     ignore-spacing)))
         (when msecs (subed-adjust-subtitle-time-stop msecs
                                                      :ignore-negative-duration
-                                                     ignore-limits))))))
+                                                     ignore-spacing))))))
 
 (defun subed--move-current-subtitle (msecs)
   "Move subtitle on point by MSECS milliseconds."
