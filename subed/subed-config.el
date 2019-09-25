@@ -229,7 +229,7 @@ hardcoded."
 
 ;; Hooks
 
-(defvar subed-subtitle-time-adjusted-hook ()
+(defvar-local subed-subtitle-time-adjusted-hook ()
   "Functions to call when a subtitle's start or stop time has changed.
 The functions are called with the subtitle's start time.")
 

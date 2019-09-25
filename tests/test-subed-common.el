@@ -165,8 +165,8 @@ Baz.
   (it "runs the appropriate hook."
     (let ((foo (setf (symbol-function 'foo) (lambda (msecs) ()))))
       (spy-on 'foo)
-      (add-hook 'subed-subtitle-time-adjusted-hook 'foo)
       (with-temp-srt-buffer
+        (add-hook 'subed-subtitle-time-adjusted-hook 'foo)
         (insert mock-srt-data)
         (subed-jump-to-subtitle-id 1)
         (expect (subed-adjust-subtitle-time-start 100) :to-equal 100)
@@ -181,8 +181,7 @@ Baz.
         (expect 'foo :to-have-been-called-times 3)
         (expect (subed-adjust-subtitle-time-stop 123) :to-equal 123)
         (expect 'foo :to-have-been-called-with 122240)
-        (expect 'foo :to-have-been-called-times 4))
-      (remove-hook 'subed-subtitle-time-adjusted-hook 'foo)))
+        (expect 'foo :to-have-been-called-times 4))))
   (it "adjusts the start/stop time."
     (with-temp-srt-buffer
       (insert mock-srt-data)
