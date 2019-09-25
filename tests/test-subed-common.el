@@ -266,7 +266,7 @@ Baz.
                           "2\n"
                           "00:00:03,000 --> 00:00:04,000\n"
                           "Bar.\n\n"))
-          (subed-jump-to-subtitle-id 3)
+          (subed-jump-to-subtitle-id 2)
           (expect (subed-adjust-subtitle-time-stop 1000000):to-be 1000000)
           (expect (subed-subtitle-msecs-stop) :to-be 1004000)))
       (it "of a non-last subtitle."
