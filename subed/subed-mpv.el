@@ -315,6 +315,13 @@ See \"List of events\" in mpv(1)."
   "Move playback position to absolute position MSEC milliseconds."
   (subed-mpv--client-send `(seek ,(/ msec 1000.0) absolute+exact)))
 
+(defun subed-mpv-jump-to-current-subtitle ()
+  "Move playback position to start of currently focused subtitle if possible."
+  (let ((cur-sub-start (subed-subtitle-msecs-start)))
+    (when cur-sub-start
+      (subed-debug "Seeking player to focused subtitle: %S" cur-sub-start)
+      (subed-mpv-jump cur-sub-start))))
+
 (defun subed-mpv-reload-subtitles ()
   "Reload subtitle file from disk."
   (subed-mpv--client-send '(sub-reload)))
