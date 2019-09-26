@@ -151,17 +151,18 @@ Before BODY is run, point is placed on the subtitle's ID."
 
 (defun subed-adjust-subtitle-time-start (msecs &optional
                                                ignore-negative-duration
-                                               ignore-spacing)
+                                               ignore-overlap)
   "Add MSECS milliseconds to start time (use negative value to subtract).
 
-Unless IGNORE-NEGATIVE-DURATION is non-nil, reduce MSECS so that
-the start time isn't larger than the stop time.  Zero-length
-subtiltes are always allowed.
+Unless either IGNORE-NEGATIVE-DURATION or
+`subed-enforce-time-boundaries' are non-nil, adjust MSECS so that
+the stop time isn't smaller than the start time.  Zero-length
+subtitles are always allowed.
 
-Unless IGNORE-SPACING is non-nil, if the adjustment would result
-in gaps between subtitles being smaller than
-`subed-subtitle-spacing', reduce MSECS so that this doesn't
-happen.
+Unless either IGNORE-OVERLAP or `subed-enforce-time-boundaries'
+are non-nil, ensure that there are no gaps between subtitles
+smaller than `subed-subtitle-spacing' milliseconds by adjusting
+MSECS if necessary.
 
 Return the number of milliseconds the start time was adjusted or
 nil if nothing changed."
@@ -171,38 +172,42 @@ nil if nothing changed."
     (when msecs-new
       (if (> msecs 0)
           ;; Adding to start time
-          (unless ignore-negative-duration
+          (unless (or ignore-negative-duration
+                      (not subed-enforce-time-boundaries))
             (let ((msecs-stop (subed-subtitle-msecs-stop)))
               (setq msecs-new (min msecs-new msecs-stop))))
         ;; Subtracting from start time
-        (unless ignore-spacing
+        (unless (or ignore-overlap
+                    (not subed-enforce-time-boundaries))
           (let* ((msecs-prev-stop (save-excursion (when (subed-backward-subtitle-id)
                                                     (subed-subtitle-msecs-stop))))
                  (msecs-min (if msecs-prev-stop
                                 (+ msecs-prev-stop subed-subtitle-spacing) 0)))
             (when msecs-min
               (setq msecs-new (max msecs-new msecs-min))))))
-      ;; msecs-new must be bigger than the current start time if we are adding
+      ;; MSECS-NEW must be bigger than the current start time if we are adding
       ;; or smaller if we are subtracting.
-      (when (or (and (> msecs 0) (> msecs-new msecs-start))   ;; Adding
-                (and (< msecs 0) (< msecs-new msecs-start)))  ;; Subtracting
+      (when (and (>= msecs-new 0)                                  ;; Ignore negative times
+                 (or (and (> msecs 0) (> msecs-new msecs-start))   ;; Adding
+                     (and (< msecs 0) (< msecs-new msecs-start)))) ;; Subtracting
         (subed-set-subtitle-time-start msecs-new)
         (subed--run-subtitle-time-adjusted-hook)
         (- msecs-new msecs-start)))))
 
 (defun subed-adjust-subtitle-time-stop (msecs &optional
                                               ignore-negative-duration
-                                              ignore-spacing)
+                                              ignore-overlap)
   "Add MSECS milliseconds to stop time (use negative value to subtract).
 
-Unless IGNORE-NEGATIVE-DURATION is non-nil, increase MSECS so
-that the stop time isn't smaller than the start time.
-Zero-length subtiltes are always allowed.
+Unless either IGNORE-NEGATIVE-DURATION or
+`subed-enforce-time-boundaries' are non-nil, adjust MSECS so that
+the stop time isn't smaller than the start time.  Zero-length
+subtitles are always allowed.
 
-Unless IGNORE-SPACING is non-nil, if the adjustment would result
-in gaps between subtitles being smaller than
-`subed-subtitle-spacing', reduce MSECS so that this doesn't
-happen.
+Unless either IGNORE-OVERLAP or `subed-enforce-time-boundaries'
+are non-nil, ensure that there are no gaps between subtitles
+smaller than `subed-subtitle-spacing' milliseconds by adjusting
+MSECS if necessary.
 
 Return the number of milliseconds the stop time was adjusted or
 nil if nothing changed."
@@ -212,7 +217,8 @@ nil if nothing changed."
     (when msecs-new
       (if (> msecs 0)
           ;; Adding to stop time
-          (unless ignore-spacing
+          (unless (or ignore-overlap
+                      (not subed-enforce-time-boundaries))
             (let* ((msecs-next-start (save-excursion (when (subed-forward-subtitle-id)
                                                        (subed-subtitle-msecs-start))))
                    (msecs-max (when msecs-next-start
@@ -220,13 +226,15 @@ nil if nothing changed."
               (when msecs-max
                 (setq msecs-new (min msecs-new msecs-max)))))
         ;; Subtracting from stop time
-        (unless ignore-negative-duration
+        (unless (or ignore-negative-duration
+                    (not subed-enforce-time-boundaries))
           (let ((msecs-start (subed-subtitle-msecs-start)))
             (setq msecs-new (max msecs-new msecs-start)))))
-      ;; msecs-new must be bigger than the current stop time if we are adding or
+      ;; MSECS-NEW must be bigger than the current stop time if we are adding or
       ;; smaller if we are subtracting.
-      (when (or (and (> msecs 0) (> msecs-new msecs-stop))   ;; Adding
-                (and (< msecs 0) (< msecs-new msecs-stop)))  ;; Subtracting
+      (when (and (>= msecs-new 0)                                  ;; Ignore negative times
+                 (or (and (> msecs 0) (> msecs-new msecs-stop))    ;; Adding
+                     (and (< msecs 0) (< msecs-new msecs-stop))))  ;; Subtracting
         (subed-set-subtitle-time-stop msecs-new)
         (subed--run-subtitle-time-adjusted-hook)
         (- msecs-new msecs-stop)))))
@@ -313,21 +321,21 @@ When moving subtitles backward (MSECS < 0), it's the same thing
 but we move the start time first."
   (if (> msecs 0)
       ;; Moving forward
-      (lambda (msecs &optional ignore-spacing)
+      (lambda (msecs &optional ignore-overlap)
         (let ((msecs (subed-adjust-subtitle-time-stop msecs
                                                       :ignore-negative-duration
-                                                      ignore-spacing)))
+                                                      ignore-overlap)))
           (when msecs (subed-adjust-subtitle-time-start msecs
                                                         :ignore-negative-duration
-                                                        ignore-spacing))))
+                                                        ignore-overlap))))
     ;; Moving backward
-    (lambda (msecs &optional ignore-spacing)
+    (lambda (msecs &optional ignore-overlap)
       (let ((msecs (subed-adjust-subtitle-time-start msecs
                                                      :ignore-negative-duration
-                                                     ignore-spacing)))
+                                                     ignore-overlap)))
         (when msecs (subed-adjust-subtitle-time-stop msecs
                                                      :ignore-negative-duration
-                                                     ignore-spacing))))))
+                                                     ignore-overlap))))))
 
 (defun subed--move-current-subtitle (msecs)
   "Move subtitle on point by MSECS milliseconds."
@@ -361,7 +369,7 @@ but we move the start time first."
                   (throw 'bumped-into-subtitle t))
                 (subed-backward-subtitle-id)
                 (subed-for-each-subtitle beg (point) :reverse
-                  (move-subtitle msecs :ignore-spacing)))
+                  (move-subtitle msecs :ignore-negative-duration)))
             ;; Start on first subtitle to see if/how far we can move backward.
             (save-excursion
               (goto-char beg)
@@ -369,7 +377,7 @@ but we move the start time first."
                 (throw 'bumped-into-subtitle t))
               (subed-forward-subtitle-id)
               (subed-for-each-subtitle (point) end nil
-                (move-subtitle msecs :ignore-spacing)))))))))
+                (move-subtitle msecs :ignore-negative-duration)))))))))
 
 (defun subed-move-subtitles (msecs &optional beg end)
   "Move subtitles between BEG and END MSECS milliseconds forward.
