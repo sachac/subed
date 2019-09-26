@@ -127,13 +127,12 @@ Pass ARGS as command line arguments.  \"--idle\" and
 
 (defun subed-mpv--client-buffer ()
   "Unique name of buffer that store RPC responses."
-  (if subed-debugging-enabled-p
-      (format "*subed-mpv-buffer:%s-%s*"
-              (file-name-base (or (buffer-file-name) "unnamed"))
-              (buffer-hash))
-      (format " *subed-mpv-buffer:%s-%s*"
-              (file-name-base (or (buffer-file-name) "unnamed"))
-              (buffer-hash))))
+  (let ((buffer-name (format "*subed-mpv-buffer:%s-%s*"
+                             (file-name-base (or (buffer-file-name) "unnamed"))
+                             (buffer-hash))))
+    (if subed-debugging-enabled-p
+        buffer-name
+      (concat " " buffer-name))))
 
 (defun subed-mpv--client-connect (delays)
   "Try to connect to `subed-mpv--socket'.
