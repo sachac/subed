@@ -178,6 +178,11 @@ If set to zero or smaller, playback is paused."
   :type 'float
   :group 'subed)
 
+(defcustom subed-enforce-time-boundaries t
+  "Whether to refuse time adjustments that result in overlapping subtitles or negative duration."
+  :type 'boolean
+  :group 'subed)
+
 (defcustom subed-loop-seconds-before 0
   "Prelude in seconds when looping over subtitle(s)."
   :type 'float
