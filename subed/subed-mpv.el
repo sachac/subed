@@ -50,6 +50,9 @@
 (defvar-local subed-mpv-playback-position-hook nil
   "Functions to call when mpv changes playback position.")
 
+(defvar-local subed-mpv-file-loaded-hook '(subed-mpv-jump-to-current-subtitle)
+  "Functions to call when mpv has loaded a file and starts playing.")
+
 (defvar-local subed-mpv--server-proc nil
   "Running mpv process.")
 
@@ -262,12 +265,18 @@ See \"List of events\" in mpv(1)."
          (let ((pos-msecs (* 1000 (or (alist-get 'data json-data) 0))))
            (setq subed-mpv-playback-position (round pos-msecs))
            (run-hook-with-args 'subed-mpv-playback-position-hook subed-mpv-playback-position))))
-      ((or "unpause" "file-loaded")
+      ("file-loaded"
        (setq subed-mpv-is-playing t)
-       (subed-debug "Playing status changed: playing=%s" subed-mpv-is-playing))
+       ;; Because mpv can report the player position AFTER the file was loaded
+       ;; we disable automatic movement of point for a while so that the effect
+       ;; of `subed-mpv-jump-to-current-subtitle' isn't cancelled immediately.
+       (subed-disable-sync-point-to-player-temporarily)
+       (run-hooks 'subed-mpv-file-loaded-hook))
+      ("unpause"
+       (setq subed-mpv-is-playing t))
       ((or "pause" "end-file" "shutdown" "idle")
-       (setq subed-mpv-is-playing nil)
-       (subed-debug "Playing status changed: playing=%s" subed-mpv-is-playing)))))
+       (setq subed-mpv-is-playing nil)))))
+
 
 
 ;;; High-level functions
