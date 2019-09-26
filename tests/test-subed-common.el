@@ -198,7 +198,7 @@ Baz.
       (expect (subed-adjust-subtitle-time-stop -100) :to-equal -100)
       (expect (save-excursion (subed-jump-to-subtitle-time-start)
                               (thing-at-point 'line)) :to-equal "00:01:00,900 --> 00:01:05,223\n")))
-  (describe "enforces limits"
+  (describe "enforces boundaries"
     (describe "when decreasing start time"
       (it "of the first subtitle."
         (with-temp-srt-buffer
