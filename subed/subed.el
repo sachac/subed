@@ -116,12 +116,22 @@
                    (documentation specific-func t)))))))
 
 ;;;###autoload
-(defun subed-mode-enable ()
-  "Enable subed mode."
-  (interactive)
-  (kill-all-local-variables)
+(define-derived-mode subed-mode text-mode "subed"
+  "Major mode for editing subtitles.
+
+subed uses the following terminology when it comes to changes in
+subtitles' timestamps:
+
+Adjust - Increase or decrease start or stop time of a subtitle
+  Move - Increase or decrease start and stop time of a subtitle
+         by the same amount
+ Shift - Increase or decrease start and stop time of the current
+         and all following subtitles by the same amount
+
+Key bindings:
+\\{subed-mode-map}"
+  :group 'subed
   (subed--init)
-  (use-local-map subed-mode-map)
   (add-hook 'post-command-hook #'subed--post-command-handler :append :local)
   (add-hook 'before-save-hook #'subed-sort :append :local)
   (add-hook 'after-save-hook #'subed-mpv-reload-subtitles :append :local)
@@ -140,49 +150,7 @@
   (subed-enable-sync-player-to-point :quiet)
   (subed-enable-replay-adjusted-subtitle :quiet)
   (subed-enable-loop-over-current-subtitle :quiet)
-  (setq major-mode 'subed-mode
-        mode-name "subed")
-  (setq subed-mode--enabled-p t)
-  (run-mode-hooks 'subed-mode-hook))
-
-(defun subed-mode-disable ()
-  "Disable subed mode."
-  (interactive)
-  (subed-disable-pause-while-typing :quiet)
-  (subed-disable-sync-point-to-player :quiet)
-  (subed-disable-sync-player-to-point :quiet)
-  (subed-disable-replay-adjusted-subtitle :quiet)
-  (subed-mpv-kill)
-  (subed-disable-debugging)
-  (kill-all-local-variables)
-  (remove-hook 'post-command-hook #'subed--post-command-handler :local)
-  (remove-hook 'before-save-hook #'subed-sort :local)
-  (remove-hook 'after-save-hook #'subed-mpv-reload-subtitles :local)
-  (remove-hook 'kill-buffer-hook #'subed-mpv-kill :local)
-  (setq subed-mode--enabled-p nil))
-
-;;;###autoload
-(defun subed-mode ()
-  "Major mode for editing subtitles.
-
-This function enables or disables `subed-mode'.  See also
-`subed-mode-enable' and `subed-mode-disable'.
-
-subed uses the following terminology when it comes to changes in
-subtitles' timestamps:
-
-Adjust - Increase or decrease start or stop time of a subtitle
-  Move - Increase or decrease start and stop time of a subtitle
-         by the same amount
- Shift - Increase or decrease start and stop time of the current
-         and all following subtitles by the same amount
-
-Key bindings:
-\\{subed-mode-map}"
-  (interactive)
-  (if subed-mode--enabled-p
-      (subed-mode-disable)
-    (subed-mode-enable)))
+  (message "subed-mode enabled"))
 
 ;; Internally, supported formats are listed in `subed--init-alist', which
 ;; associates file extensions with format-specific init methods (e.g. "srt" ->
@@ -193,7 +161,7 @@ Key bindings:
 (dolist (item subed--init-alist)
   (let ((file-ext-regex (car item)))
     (add-to-list 'auto-mode-alist (cons (concat "\\." file-ext-regex "\\'")
-                                        'subed-mode-enable))))
+                                        'subed-mode))))
 
 (provide 'subed)
 ;;; subed.el ends here
