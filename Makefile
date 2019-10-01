@@ -1,3 +1,6 @@
+clean:
+	find . -name "*.elc" -delete
+
 test:
 	buttercup
 	emacs -q -batch \
