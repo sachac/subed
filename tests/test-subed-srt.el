@@ -61,7 +61,7 @@ Baz.
                             (progn
                               (subed-srt--jump-to-subtitle-id outset-id)
                               (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal target-id)))))))
-    (it "returns first subtitle ID if time is before the first subtitle's start time."
+    (it "returns nil if time is before the first subtitle's start time."
       (with-temp-srt-buffer
         (insert mock-srt-data)
         (let ((msecs (- (save-excursion
@@ -70,8 +70,8 @@ Baz.
           (cl-loop for outset-id from 1 to 3 do
                    (progn
                      (subed-srt--jump-to-subtitle-id outset-id)
-                     (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal 1))))))
-    (it "returns last subtitle ID if time is after the last subtitle's start time."
+                     (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal nil))))))
+    (it "returns nil if time is after the last subtitle's start time."
       (with-temp-srt-buffer
         (insert mock-srt-data)
         (let ((msecs (+ (save-excursion
@@ -80,8 +80,8 @@ Baz.
           (cl-loop for outset-id from 1 to 3 do
                    (progn
                      (subed-srt--jump-to-subtitle-id outset-id)
-                     (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal 3))))))
-    (it "returns previous subtitle ID when time is between subtitles."
+                     (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal nil))))))
+    (it "returns nil if time is between subtitles."
       (with-temp-srt-buffer
         (insert mock-srt-data)
         (cl-loop for target-id from 1 to 2 do
@@ -89,13 +89,13 @@ Baz.
                    (cl-loop for outset-id from 1 to 3 do
                             (progn
                               (subed-srt--jump-to-subtitle-id outset-id)
-                              (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal target-id))))
+                              (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal nil))))
                  (let ((msecs (- (subed-srt--subtitle-msecs-start (+ target-id 1)) 1)))
                    (cl-loop for outset-id from 1 to 3 do
                             (progn
                               (subed-srt--jump-to-subtitle-id outset-id)
-                              (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal target-id)))))))
-    (it "doesn't fail when start time is invalid."
+                              (expect (subed-srt--subtitle-id-at-msecs msecs) :to-equal nil)))))))
+    (it "doesn't fail if start time is invalid."
       (with-temp-srt-buffer
         (insert mock-srt-data)
         (subed-srt--jump-to-subtitle-id 2)

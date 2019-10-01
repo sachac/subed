@@ -77,9 +77,7 @@ Return nil if TIME-STRING doesn't match the pattern."
 
 (defun subed-srt--subtitle-id-at-msecs (msecs)
   "Return the ID of the subtitle at MSECS milliseconds.
-If MSECS is between subtitles, return the subtitle that starts
-after MSECS if there is one and its start time is >= MSECS +
-1000.  Otherwise return the closest subtitle before MSECS."
+Return nil if there is no subtitle at MSECS."
   (save-match-data
     (save-excursion
       (goto-char (point-min))
@@ -90,17 +88,16 @@ after MSECS if there is one and its start time is >= MSECS +
         (when (re-search-forward (format "\\(%s\\|\\`\\)[0-9]+\n%02d:" subed-srt--regexp-separator only-hours) nil t)
           (beginning-of-line)
           ;; Move to first subtitle in the relevant hour and minute
-          (re-search-forward (format "\\(\n\n\\|\\`\\)[0-9]+\n%02d:%02d" only-hours only-mins) nil t)))
+          (re-search-forward (format "\\(\n\n\\|\\`\\)[0-9]+\n%02d:%02d" only-hours only-mins) nil t))
       ;; Move to first subtitle that starts at or after MSECS
-      (catch 'last-subtitle-reached
+      (catch 'subtitle-id
         (while (<= (or (subed-srt--subtitle-msecs-start) -1) msecs)
+          ;; If stop time is >= MSECS, we found a match
+          (let ((cur-sub-end (subed-srt--subtitle-msecs-stop)))
+            (when (and cur-sub-end (>= cur-sub-end msecs))
+              (throw 'subtitle-id (subed-srt--subtitle-id))))
           (unless (subed-srt--forward-subtitle-id)
-            (throw 'last-subtitle-reached nil))))
-      ;; Move back to previous subtitle if start of current subtitle is in the
-      ;; future (i.e. MSECS is between subtitles)
-      (when (> (or (subed-srt--subtitle-msecs-start) -1) msecs)
-        (subed-srt--backward-subtitle-id))
-      (subed-srt--subtitle-id))))
+            (throw 'subtitle-id nil))))))))
 
 (defun subed-srt--subtitle-msecs-start (&optional sub-id)
   "Subtitle start time in milliseconds or nil if it can't be found.
