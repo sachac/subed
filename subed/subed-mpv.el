@@ -251,9 +251,9 @@ string."
          (event (when json-data
                   (alist-get 'event json-data))))
     (when event
-      (subed-mpv--handle-event json-data))))
+      (subed-mpv--client-handle-event json-data))))
 
-(defun subed-mpv--handle-event (json-data)
+(defun subed-mpv--client-handle-event (json-data)
   "Handler for relevant mpv events.
 
 JSON-DATA is mpv's JSON response in the form of an association
@@ -288,14 +288,14 @@ See \"List of events\" in mpv(1)."
   (interactive)
   (when subed-mpv-is-playing
     (when (subed-mpv--client-send `(set_property pause yes))
-      (subed-mpv--handle-event '((event . "pause"))))))
+      (subed-mpv--client-handle-event '((event . "pause"))))))
 
 (defun subed-mpv-unpause ()
   "Start playback."
   (interactive)
   (unless subed-mpv-is-playing
     (when (subed-mpv--client-send `(set_property pause no))
-      (subed-mpv--handle-event '((event . "unpause"))))))
+      (subed-mpv--client-handle-event '((event . "unpause"))))))
 
 (defun subed-mpv-toggle-pause ()
   "Start or stop playback."
