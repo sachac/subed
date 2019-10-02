@@ -342,6 +342,8 @@ Video files are expected to have any of the extensions listed in
 `subed-video-extensions'."
   (interactive (list (read-file-name "Find video: " nil nil t nil #'subed-mpv--is-video-file-p)))
   (let ((filepath (expand-file-name file)))
+    (when (subed-mpv--server-started-p)
+      (subed-mpv-kill))
     (when (apply #'subed-mpv--server-start subed-mpv-arguments)
       (subed-debug "Opening video file: %s" filepath)
       (subed-mpv--client-connect subed-mpv--retry-delays)
