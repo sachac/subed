@@ -92,10 +92,6 @@
 
 ;; Variables
 
-(defvar-local subed-mode--enabled-p nil
-  "Whether `subed-mode' is enabled.
-This is set by `subed-mode-enable' and `subed-mode-disable'.")
-
 (defvar-local subed-debugging-enabled-p nil
   "Whether debugging messages are displayed.")
 
