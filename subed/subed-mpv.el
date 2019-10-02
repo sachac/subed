@@ -50,7 +50,8 @@
 (defvar-local subed-mpv-playback-position-hook nil
   "Functions to call when mpv changes playback position.")
 
-(defvar-local subed-mpv-file-loaded-hook '(subed-mpv-jump-to-current-subtitle)
+(defvar-local subed-mpv-file-loaded-hook '(subed-mpv-pause
+                                           subed-mpv-jump-to-current-subtitle)
   "Functions to call when mpv has loaded a file and starts playing.")
 
 (defvar-local subed-mpv--server-proc nil
