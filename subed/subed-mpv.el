@@ -214,9 +214,8 @@ string."
   ;;   {"data":"mpv 0.29.1","error":"success"}
   ;;   {"data":null,"request_id":1,"error":"success"}
   ;;   {"event":"start-file"}{"event":"tracks-changed"}
-  ;; JSON-STRING cal also contain incomplete JSON at the end,
-  ;; e.g. `{"error":"succ'.  Therefore we maintain a buffer and process only
-  ;; complete lines.
+  ;; JSON-STRING can also contain incomplete JSON, e.g. `{"error":"succ'.
+  ;; Therefore we maintain a buffer and process only complete lines.
   (when (buffer-live-p (process-buffer proc))
     (let ((orig-buffer (current-buffer)))
 	  (with-current-buffer (process-buffer proc)
