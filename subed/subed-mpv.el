@@ -220,13 +220,15 @@ string."
     (let ((orig-buffer (current-buffer)))
 	  (with-current-buffer (process-buffer proc)
         ;; Insert new response where previous response ended
-	    (let ((moving (= (point) (process-mark proc))))
+	    (let* ((proc-mark (process-mark proc))
+               (moving (= (point) proc-mark)))
 		  (save-excursion
-		    (goto-char (process-mark proc))
+		    (goto-char proc-mark)
 		    (insert response)
-		    (set-marker (process-mark proc) (point)))
-		  (if moving (goto-char (process-mark proc))))
-	    ;; Process and remove all complete lines of JSON
+		    (set-marker proc-mark (point)))
+		  (if moving (goto-char proc-mark)))
+	    ;; Process and remove all complete lines of JSON (lines are complete if
+	    ;; they end with \n)
 	    (let ((p0 (point-min)))
 		  (while (progn (goto-char p0)
                         (end-of-line)
