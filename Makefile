@@ -11,3 +11,10 @@ test:
 	emacs -Q -batch --eval "(checkdoc-file \"subed/subed-config.el\")"
 	emacs -Q -batch --eval "(checkdoc-file \"subed/subed-mpv.el\")"
 	emacs -Q -batch --eval "(checkdoc-file \"subed/subed-srt.el\")"
+
+test-compile:
+	emacs -Q -batch --eval "(byte-compile-file \"subed/subed.el\")"
+	emacs -Q -batch --eval "(byte-compile-file \"subed/subed-config.el\")"
+	emacs -Q -batch --eval "(byte-compile-file \"subed/subed-mpv.el\")"
+	emacs -Q -batch --eval "(byte-compile-file \"subed/subed-srt.el\")"
+	make clean
