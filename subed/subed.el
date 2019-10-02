@@ -149,8 +149,7 @@ Key bindings:
   (subed-enable-sync-point-to-player :quiet)
   (subed-enable-sync-player-to-point :quiet)
   (subed-enable-replay-adjusted-subtitle :quiet)
-  (subed-enable-loop-over-current-subtitle :quiet)
-  (message "subed-mode enabled"))
+  (subed-enable-loop-over-current-subtitle :quiet))
 
 ;; Internally, supported formats are listed in `subed--init-alist', which
 ;; associates file extensions with format-specific init methods (e.g. "srt" ->
