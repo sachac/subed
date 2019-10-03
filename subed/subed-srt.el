@@ -481,13 +481,16 @@ scheduled call is canceled and another call is scheduled in
              (delete-region prev-sub-end (point))
              (insert "\n\n"))))
 
-       ;; Two trailing newline if last subtitle text is empty,
-       ;; one trailing newline otherwise
-       (goto-char (point-max))
-       (subed-srt--jump-to-subtitle-end)
-       (unless (looking-at "\n\\'")
-         (delete-region (point) (point-max))
-         (insert "\n"))
+       ;; Two trailing newline if last subtitle text is empty, one trailing
+       ;; newline otherwise; do nothing in empty buffer (no graphical
+       ;; characters)
+       (goto-char (point-min))
+       (when (re-search-forward "[[:graph:]]" nil t)
+         (goto-char (point-max))
+         (subed-srt--jump-to-subtitle-end)
+         (unless (looking-at "\n\\'")
+           (delete-region (point) (point-max))
+           (insert "\n")))
 
        ;; One space before and after " --> "
        (goto-char (point-min))

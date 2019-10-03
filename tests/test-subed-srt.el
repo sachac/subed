@@ -1385,6 +1385,11 @@ Baz.
       (expect (buffer-string) :not :to-equal mock-srt-data)
       (subed-srt--sanitize)
       (expect (buffer-string) :to-equal mock-srt-data)))
+  (it "does not insert newline in empty buffer."
+    (with-temp-srt-buffer
+      (expect (buffer-string) :to-equal "")
+      (subed-srt--sanitize)
+      (expect (buffer-string) :to-equal "")))
   )
 
 (describe "Renumbering"
