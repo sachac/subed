@@ -829,16 +829,17 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 
 (defun subed--set-subtitle-loop (&optional sub-id)
   "Set loop positions to start/stop time of SUB-ID or current subtitle."
-  (setq subed--subtitle-loop-start (- (subed-subtitle-msecs-start sub-id)
-                                      (* subed-loop-seconds-before 1000))
-        subed--subtitle-loop-stop (+ (subed-subtitle-msecs-stop sub-id)
-                                     (* subed-loop-seconds-after 1000)))
-  (subed-debug "Set loop: %s - %s"
+  (let ((msecs-start (subed-subtitle-msecs-start sub-id))
+        (msecs-stop (subed-subtitle-msecs-stop sub-id)))
+    (when (and msecs-start msecs-stop)
+      (setq subed--subtitle-loop-start (- msecs-start (* subed-loop-seconds-before 1000))
+            subed--subtitle-loop-stop (+ msecs-stop (* subed-loop-seconds-after 1000)))
+      (subed-debug "Set loop: %s - %s"
+                   (subed-srt--msecs-to-timestamp subed--subtitle-loop-start)
+                   (subed-srt--msecs-to-timestamp subed--subtitle-loop-stop))
+      (message "Looping over %s - %s"
                (subed-srt--msecs-to-timestamp subed--subtitle-loop-start)
-               (subed-srt--msecs-to-timestamp subed--subtitle-loop-stop))
-  (message "Looping over %s - %s"
-           (subed-srt--msecs-to-timestamp subed--subtitle-loop-start)
-           (subed-srt--msecs-to-timestamp subed--subtitle-loop-stop)))
+               (subed-srt--msecs-to-timestamp subed--subtitle-loop-stop)))))
 
 (defun subed--ensure-subtitle-loop (cur-msecs)
   "Jump to current subtitle start time if CUR-MSECS is after stop time."
