@@ -176,6 +176,13 @@ See also `subed-srt--subtitle-id-at-msecs'."
     (when (and target-sub-id current-sub-id (not (= target-sub-id current-sub-id)))
       (subed-srt--jump-to-subtitle-id target-sub-id))))
 
+(defun subed-srt--jump-to-subtitle-text-at-msecs (msecs)
+  "Move point to the text of the subtitle that is playing at MSECS.
+Return point or nil if point is still on the same subtitle.
+See also `subed-srt--subtitle-id-at-msecs'."
+  (when (subed-srt--jump-to-subtitle-id-at-msecs msecs)
+    (subed-srt--jump-to-subtitle-text)))
+
 (defun subed-srt--jump-to-subtitle-time-start (&optional sub-id)
   "Move point to subtitle's start time.
 If SUB-ID is not given, use subtitle on point.
@@ -207,13 +214,6 @@ Return point or nil if a the subtitle's text can't be found."
   (when (subed-srt--jump-to-subtitle-id sub-id)
     (forward-line 2)
     (point)))
-
-(defun subed-srt--jump-to-subtitle-text-at-msecs (msecs)
-  "Move point to the text of the subtitle that is playing at MSECS.
-Return point or nil if point is still on the same subtitle.
-See also `subed-srt--subtitle-id-at-msecs'."
-  (when (subed-srt--jump-to-subtitle-id-at-msecs msecs)
-    (subed-srt--jump-to-subtitle-text)))
 
 (defun subed-srt--jump-to-subtitle-end (&optional sub-id)
   "Move point after the last character of the subtitle's text.
