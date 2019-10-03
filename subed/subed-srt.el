@@ -88,7 +88,7 @@ Return nil if there is no subtitle at MSECS."
         (when (re-search-forward (format "\\(%s\\|\\`\\)[0-9]+\n%02d:" subed-srt--regexp-separator only-hours) nil t)
           (beginning-of-line)
           ;; Move to first subtitle in the relevant hour and minute
-          (re-search-forward (format "\\(\n\n\\|\\`\\)[0-9]+\n%02d:%02d" only-hours only-mins) nil t))
+          (re-search-forward (format "\\(\n\n\\|\\`\\)[0-9]+\n%02d:%02d" only-hours only-mins) nil t)))
       ;; Move to first subtitle that starts at or after MSECS
       (catch 'subtitle-id
         (while (<= (or (subed-srt--subtitle-msecs-start) -1) msecs)
@@ -97,7 +97,7 @@ Return nil if there is no subtitle at MSECS."
             (when (and cur-sub-end (>= cur-sub-end msecs))
               (throw 'subtitle-id (subed-srt--subtitle-id))))
           (unless (subed-srt--forward-subtitle-id)
-            (throw 'subtitle-id nil))))))))
+            (throw 'subtitle-id nil)))))))
 
 (defun subed-srt--subtitle-msecs-start (&optional sub-id)
   "Subtitle start time in milliseconds or nil if it can't be found.
