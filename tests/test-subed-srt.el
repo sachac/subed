@@ -1186,7 +1186,24 @@ Baz.
 (describe "Validating"
   (it "works in empty buffer."
     (with-temp-srt-buffer
-      (expect (subed-srt--validate) :to-be nil)))
+     (subed-srt--validate)))
+  (it "works in buffer that contains only newlines."
+    (with-temp-srt-buffer
+      (cl-loop for _ from 1 to 10 do
+               (insert "\n")
+               (subed-srt--validate))))
+  (it "works in buffer that contains only spaces."
+    (with-temp-srt-buffer
+      (cl-loop for _ from 1 to 10 do
+               (insert " ")
+               (subed-srt--validate))))
+  (it "works in buffer that contains only spaces and newlines."
+    (with-temp-srt-buffer
+      (cl-loop for _ from 1 to 10 do
+               (if (eq (random 2) 0)
+                   (insert " ")
+                 (insert "\n"))
+               (subed-srt--validate))))
   (it "reports invalid IDs."
     (with-temp-srt-buffer
       (insert mock-srt-data)
