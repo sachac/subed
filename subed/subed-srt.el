@@ -550,8 +550,22 @@ scheduled call is canceled and another call is scheduled in
   "This function is called when subed-mode is entered for a SRT file."
   (setq-local subed--subtitle-format "srt")
   (setq-local font-lock-defaults '(subed-srt-font-lock-keywords))
-  (setq-local paragraph-start "^[[:alnum:]\n]+")
-  (setq-local paragraph-separate "\n\n"))
+  ;; Support for fill-paragraph (M-q)
+  (let ((timestamps-regexp (concat subed-srt--regexp-timestamp
+                                   " *--> *"
+                                   subed-srt--regexp-timestamp)))
+    (setq-local paragraph-separate (concat "^\\("
+                                           (mapconcat 'identity `("[[:blank:]]*"
+                                                                  "[[:digit:]]+"
+                                                                  ,timestamps-regexp) "\\|")
+                                           "\\)$"))
+    (setq-local paragraph-start (concat "\\("
+                                        ;; Mulitple speakers in the same
+                                        ;; subtitle are often distinguished with
+                                        ;; a "-" at the start of the line.
+                                        (mapconcat 'identity '("^-"
+                                                               "[[:graph:]]*$") "\\|")
+                                        "\\)"))))
 
 (provide 'subed-srt)
 ;;; subed-srt.el ends here
