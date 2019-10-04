@@ -37,7 +37,7 @@
           debug-on-error t)
     (let ((debug-buffer (get-buffer-create subed-debug-buffer))
           (debug-window (or (get-buffer-window subed-debug-buffer)
-                            (split-window-horizontally (max 35 (floor (* 0.3 (window-width))))))))
+                            (split-window-horizontally (max 40 (floor (* 0.3 (window-width))))))))
       (set-window-buffer debug-window debug-buffer)
       (with-current-buffer debug-buffer
         (buffer-disable-undo)
