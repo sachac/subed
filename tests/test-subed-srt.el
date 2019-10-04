@@ -1408,9 +1408,9 @@ Baz.
       (kill-new "asdf")
       (goto-char (point-min))
       (while (looking-at "^[0-9]$")
-        (replace-match "555"))
+        (insert "555"))
       (subed-srt--regenerate-ids)
-      (expect (buffer-string) :to-equal mock-srt-data))))
+      (expect (car kill-ring) :to-equal "asdf"))))
 
 (describe "Sorting"
   (it "orders subtitles by start time."
