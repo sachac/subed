@@ -425,9 +425,10 @@ Return new point."
       (save-excursion
         (goto-char (point-min))
         (subed-srt--jump-to-subtitle-id)
-        (unless (string= (current-word) "1")
-          (delete-region (point) (progn (forward-word 1) (point)))
-          (insert "1"))
+        (when (looking-at "^[[:digit:]]+$")
+          (unless (string= (current-word) "1")
+            (delete-region (point) (progn (forward-word 1) (point)))
+            (insert "1")))
         (let ((id 2))
           (while (subed-srt--forward-subtitle-id)
             (let ((id-str (number-to-string id)))

@@ -1410,7 +1410,12 @@ Baz.
       (while (looking-at "^[0-9]$")
         (insert "555"))
       (subed-srt--regenerate-ids)
-      (expect (car kill-ring) :to-equal "asdf"))))
+      (expect (car kill-ring) :to-equal "asdf")))
+  (it "does not modify empty buffer."
+    (with-temp-srt-buffer
+      (subed-srt--regenerate-ids)
+      (expect (buffer-string) :to-equal "")))
+  )
 
 (describe "Sorting"
   (it "orders subtitles by start time."
