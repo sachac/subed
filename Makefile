@@ -3,14 +3,14 @@ clean:
 
 test:
 	buttercup
-	emacs -q -batch \
+	emacs --no-init-file --batch \
 		  --eval "(require 'package-lint)" \
-	      -f package-lint-batch-and-exit \
+	      --file package-lint-batch-and-exit \
 	      ./subed/subed.el
-	emacs -Q -batch --eval "(checkdoc-file \"subed/subed.el\")"
-	emacs -Q -batch --eval "(checkdoc-file \"subed/subed-config.el\")"
-	emacs -Q -batch --eval "(checkdoc-file \"subed/subed-mpv.el\")"
-	emacs -Q -batch --eval "(checkdoc-file \"subed/subed-srt.el\")"
+	emacs --quick --batch --eval "(checkdoc-file \"subed/subed.el\")"
+	emacs --quick --batch --eval "(checkdoc-file \"subed/subed-config.el\")"
+	emacs --quick --batch --eval "(checkdoc-file \"subed/subed-mpv.el\")"
+	emacs --quick --batch --eval "(checkdoc-file \"subed/subed-srt.el\")"
 
 test-compile:
 	emacs -Q -batch --eval "(byte-compile-file \"subed/subed.el\")"
