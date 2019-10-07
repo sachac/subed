@@ -353,11 +353,16 @@ Video files are expected to have any of the extensions listed in
 
 (defun subed-mpv--add-subtitle-after-first-save ()
   "Tell mpv to load subtitles from `buffer-file-name'.
+
+Don't send the load command to mpv if `subed-subtitle-id' returns
+nil because that likely means the file is empty or invalid.
+
 This function is supposed to be added to `after-save-hook', and
 it removes itself from it so mpv doesn't add the same file every
 time the buffer is saved."
-  (subed-mpv-add-subtitles (buffer-file-name))
-  (remove-hook 'after-save-hook #'subed-mpv--add-subtitle-after-first-save :local))
+  (when (subed-subtitle-id)
+    (subed-mpv-add-subtitles (buffer-file-name))
+    (remove-hook 'after-save-hook #'subed-mpv--add-subtitle-after-first-save :local)))
 
 (defun subed-mpv-kill ()
   "Close connection to mpv process and kill the process."
