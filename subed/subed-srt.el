@@ -27,6 +27,9 @@
 
 ;;; Code:
 
+(require 'subed-config)
+(require 'subed-common)
+
 ;;; Syntax highlighting
 
 (defconst subed-srt-font-lock-keywords

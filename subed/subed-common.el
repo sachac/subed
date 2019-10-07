@@ -27,6 +27,9 @@
 
 ;;; Code:
 
+(require 'subed-config)
+(require 'subed-mpv)
+
 ;;; Debugging
 
 (defun subed-enable-debugging ()
