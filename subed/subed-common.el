@@ -534,7 +534,7 @@ following manner:
   \\[universal-argument] \\[universal-argument] \\[subed-insert-subtitle]   Insert 2 subtitles before the current subtitle"
   (interactive "P")
   (atomic-change-group
-    (cl-multiple-value-bind (number-of-subs insert-before-current buffer-is-empty
+    (cl-multiple-value-bind (number-of-subs insert-before-current _buffer-is-empty
                              msecs-min msecs-max msecs-avail msecs-per-sub msecs-between
                              insert-subtitle-func)
                             (subed--insert-subtitle-info arg)
@@ -596,7 +596,7 @@ following manner:
   (interactive "P")
   (atomic-change-group
     (cl-multiple-value-bind (number-of-subs insert-before-current buffer-is-empty
-                             msecs-min msecs-max msecs-avail msecs-per-sub msecs-between
+                             msecs-min msecs-max _msecs-avail msecs-per-sub msecs-between
                              insert-subtitle-func)
                             (subed--insert-subtitle-info arg)
       (dotimes (i number-of-subs)
