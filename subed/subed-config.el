@@ -39,35 +39,10 @@
 (defvar subed--init-alist '(("srt" . subed-srt--init))
   "Alist that maps file extensions to format-specific init functions.")
 
-(defvar subed-mode-map
-  (let ((subed-mode-map (make-keymap)))
-    (define-key subed-mode-map (kbd "M-n") #'subed-forward-subtitle-text)
-    (define-key subed-mode-map (kbd "M-p") #'subed-backward-subtitle-text)
-    (define-key subed-mode-map (kbd "C-M-a") #'subed-jump-to-subtitle-text)
-    (define-key subed-mode-map (kbd "C-M-e") #'subed-jump-to-subtitle-end)
-    (define-key subed-mode-map (kbd "M-[") #'subed-decrease-start-time)
-    (define-key subed-mode-map (kbd "M-]") #'subed-increase-start-time)
-    (define-key subed-mode-map (kbd "M-{") #'subed-decrease-stop-time)
-    (define-key subed-mode-map (kbd "M-}") #'subed-increase-stop-time)
-    (define-key subed-mode-map (kbd "C-M-n") #'subed-move-subtitle-forward)
-    (define-key subed-mode-map (kbd "C-M-p") #'subed-move-subtitle-backward)
-    (define-key subed-mode-map (kbd "C-M-f") #'subed-shift-subtitle-forward)
-    (define-key subed-mode-map (kbd "C-M-b") #'subed-shift-subtitle-backward)
-    (define-key subed-mode-map (kbd "M-i") #'subed-insert-subtitle)
-    (define-key subed-mode-map (kbd "C-M-i") #'subed-insert-subtitle-adjacent)
-    (define-key subed-mode-map (kbd "M-k") #'subed-kill-subtitle)
-    (define-key subed-mode-map (kbd "M-s") #'subed-sort)
-    (define-key subed-mode-map (kbd "M-SPC") #'subed-mpv-toggle-pause)
-    (define-key subed-mode-map (kbd "C-c C-d") #'subed-toggle-debugging)
-    (define-key subed-mode-map (kbd "C-c C-v") #'subed-mpv-find-video)
-    (define-key subed-mode-map (kbd "C-c C-p") #'subed-toggle-pause-while-typing)
-    (define-key subed-mode-map (kbd "C-c C-l") #'subed-toggle-loop-over-current-subtitle)
-    (define-key subed-mode-map (kbd "C-c C-r") #'subed-toggle-replay-adjusted-subtitle)
-    (define-key subed-mode-map (kbd "C-c [") #'subed-copy-player-pos-to-start-time)
-    (define-key subed-mode-map (kbd "C-c ]") #'subed-copy-player-pos-to-stop-time)
-    (define-key subed-mode-map (kbd "C-c .") #'subed-toggle-sync-point-to-player)
-    (define-key subed-mode-map (kbd "C-c ,") #'subed-toggle-sync-player-to-point)
-    subed-mode-map)
+;; This variable is set in subed.el to avoid compiler warnings because it uses
+;; functions defined in subed-common.el, and (require 'subed-common) results in
+;; recursive requires.
+(defvar subed-mode-map nil
   "Keymap for ‘subed-mode’.")
 
 
