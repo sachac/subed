@@ -262,10 +262,12 @@ See \"List of events\" in mpv(1)."
            (run-hook-with-args 'subed-mpv-playback-position-hook subed-mpv-playback-position))))
       ("file-loaded"
        (setq subed-mpv-is-playing t)
+       ;; TODO: Remove this code.  It seems unnecessary now.  Not sure why, but
+       ;; I can't reproduce the issue.
        ;; Because mpv can report the player position AFTER the file was loaded
        ;; we disable automatic movement of point for a while so that the effect
        ;; of `subed-mpv-jump-to-current-subtitle' isn't cancelled immediately.
-       (subed-disable-sync-point-to-player-temporarily)
+       ;; (subed-disable-sync-point-to-player-temporarily)
        (run-hooks 'subed-mpv-file-loaded-hook))
       ("unpause"
        (setq subed-mpv-is-playing t))
