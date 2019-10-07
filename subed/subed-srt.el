@@ -120,7 +120,7 @@ If SUB-ID is not given, use subtitle on point."
       (subed-srt--timestamp-to-msecs timestamp))))
 
 (defun subed-srt--subtitle-text (&optional sub-id)
-  "Return subtitle's text.
+  "Return subtitle's text or an empty string.
 If SUB-ID is not given, use subtitle on point."
   (or (save-excursion
         (let ((beg (subed-srt--jump-to-subtitle-text sub-id))
