@@ -674,10 +674,11 @@ If QUIET is non-nil, do not display a message in the minibuffer."
              (subed-jump-to-subtitle-text-at-msecs msecs))
     (subed-debug "Synchronized point to playback position: %s -> #%s"
                  (subed-msecs-to-timestamp msecs) (subed-subtitle-id))
-    ;; post-command-hook is not triggered because we didn't move interactively.
-    ;; But there's not really a difference, e.g. the minor mode `hl-line' breaks
-    ;; unless we call its post-command function, so we do it manually.
-    ;; It's also important NOT to call our own post-command function because
+    ;; post-command-hook is not triggered because we didn't move interactively,
+    ;; but there shouldn't be a difference between automatic movement and manual
+    ;; movement.  E.g. the minor mode `hl-line' breaks because its post-command
+    ;; function is not called.
+    ;; But it's also important NOT to call our own post-command function because
     ;; that causes player-to-point syncing, which would get hairy.
     (remove-hook 'post-command-hook #'subed--post-command-handler)
     (run-hooks 'post-command-hook)
