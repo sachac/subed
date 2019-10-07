@@ -33,6 +33,7 @@
 ;;; Code:
 
 (require 'subed-config)
+(require 'subed-debug)
 (require 'subed-common)
 (require 'subed-srt)
 (require 'subed-mpv)

@@ -27,6 +27,7 @@
 ;;; Code:
 
 (require 'subed-config)
+(require 'subed-debug)
 (require 'json)
 
 (defvar-local subed-mpv-is-playing nil

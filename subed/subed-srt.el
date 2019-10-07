@@ -28,6 +28,7 @@
 ;;; Code:
 
 (require 'subed-config)
+(require 'subed-debug)
 (require 'subed-common)
 
 ;;; Syntax highlighting

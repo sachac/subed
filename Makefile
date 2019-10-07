@@ -23,4 +23,6 @@ test-compile:
 	                                     (byte-compile-file \"subed/subed-mpv.el\"))"
 	emacs --quick --batch --eval "(progn (add-to-list 'load-path (expand-file-name \"subed\" default-directory)) \
 	                                     (byte-compile-file \"subed/subed-srt.el\"))"
+	emacs --quick --batch --eval "(progn (add-to-list 'load-path (expand-file-name \"subed\" default-directory)) \
+	                                     (byte-compile-file \"subed/subed-debug.el\"))"
 	make clean
