@@ -343,18 +343,21 @@ Video files are expected to have any of the extensions listed in
       (subed-debug "Opening video file: %s" filepath)
       (subed-mpv--client-connect subed-mpv--retry-delays)
       (subed-mpv--client-send `(loadfile ,filepath replace))
+      ;; mpv won't add the subtitles if the file doesn't exist yet, so we add it
+      ;; via after-save-hook.
       (if (file-exists-p (buffer-file-name))
-          (subed-mpv--client-send `(sub-add ,(buffer-file-name) select))
-        ;; mpv won't add the subtitles if the file doesn't exist yet, so we add
-        ;; it via after-save-hook.  We don't want to add the subtitles on every
-        ;; save, so we remove and undefine ourselves after the first save.
-        (defun subed-mpv--sub-add-after-save ()
-          (subed-mpv--client-send `(sub-add ,(buffer-file-name) select))
-          (remove-hook 'after-save-hook #'subed-mpv--sub-add-after-save :local)
-          (fmakunbound 'subed-mpv--sub-add-after-save))
-        (add-hook 'after-save-hook #'subed-mpv--sub-add-after-save :append :local))
+          (subed-mpv-add-subtitles (buffer-file-name))
+        (add-hook 'after-save-hook #'subed-mpv--add-subtitle-after-first-save :append :local))
       (subed-mpv--client-send `(observe_property 1 time-pos))
       (subed-mpv-playback-speed subed-playback-speed-while-not-typing))))
+
+(defun subed-mpv--add-subtitle-after-first-save ()
+  "Tell mpv to load subtitles from `buffer-file-name'.
+This function is supposed to be added to `after-save-hook', and
+it removes itself from it so mpv doesn't add the same file every
+time the buffer is saved."
+  (subed-mpv-add-subtitles (buffer-file-name))
+  (remove-hook 'after-save-hook #'subed-mpv--add-subtitle-after-first-save :local))
 
 (defun subed-mpv-kill ()
   "Close connection to mpv process and kill the process."
