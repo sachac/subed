@@ -76,6 +76,13 @@
 
 ;;; Utilities
 
+(defun subed-msecs-to-timestamp (msecs)
+  "Convert MSECS to human-readable string."
+  ;; We need to wrap format-seconds in save-match-data because it does regexp
+  ;; stuff and we need to preserve our own match-data.
+  (concat (save-match-data (format-seconds "%02h:%02m:%02s" (/ msecs 1000)))
+          "," (format "%03d" (mod msecs 1000))))
+
 (defmacro subed-save-excursion (&rest body)
   "Restore relative point within current subtitle after executing BODY.
 This also works if the buffer changes (e.g. when sorting
@@ -664,7 +671,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 
 (defun subed--replay-adjusted-subtitle (msecs-start)
   "Seek player to MSECS-START."
-  (subed-debug "Replaying subtitle at: %s" (subed-srt--msecs-to-timestamp msecs-start))
+  (subed-debug "Replaying subtitle at: %s" (subed-msecs-to-timestamp msecs-start))
   (subed-mpv-jump msecs-start))
 
 
@@ -708,7 +715,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
   (when (and (not (use-region-p)) ;; Don't sync with active-mark in transient-mark-mode
              (subed-jump-to-subtitle-text-at-msecs msecs))
     (subed-debug "Synchronized point to playback position: %s -> #%s"
-                 (subed-srt--msecs-to-timestamp msecs) (subed-subtitle-id))
+                 (subed-msecs-to-timestamp msecs) (subed-subtitle-id))
     ;; post-command-hook is not triggered because we didn't move interactively.
     ;; But there's not really a difference, e.g. the minor mode `hl-line' breaks
     ;; unless we call its post-command function, so we do it manually.
@@ -835,11 +842,11 @@ If QUIET is non-nil, do not display a message in the minibuffer."
       (setq subed--subtitle-loop-start (- msecs-start (* subed-loop-seconds-before 1000))
             subed--subtitle-loop-stop (+ msecs-stop (* subed-loop-seconds-after 1000)))
       (subed-debug "Set loop: %s - %s"
-                   (subed-srt--msecs-to-timestamp subed--subtitle-loop-start)
-                   (subed-srt--msecs-to-timestamp subed--subtitle-loop-stop))
+                   (subed-msecs-to-timestamp subed--subtitle-loop-start)
+                   (subed-msecs-to-timestamp subed--subtitle-loop-stop))
       (message "Looping over %s - %s"
-               (subed-srt--msecs-to-timestamp subed--subtitle-loop-start)
-               (subed-srt--msecs-to-timestamp subed--subtitle-loop-stop)))))
+               (subed-msecs-to-timestamp subed--subtitle-loop-start)
+               (subed-msecs-to-timestamp subed--subtitle-loop-stop)))))
 
 (defun subed--ensure-subtitle-loop (cur-msecs)
   "Jump to current subtitle start time if CUR-MSECS is after stop time."
@@ -848,9 +855,9 @@ If QUIET is non-nil, do not display a message in the minibuffer."
     (when (or (< cur-msecs subed--subtitle-loop-start)
               (> cur-msecs subed--subtitle-loop-stop))
       (subed-debug "%s -> Looping over %s - %s"
-                   (subed-srt--msecs-to-timestamp cur-msecs)
-                   (subed-srt--msecs-to-timestamp subed--subtitle-loop-start)
-                   (subed-srt--msecs-to-timestamp subed--subtitle-loop-stop))
+                   (subed-msecs-to-timestamp cur-msecs)
+                   (subed-msecs-to-timestamp subed--subtitle-loop-start)
+                   (subed-msecs-to-timestamp subed--subtitle-loop-stop))
       (subed-mpv-jump subed--subtitle-loop-start))))
 
 
