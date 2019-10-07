@@ -222,32 +222,6 @@ The functions are called with the subtitle's start time."
 (defvar-local subed-subtitle-motion-hook nil
   "Functions to call after current subtitle changed.")
 
-(defvar-local subed--status-point 1
-  "Keeps track of `(point)' to detect changes.")
-
-(defvar-local subed--status-subtitle-id 1
-  "Keeps track of `(subed-subtitle-id)' to detect changes.")
-
-(defun subed--post-command-handler ()
-  "Detect point motion and user entering text and signal hooks."
-  ;; Check for point motion first; skip checking for other changes if it didn't
-  (let ((new-point (point)))
-    (when (and new-point subed--status-point
-               (not (= new-point subed--status-point)))
-
-      ;; If point is synced to playback position, temporarily prevent unexpected
-      ;; movement of the cursor.
-      (subed-disable-sync-point-to-player-temporarily)
-
-      (setq subed--status-point new-point)
-      ;; Signal point motion
-      (run-hooks 'subed-point-motion-hook)
-      (let ((new-sub-id (subed-subtitle-id)))
-        (when (and new-sub-id subed--status-subtitle-id
-                   (not (= subed--status-subtitle-id new-sub-id)))
-          (setq subed--status-subtitle-id new-sub-id)
-          ;; Signal motion between subtitles
-          (run-hooks 'subed-subtitle-motion-hook))))))
 
 (provide 'subed-config)
 ;;; subed-config.el ends here

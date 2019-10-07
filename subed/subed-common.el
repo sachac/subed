@@ -112,6 +112,35 @@ Before BODY is run, point is placed on the subtitle's ID."
   (concat string (make-string (- length (length string)) fillchar)))
 
 
+;;; Hooks for point motion and subtitle motion
+
+(defvar-local subed--current-point -1)
+(defvar-local subed--current-subtitle-id -1)
+(defun subed--post-command-handler ()
+  "Detect point motion and user entering text and signal hooks."
+  ;; Check for point motion first to avoid expensive calls to subed-subtitle-id
+  ;; as often as possible.
+  (let ((new-point (point)))
+    (when (and new-point subed--current-point
+               (not (= new-point subed--current-point)))
+
+      ;; If point is synced to playback position, temporarily disable that so
+      ;; that manual moves aren't cancelled immediately by automated moves.
+      (subed-disable-sync-point-to-player-temporarily)
+
+      ;; Store new point and fire signal.
+      (setq subed--current-point new-point)
+      (run-hooks 'subed-point-motion-hook)
+
+      ;; Check if point moved across subtitle boundaries.
+      (let ((new-sub-id (subed-subtitle-id)))
+        (when (and new-sub-id subed--current-subtitle-id
+                   (not (= new-sub-id subed--current-subtitle-id)))
+          ;; Store new ID and fire signal.
+          (setq subed--current-subtitle-id new-sub-id)
+          (run-hooks 'subed-subtitle-motion-hook))))))
+
+
 ;;; Adjusting start/stop time individually
 
 (defun subed-adjust-subtitle-time-start (msecs &optional
