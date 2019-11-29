@@ -154,12 +154,12 @@ If set to zero or smaller, playback is paused."
   :type 'boolean
   :group 'subed)
 
-(defcustom subed-loop-seconds-before 0
+(defcustom subed-loop-seconds-before 1
   "Prelude in seconds when looping over subtitle(s)."
   :type 'float
   :group 'subed)
 
-(defcustom subed-loop-seconds-after 0
+(defcustom subed-loop-seconds-after 1
   "Addendum in seconds when looping over subtitle(s)."
   :type 'float
   :group 'subed)
