@@ -786,8 +786,14 @@ If QUIET is non-nil, do not display a message in the minibuffer."
   "Whether the player is looping over the current subtitle."
   (or subed--subtitle-loop-start subed--subtitle-loop-stop))
 
+(defvar-local subed--enable-point-to-player-sync-after-disabling-loop nil)
+
 (defun subed-enable-loop-over-current-subtitle (&optional quiet)
   "Enable looping over the current subtitle in the player.
+
+If enabled, point-to-player synchronization is disabled and
+re-enabled again when `subed-disable-loop-over-current-subtitle'
+is called.
 
 If QUIET is non-nil, do not display a message in the minibuffer."
   (interactive)
@@ -796,6 +802,9 @@ If QUIET is non-nil, do not display a message in the minibuffer."
     (add-hook 'subed-mpv-playback-position-hook #'subed--ensure-subtitle-loop :append :local)
     (add-hook 'subed-subtitle-motion-hook #'subed--set-subtitle-loop :append :local)
     (subed-debug "Enabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop)
+    (when (subed-sync-point-to-player-p)
+      (subed-disable-sync-point-to-player)
+      (setq subed--enable-point-to-player-sync-after-disabling-loop t))
     (unless quiet
       (message "Enabled looping over current subtitle"))))
 
@@ -810,6 +819,9 @@ If QUIET is non-nil, do not display a message in the minibuffer."
     (setq subed--subtitle-loop-start nil
           subed--subtitle-loop-stop nil)
     (subed-debug "Disabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop)
+    (when subed--enable-point-to-player-sync-after-disabling-loop
+      (subed-enable-sync-point-to-player)
+      (setq subed--enable-point-to-player-sync-after-disabling-loop nil))
     (unless quiet
       (message "Disabled looping over current subtitle"))))
 
