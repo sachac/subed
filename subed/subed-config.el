@@ -49,19 +49,19 @@
 ;; Syntax highlighting
 
 (defface subed-srt-id-face
-  '((t (:foreground "sandybrown")))
+  '((t (:inherit 'font-lock-constant-face)))
   "Each subtitle's consecutive number")
 
 (defface subed-srt-time-face
-  '((t (:foreground "skyblue")))
+  '((t (:inherit 'font-lock-string-face)))
   "Start and stop times of subtitles")
 
 (defface subed-srt-time-separator-face
-  '((t (:foreground "dimgray")))
+  '((t (:inherit 'font-lock-comment-face)))
   "Separator between the start and stop time (\" --> \")")
 
 (defface subed-srt-text-face
-  '((t (:foreground "brightyellow")))
+  '((t (:inherit 'default)))
   "Text of the subtitle")
 
 
