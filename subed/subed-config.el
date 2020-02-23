@@ -191,7 +191,7 @@ remembers whether it was originally enabled by the user.")
   :type 'file
   :group 'subed)
 
-(defcustom subed-mpv-arguments '("--osd-level" "2" "--osd-fractions")
+(defcustom subed-mpv-arguments '("--osd-level=2" "--osd-fractions")
   "Additional arguments for \"mpv\".
 The options --input-ipc-server=SRTEDIT-MPV-SOCKET and --idle are
 hardcoded."
