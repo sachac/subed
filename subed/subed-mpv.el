@@ -78,7 +78,8 @@ See also `subed-mpv-socket-dir'."
        (error "%s" (mapconcat #'identity (cdr err) ": ")))))
   (concat (file-name-as-directory subed-mpv-socket-dir)
           (format "%s:%s"
-                  (file-name-sans-extension (subed--buffer-file-name))
+                  (let ((filename (file-name-sans-extension (subed--buffer-file-name))))
+                    (substring (substring filename 0 (min (length filename) 20))))
                   (buffer-hash))))
 
 (defun subed-mpv--server-start (&rest args)
