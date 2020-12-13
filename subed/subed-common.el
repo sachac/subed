@@ -135,7 +135,8 @@ Before BODY is run, point is placed on the subtitle's ID."
       ;; Check if point moved across subtitle boundaries.
       (let ((new-sub-id (subed-subtitle-id)))
         (when (and new-sub-id subed--current-subtitle-id
-                   (not (= new-sub-id subed--current-subtitle-id)))
+                   (not (funcall (if (stringp subed--current-subtitle-id) 'string= 'equal)
+                                 new-sub-id subed--current-subtitle-id)))
           ;; Store new ID and fire signal.
           (setq subed--current-subtitle-id new-sub-id)
           (run-hooks 'subed-subtitle-motion-hook))))))

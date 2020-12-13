@@ -36,7 +36,8 @@
 (defvar-local subed--subtitle-format nil
   "Short form of the name of the subtitle format in the current buffer (e.g. \"srt\").")
 
-(defvar subed--init-alist '(("srt" . subed-srt--init))
+(defvar subed--init-alist '(("srt" . subed-srt--init)
+                            ("vtt" . subed-vtt--init))
   "Alist that maps file extensions to format-specific init functions.")
 
 ;; This variable is set in subed.el to avoid compiler warnings because it uses
@@ -64,6 +65,17 @@
   '((t (:inherit 'default)))
   "Text of the subtitle")
 
+(defface subed-vtt-time-face
+  '((t (:inherit 'font-lock-string-face)))
+  "Start and stop times of subtitles")
+
+(defface subed-vtt-time-separator-face
+  '((t (:inherit 'font-lock-comment-face)))
+  "Separator between the start and stop time (\" --> \")")
+
+(defface subed-vtt-text-face
+  '((t (:inherit 'default)))
+  "Text of the subtitle")
 
 ;; Variables
 
