@@ -419,6 +419,21 @@ Return new point."
     (delete-region beg end))
   (subed-srt--regenerate-ids-soon))
 
+(defun subed-srt--merge-with-next ()
+  "Merge the current subtitle with the next subtitle.
+Update the end timestamp accordingly."
+  (interactive)
+  (subed-srt--jump-to-subtitle-end)
+  (save-excursion
+    (let ((pos (point)) new-end)
+      (subed-srt--forward-subtitle-time-stop)
+      (when (looking-at subed-srt--regexp-timestamp)
+        (setq new-end (subed-srt--timestamp-to-msecs (match-string 0))))
+      (subed-srt--jump-to-subtitle-text)
+      (delete-region pos (point))
+      (insert "\n")
+      (subed-srt--set-subtitle-time-stop new-end)))
+  (subed-srt--regenerate-ids-soon))
 
 ;;; Maintenance
 

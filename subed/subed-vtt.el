@@ -414,8 +414,22 @@ Return new point."
                                   (subed-vtt--backward-subtitle-end)
                                   (1+ (point)))
               end (save-excursion (goto-char (point-max)))))
-    (delete-region beg end))
-  (subed-vtt--regenerate-ids-soon))
+    (delete-region beg end)))
+
+(defun subed-vtt--merge-with-next ()
+  "Merge the current subtitle with the next subtitle.
+Update the end timestamp accordingly."
+  (interactive)
+  (subed-vtt--jump-to-subtitle-end)
+  (save-excursion
+    (let ((pos (point)) new-end)
+      (subed-vtt--forward-subtitle-time-stop)
+      (when (looking-at subed-vtt--regexp-timestamp)
+        (setq new-end (subed-vtt--timestamp-to-msecs (match-string 0))))
+      (subed-vtt--jump-to-subtitle-text)
+      (delete-region pos (point))
+      (insert "\n")
+      (subed-vtt--set-subtitle-time-stop new-end))))
 
 
 ;;; Maintenance
