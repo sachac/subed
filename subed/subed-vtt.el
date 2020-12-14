@@ -148,14 +148,14 @@ If SUB-ID is not given, use subtitle on point."
   "Move to the ID of a subtitle and return point.
 If SUB-ID is not given, focus the current subtitle's ID.
 Return point or nil if no subtitle ID could be found.
-WebVTT doesn't use IDs, so we use the starting timestamp instead"
+WebVTT doesn't use IDs, so we use the starting timestamp instead."
   (interactive)
   (save-match-data
-    (if sub-id
+    (if (stringp sub-id)
         ;; Look for a line that contains only the ID, preceded by one or more
         ;; blank lines or the beginning of the buffer.
         (let* ((orig-point (point))
-               (regex (concat "\\(" subed-srt--regexp-separator "\\|\\`\\)\\(" (regexp-quote (string-to-number sub-id)) "\\)"))
+               (regex (concat "\\(" subed-srt--regexp-separator "\\|\\`\\)\\(" (regexp-quote sub-id) "\\)"))
                (match-found (progn (goto-char (point-min))
                                    (re-search-forward regex nil t))))
           (if match-found
@@ -232,7 +232,7 @@ can be found."
       ;; `subed-vtt--regexp-separator' here because if subtitle text is empty,
       ;; it may be the only empty line in the separator, i.e. there's only one
       ;; "\n".
-      (let ((regex (concat "\\([[:blank:]]*\n+[0-9]+\n\\|\\([[:blank:]]*\n*\\)\\'\\)")))
+      (let ((regex (concat "\\([[:blank:]]*\n+" subed-vtt--regexp-timestamp "\\|\\([[:blank:]]*\n*\\)\\'\\)")))
         (when (re-search-forward regex nil t)
           (goto-char (match-beginning 0))))
       (unless (= (point) orig-point)
@@ -252,7 +252,7 @@ Return point or nil if there is no previous subtitle."
   (interactive)
   (let ((orig-point (point)))
     (when (subed-vtt--jump-to-subtitle-id)
-      (if (re-search-backward (concat "\\(" subed-vtt--regexp-separator "\\|\\`[[:space:]]*\\)" "\\([0-9]+\\)\n") nil t)
+      (if (re-search-backward (concat "\\(" subed-vtt--regexp-separator "\\|\\`[[:space:]]*\\)\\(" subed-vtt--regexp-timestamp "\\)") nil t)
           (progn
             (goto-char (match-beginning 2))
             (point))
@@ -369,7 +369,7 @@ Return new point."
   (subed-vtt--jump-to-subtitle-id)
   (insert (subed-vtt--make-subtitle id start stop text))
   (save-match-data
-    (when (looking-at "\\([[:space:]]*\\|^\\)[0-9]+$")
+    (when (looking-at (concat "\\([[:space:]]*\\|^\\)" subed-vtt--regexp-timestamp))
       (insert "\n")))
   (forward-line -2)
   (subed-vtt--jump-to-subtitle-text))
@@ -415,6 +415,7 @@ Return new point."
                                   (1+ (point)))
               end (save-excursion (goto-char (point-max)))))
     (delete-region beg end)))
+
 
 (defun subed-vtt--merge-with-next ()
   "Merge the current subtitle with the next subtitle.
@@ -531,8 +532,7 @@ Update the end timestamp accordingly."
                 ;; endrecfun (move to end of current record/subtitle)
                 #'subed-vtt--jump-to-subtitle-end
                 ;; startkeyfun (return sort value of current record/subtitle)
-                #'subed-vtt--subtitle-msecs-start))
-    (subed-vtt--regenerate-ids)))
+                #'subed-vtt--subtitle-msecs-start))))
 
 (defun subed-vtt--init ()
   "This function is called when subed-mode is entered for a SRT file."
