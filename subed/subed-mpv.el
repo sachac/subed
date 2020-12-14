@@ -335,6 +335,23 @@ See \"List of events\" in mpv(1)."
          (or (file-directory-p filepath)
              (member (file-name-extension filename) subed-video-extensions)))))
 
+(defun subed-mpv-play-video-from-url (url)
+  "Open video file from URL in mpv."
+  (interactive "MURL: ")
+  (when (subed-mpv--server-started-p)
+    (subed-mpv-kill))
+  (when (apply #'subed-mpv--server-start subed-mpv-arguments)
+      (subed-debug "Opening video from URL: %s" url)
+      (subed-mpv--client-connect subed-mpv--retry-delays)
+      (subed-mpv--client-send `(loadfile ,url replace))
+      ;; mpv won't add the subtitles if the file doesn't exist yet, so we add it
+      ;; via after-save-hook.
+      (if (file-exists-p (buffer-file-name))
+          (subed-mpv-add-subtitles (buffer-file-name))
+        (add-hook 'after-save-hook #'subed-mpv--add-subtitle-after-first-save :append :local))
+      (subed-mpv--client-send `(observe_property 1 time-pos))
+      (subed-mpv-playback-speed subed-playback-speed-while-not-typing)))
+
 (defun subed-mpv-find-video (file)
   "Open video file FILE in mpv.
 
