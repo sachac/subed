@@ -56,6 +56,7 @@
     (define-key subed-mode-map (kbd "C-M-i") #'subed-insert-subtitle-adjacent)
     (define-key subed-mode-map (kbd "M-k") #'subed-kill-subtitle)
     (define-key subed-mode-map (kbd "M-m") #'subed-merge-with-next)
+    (define-key subed-mode-map (kbd "M-M") #'subed-merge-with-previous)
     (define-key subed-mode-map (kbd "M-s") #'subed-sort)
     (define-key subed-mode-map (kbd "M-SPC") #'subed-mpv-toggle-pause)
     (define-key subed-mode-map (kbd "C-c C-d") #'subed-toggle-debugging)
