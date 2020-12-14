@@ -232,7 +232,7 @@ can be found."
       ;; `subed-vtt--regexp-separator' here because if subtitle text is empty,
       ;; it may be the only empty line in the separator, i.e. there's only one
       ;; "\n".
-      (let ((regex (concat "\\([[:blank:]]*\n+[0-9]+\n\\|\\([[:blank:]]*\n*\\)\\'\\)")))
+      (let ((regex (concat "\\([[:blank:]]*\n+" subed-vtt--regexp-timestamp "\\|\\([[:blank:]]*\n*\\)\\'\\)")))
         (when (re-search-forward regex nil t)
           (goto-char (match-beginning 0))))
       (unless (= (point) orig-point)
@@ -252,7 +252,7 @@ Return point or nil if there is no previous subtitle."
   (interactive)
   (let ((orig-point (point)))
     (when (subed-vtt--jump-to-subtitle-id)
-      (if (re-search-backward (concat "\\(" subed-vtt--regexp-separator "\\|\\`[[:space:]]*\\)" "\\([0-9]+\\)\n") nil t)
+      (if (re-search-backward (concat "\\(" subed-vtt--regexp-separator "\\|\\`[[:space:]]*\\)\\(" subed-vtt--regexp-timestamp "\\)") nil t)
           (progn
             (goto-char (match-beginning 2))
             (point))
@@ -369,7 +369,7 @@ Return new point."
   (subed-vtt--jump-to-subtitle-id)
   (insert (subed-vtt--make-subtitle id start stop text))
   (save-match-data
-    (when (looking-at "\\([[:space:]]*\\|^\\)[0-9]+$")
+    (when (looking-at (concat "\\([[:space:]]*\\|^\\)" subed-vtt--regexp-timestamp))
       (insert "\n")))
   (forward-line -2)
   (subed-vtt--jump-to-subtitle-text))
