@@ -423,17 +423,19 @@ Return new point."
   "Merge the current subtitle with the next subtitle.
 Update the end timestamp accordingly."
   (interactive)
-  (subed-srt--jump-to-subtitle-end)
   (save-excursion
+    (subed-srt--jump-to-subtitle-end)
     (let ((pos (point)) new-end)
-      (subed-srt--forward-subtitle-time-stop)
-      (when (looking-at subed-srt--regexp-timestamp)
-        (setq new-end (subed-srt--timestamp-to-msecs (match-string 0))))
-      (subed-srt--jump-to-subtitle-text)
-      (delete-region pos (point))
-      (insert "\n")
-      (subed-srt--set-subtitle-time-stop new-end)))
-  (subed-srt--regenerate-ids-soon))
+      (if (subed-srt--forward-subtitle-time-stop)
+          (progn
+            (when (looking-at subed-srt--regexp-timestamp)
+              (setq new-end (subed-srt--timestamp-to-msecs (match-string 0))))
+            (subed-srt--jump-to-subtitle-text)
+            (delete-region pos (point))
+            (insert "\n")
+            (subed-srt--set-subtitle-time-stop new-end)
+            (subed-srt--regenerate-ids-soon))
+        (error "No subtitle to merge into")))))
 
 ;;; Maintenance
 
