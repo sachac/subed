@@ -148,14 +148,14 @@ If SUB-ID is not given, use subtitle on point."
   "Move to the ID of a subtitle and return point.
 If SUB-ID is not given, focus the current subtitle's ID.
 Return point or nil if no subtitle ID could be found.
-WebVTT doesn't use IDs, so we use the starting timestamp instead"
+WebVTT doesn't use IDs, so we use the starting timestamp instead."
   (interactive)
   (save-match-data
-    (if sub-id
+    (if (stringp sub-id)
         ;; Look for a line that contains only the ID, preceded by one or more
         ;; blank lines or the beginning of the buffer.
         (let* ((orig-point (point))
-               (regex (concat "\\(" subed-srt--regexp-separator "\\|\\`\\)\\(" (regexp-quote (string-to-number sub-id)) "\\)"))
+               (regex (concat "\\(" subed-srt--regexp-separator "\\|\\`\\)\\(" (regexp-quote sub-id) "\\)"))
                (match-found (progn (goto-char (point-min))
                                    (re-search-forward regex nil t))))
           (if match-found
@@ -414,8 +414,7 @@ Return new point."
                                   (subed-vtt--backward-subtitle-end)
                                   (1+ (point)))
               end (save-excursion (goto-char (point-max)))))
-    (delete-region beg end))
-  (subed-vtt--regenerate-ids-soon))
+    (delete-region beg end)))
 
 
 ;;; Maintenance
@@ -517,8 +516,7 @@ Return new point."
                 ;; endrecfun (move to end of current record/subtitle)
                 #'subed-vtt--jump-to-subtitle-end
                 ;; startkeyfun (return sort value of current record/subtitle)
-                #'subed-vtt--subtitle-msecs-start))
-    (subed-vtt--regenerate-ids)))
+                #'subed-vtt--subtitle-msecs-start))))
 
 (defun subed-vtt--init ()
   "This function is called when subed-mode is entered for a SRT file."
