@@ -179,7 +179,7 @@ Return point or nil if point is still on the same subtitle.
 See also `subed-vtt--subtitle-id-at-msecs'."
   (let ((current-sub-id (subed-vtt--subtitle-id))
         (target-sub-id (subed-vtt--subtitle-id-at-msecs msecs)))
-    (when (and target-sub-id current-sub-id (not (= target-sub-id current-sub-id)))
+    (when (and target-sub-id current-sub-id (not (equal target-sub-id current-sub-id)))
       (subed-vtt--jump-to-subtitle-id target-sub-id))))
 
 (defun subed-vtt--jump-to-subtitle-text-at-msecs (msecs)
