@@ -513,7 +513,7 @@ scheduled call is canceled and another call is scheduled in
       (save-match-data
         (let ((orig-point (point)))
           (goto-char (point-min))
-          (while (and (re-search-forward (format "\\(%s[[^\\']]\\|\\`\\)" subed-srt--regexp-separator) nil t)
+          (while (and (re-search-forward (format "\\(%s\\|\\`\\)" subed-srt--regexp-separator) nil t)
                       (looking-at "[[:alnum:]]"))
             (unless (looking-at "^[0-9]+$")
               (error "Found invalid subtitle ID: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
