@@ -483,8 +483,7 @@ Return new point."
       (save-match-data
         (let ((orig-point (point)))
           (goto-char (point-min))
-          (while (and (re-search-forward (format "\\(%s[[^\\']]\\|\\`\\)" subed-vtt--regexp-separator) nil t)
-                      (looking-at "[[:alnum:]]"))
+          (while (and (re-search-forward (format "\\(%s[[^\\']]\\|\\`\\)%s" subed-vtt--regexp-separator subed-vtt--regexp-timestamp) nil t) (goto-char (match-beginning 2)))
             ;; This regex is stricter than `subed-vtt--regexp-timestamp'
             (unless (looking-at "^[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\.[0-9]\\{3\\}")
               (error "Found invalid start time: %S"  (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))

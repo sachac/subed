@@ -36,6 +36,7 @@
 (require 'subed-debug)
 (require 'subed-common)
 (require 'subed-srt)
+(require 'subed-vtt)
 (require 'subed-mpv)
 
 (setq subed-mode-map
