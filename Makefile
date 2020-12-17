@@ -2,7 +2,7 @@ clean:
 	find . -name "*.elc" -delete
 
 test:
-	buttercup
+	emacs -batch -f package-initialize -L . -f buttercup-run-discover
 	emacs --no-init-file --batch \
 		  --eval "(require 'package-lint)" \
 	      --file package-lint-batch-and-exit \
