@@ -1238,6 +1238,15 @@ Baz.
       (expect (subed-srt--validate) :to-throw
               'error '("Found invalid separator between start and stop time: \"00:01:01,000 -->00:01:05,123\""))
       (expect (point) :to-equal 15)))
+  (it "reports invalid start time in later entries."
+    (with-temp-srt-buffer
+      (insert mock-srt-data)
+      (subed-srt--jump-to-subtitle-time-start 3)
+      (forward-char 3)
+      (insert "##")
+      (expect (subed-srt--validate) :to-throw
+              'error '("Found invalid start time: \"00:##03:03,45 --> 00:03:15,5\""))
+      (expect (point) :to-equal 79)))
   (it "does not report error when last subtitle text is empty."
     (with-temp-srt-buffer
       (insert mock-srt-data)
