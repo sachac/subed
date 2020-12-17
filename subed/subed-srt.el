@@ -519,7 +519,7 @@ scheduled call is canceled and another call is scheduled in
               (error "Found invalid subtitle ID: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
             (forward-line)
             ;; This regex is stricter than `subed-srt--regexp-timestamp'
-            (unless (looking-at "^[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\},[0-9]\\{3\\}")
+            (unless (looking-at "^[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\},[0-9]\\{,3\\}")
               (error "Found invalid start time: %S"  (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
             (when (re-search-forward "[[:blank:]]" (point-at-eol) t)
               (goto-char (match-beginning 0)))
@@ -529,7 +529,7 @@ scheduled call is canceled and another call is scheduled in
             (condition-case nil
                 (forward-char 5)
               (error nil))
-            (unless (looking-at "[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\},[0-9]\\{3\\}$")
+            (unless (looking-at "[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\},[0-9]\\{,3\\}$")
               (error "Found invalid stop time: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1))))
           (goto-char orig-point))))))
 
