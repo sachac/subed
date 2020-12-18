@@ -621,6 +621,15 @@ following manner:
     (subed-regenerate-ids-soon))
   (point))
 
+;;; Merging
+
+(defun subed-merge-with-previous ()
+  "Merge the current subtitle with the previous subtitle.
+Update the end timestamp accordingly."
+  (interactive)
+  (if (subed-backward-subtitle-id)
+      (subed-merge-with-next)
+    (error "No previous subtitle to merge into")))
 
 ;;; Replay time-adjusted subtitle
 

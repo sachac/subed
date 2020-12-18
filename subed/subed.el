@@ -36,6 +36,7 @@
 (require 'subed-debug)
 (require 'subed-common)
 (require 'subed-srt)
+(require 'subed-vtt)
 (require 'subed-mpv)
 
 (setq subed-mode-map
@@ -55,10 +56,13 @@
     (define-key subed-mode-map (kbd "M-i") #'subed-insert-subtitle)
     (define-key subed-mode-map (kbd "C-M-i") #'subed-insert-subtitle-adjacent)
     (define-key subed-mode-map (kbd "M-k") #'subed-kill-subtitle)
+    (define-key subed-mode-map (kbd "M-m") #'subed-merge-with-next)
+    (define-key subed-mode-map (kbd "M-M") #'subed-merge-with-previous)
     (define-key subed-mode-map (kbd "M-s") #'subed-sort)
     (define-key subed-mode-map (kbd "M-SPC") #'subed-mpv-toggle-pause)
     (define-key subed-mode-map (kbd "C-c C-d") #'subed-toggle-debugging)
     (define-key subed-mode-map (kbd "C-c C-v") #'subed-mpv-find-video)
+    (define-key subed-mode-map (kbd "C-c C-u") #'subed-mpv-play-video-from-url)
     (define-key subed-mode-map (kbd "C-c C-p") #'subed-toggle-pause-while-typing)
     (define-key subed-mode-map (kbd "C-c C-l") #'subed-toggle-loop-over-current-subtitle)
     (define-key subed-mode-map (kbd "C-c C-r") #'subed-toggle-replay-adjusted-subtitle)
@@ -96,7 +100,7 @@
         "forward-subtitle-time-start" "backward-subtitle-time-start"
         "forward-subtitle-time-stop" "backward-subtitle-time-stop"
         "set-subtitle-time-start" "set-subtitle-time-stop"
-        "prepend-subtitle" "append-subtitle" "kill-subtitle"
+        "prepend-subtitle" "append-subtitle" "kill-subtitle" "merge-with-next"
         "regenerate-ids" "regenerate-ids-soon"
         "sanitize" "validate" "sort"))
 
