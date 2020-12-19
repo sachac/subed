@@ -631,6 +631,21 @@ Update the end timestamp accordingly."
       (subed-merge-with-next)
     (error "No previous subtitle to merge into")))
 
+(defun subed-split-subtitle ()
+  "Split current subtitle at point using timestamp from MPV."
+  (interactive)
+  (let* ((end-timestamp (subed-subtitle-msecs-stop))
+         (orig (point))
+         (text (buffer-substring orig (save-excursion (subed-jump-to-subtitle-end) (point)))))
+    (unless subed-mpv-playback-position
+      (error "Not playing back in MPV"))
+    (when (or (> subed-mpv-playback-position end-timestamp)
+              (< subed-mpv-playback-position (subed-subtitle-msecs-start)))
+      (error "Not in the currently playing subtitle segment"))
+    (subed-set-subtitle-time-stop subed-mpv-playback-position)
+    (delete-region (point) (subed-jump-to-subtitle-end))
+    (subed-append-subtitle nil subed-mpv-playback-position end-timestamp (string-trim text))))
+
 ;;; Replay time-adjusted subtitle
 
 (defun subed-replay-adjusted-subtitle-p ()
