@@ -636,15 +636,20 @@ Update the end timestamp accordingly."
   (interactive)
   (let* ((end-timestamp (subed-subtitle-msecs-stop))
          (orig (point))
+         (text-beg (save-excursion (subed-jump-to-subtitle-text)))
+         (text-end (save-excursion (subed-jump-to-subtitle-end)))
          (text (buffer-substring orig (save-excursion (subed-jump-to-subtitle-end) (point)))))
     (unless subed-mpv-playback-position
       (error "Not playing back in MPV"))
+    (unless (and text-beg text-end (> orig text-beg) (< orig text-end))
+      (error "Not in the middle of subtitle text"))
     (when (or (> subed-mpv-playback-position end-timestamp)
               (< subed-mpv-playback-position (subed-subtitle-msecs-start)))
       (error "Not in the currently playing subtitle segment"))
     (subed-set-subtitle-time-stop subed-mpv-playback-position)
     (delete-region (point) (subed-jump-to-subtitle-end))
-    (subed-append-subtitle nil subed-mpv-playback-position end-timestamp (string-trim text))))
+    (subed-append-subtitle nil subed-mpv-playback-position end-timestamp (string-trim text))
+    (subed-regenerate-ids-soon)))
 
 ;;; Replay time-adjusted subtitle
 
