@@ -621,16 +621,6 @@ following manner:
     (subed-regenerate-ids-soon))
   (point))
 
-;;; Merging
-
-(defun subed-merge-with-previous ()
-  "Merge the current subtitle with the previous subtitle.
-Update the end timestamp accordingly."
-  (interactive)
-  (if (subed-backward-subtitle-id)
-      (subed-merge-with-next)
-    (error "No previous subtitle to merge into")))
-
 (defun subed-split-subtitle ()
   "Split current subtitle at point.
 
@@ -668,6 +658,16 @@ Return point of the new subtitle.
       (subed-append-subtitle nil new-start-timestamp new-stop-timestamp new-text))
     (subed-regenerate-ids-soon)
     (point)))
+
+;;; Merging
+
+(defun subed-merge-with-previous ()
+  "Merge the current subtitle with the previous subtitle.
+Update the end timestamp accordingly."
+  (interactive)
+  (if (subed-backward-subtitle-id)
+      (subed-merge-with-next)
+    (error "No previous subtitle to merge into")))
 
 ;;; Replay time-adjusted subtitle
 
