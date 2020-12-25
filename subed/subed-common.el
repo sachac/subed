@@ -632,24 +632,42 @@ Update the end timestamp accordingly."
     (error "No previous subtitle to merge into")))
 
 (defun subed-split-subtitle ()
-  "Split current subtitle at point using timestamp from MPV."
+  "Split current subtitle at point.
+
+The subtitle text after point is moved to a new subtitle that is
+inserted after the current subtitle.
+
+If a video is playing, `subed-mpv-playback-position' is used as
+the new stop time of the current subtitle. Otherwise, the
+timestamp between the start and stop timestamp of the current
+subtitle is used.
+
+The newly inserted subtitle starts `subed-subtitle-spacing'
+milliseconds after the current subtitle's new end timestamp.
+
+Return point of the new subtitle.
+"
   (interactive)
-  (let* ((end-timestamp (subed-subtitle-msecs-stop))
-         (orig (point))
-         (text-beg (save-excursion (subed-jump-to-subtitle-text)))
-         (text-end (save-excursion (or (subed-jump-to-subtitle-end) (point))))
-         (text (buffer-substring orig text-end)))
-    (unless subed-mpv-playback-position
-      (error "Not playing back in MPV"))
-    (unless (and text-beg text-end (>= orig text-beg) (<= orig text-end))
-      (error "Not in the middle of subtitle text"))
-    (when (or (> subed-mpv-playback-position end-timestamp)
-              (< subed-mpv-playback-position (subed-subtitle-msecs-start)))
-      (error "Not in the currently playing subtitle segment"))
-    (subed-set-subtitle-time-stop subed-mpv-playback-position)
-    (delete-region (point) text-end)
-    (subed-append-subtitle nil subed-mpv-playback-position end-timestamp (string-trim text))
-    (subed-regenerate-ids-soon)))
+  (let ((text-beg (save-excursion (subed-jump-to-subtitle-text)))
+        (text-end (save-excursion (or (subed-jump-to-subtitle-end) (point)))))
+    ;; Ensure point is on subtitle text
+    (unless (and text-beg text-end (>= (point) text-beg) (<= (point) text-end))
+      (subed-jump-to-subtitle-text))
+    (let* ((split-timestamp (if subed-mpv-playback-position
+                                (+ subed-mpv-playback-position subed-subtitle-spacing)
+                              (let ((sub-len (- (subed-subtitle-msecs-stop) (subed-subtitle-msecs-start))))
+                                (+ (subed-subtitle-msecs-start) (/ sub-len 2)))))
+           (new-text (string-trim (buffer-substring (point) text-end)))
+           (new-start-timestamp (+ split-timestamp subed-subtitle-spacing))
+           (new-stop-timestamp (subed-subtitle-msecs-stop)))
+      (when (or (> split-timestamp new-stop-timestamp)
+                (< split-timestamp (subed-subtitle-msecs-start)))
+        (error "Playback position is not at the subtitle on point."))
+      (subed-set-subtitle-time-stop split-timestamp)
+      (delete-region (point) text-end)
+      (subed-append-subtitle nil new-start-timestamp new-stop-timestamp new-text))
+    (subed-regenerate-ids-soon)
+    (point)))
 
 ;;; Replay time-adjusted subtitle
 
