@@ -500,9 +500,10 @@ Update the end timestamp accordingly."
       (save-match-data
         (let ((orig-point (point)))
           (goto-char (point-min))
-          (while (and (re-search-forward (format "\\(%s[[^\\']]\\|\\`\\)%s" subed-vtt--regexp-separator subed-vtt--regexp-timestamp) nil t) (goto-char (match-beginning 2)))
+          (while (and (re-search-forward (format "^\\(%s\\)" subed-vtt--regexp-timestamp) nil t)
+                      (goto-char (match-beginning 1)))
             ;; This regex is stricter than `subed-vtt--regexp-timestamp'
-            (unless (looking-at "^[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\.[0-9]\\{3\\}")
+            (unless (looking-at "^[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\(\\.[0-9]\\{0,3\\}\\)")
               (error "Found invalid start time: %S"  (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
             (when (re-search-forward "[[:blank:]]" (point-at-eol) t)
               (goto-char (match-beginning 0)))
@@ -512,7 +513,7 @@ Update the end timestamp accordingly."
             (condition-case nil
                 (forward-char 5)
               (error nil))
-            (unless (looking-at "[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\},[0-9]\\{3\\}$")
+            (unless (looking-at "[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\(\\.[0-9]\\{0,3\\}\\)$")
               (error "Found invalid stop time: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1))))
           (goto-char orig-point))))))
 
@@ -524,6 +525,7 @@ Update the end timestamp accordingly."
     (subed-vtt--validate)
     (subed-save-excursion
      (goto-char (point-min))
+     (subed-vtt--forward-subtitle-id)
      (sort-subr nil
                 ;; nextrecfun (move to next record/subtitle or to end-of-buffer
                 ;; if there are no more records)
