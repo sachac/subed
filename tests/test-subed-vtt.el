@@ -1060,7 +1060,7 @@ Baz.
                                                  "00:03:03.45 --> 00:03:15.5\n"
                                                  ""))
        (subed-vtt--sanitize)
-       (expect (buffer-string) :to-equal (concat "WEBVTT\n\n" 
+       (expect (buffer-string) :to-equal (concat "WEBVTT\n\n"
                                                  "00:01:01.000 --> 00:01:05.123\n"
                                                  "Foo.\n\n"
                                                  "00:02:02.234 --> 00:02:10.345\n"
