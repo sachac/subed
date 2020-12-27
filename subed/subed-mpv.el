@@ -353,8 +353,8 @@ See \"List of events\" in mpv(1)."
 
 (defun subed-mpv-play-video-from-url (url)
   "Open video file from URL in mpv.
-See the mpv manual for a list of supported URL types. If you have
-youtube-dl installed, mpv can open videos from a variety of
+See the mpv manual for a list of supported URL types.  If you
+have youtube-dl installed, mpv can open videos from a variety of
 hosting providers."
   (interactive "MURL: ")
   (subed-mpv--play url))
