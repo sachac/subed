@@ -1,4 +1,8 @@
-;; -*- eval: (buttercup-minor-mode) -*-
+;;;; Copyright 2019 Random User <rndusr@posteo.de>
+;;;; Copyright 2021 Sebastian 'seabass' Crane <seabass-labrax@gmx.com>
+;;;;
+;;;; SPDX-License-Identifier: GPL-3.0-or-later
+
 (add-to-list 'load-path "./subed")
 (require 'subed)
 
@@ -140,3 +144,6 @@
     )
   )
 
+/* Local Variables:             */
+/* eval: (buttercup-minor-mode) */
+/* End:                         */

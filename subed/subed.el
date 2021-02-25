@@ -1,5 +1,12 @@
 ;;; subed.el --- A major mode for editing subtitles  -*- lexical-binding: t; -*-
 
+;;;; Copyright 2019-2020 Random User <rndusr@posteo.de>
+;;;; Copyright 2019 i-blis <i-blis@yandex.ru>
+;;;; Copyright 2019 riscy
+;;;; Copyright 2020 Sacha Chua <sacha@sachachua.com>
+;;;;
+;;;; SPDX-License-Identifier: GPL-3.0-or-later
+
 ;; Version: 0.0.1
 ;; Keywords: convenience, files, hypermedia, multimedia
 ;; URL: https://github.com/rndusr/subed

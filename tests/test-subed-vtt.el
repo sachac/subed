@@ -1,4 +1,9 @@
-;; -*- eval: (buttercup-minor-mode) -*-
+;;;; Copyright 2020 Sacha Chua <sacha@sachachua.com>
+;;;; Copyright 2020 Random User <rndusr@posteo.de>
+;;;; Copyright 2021 Sebastian 'seabass' Crane <seabass-labrax@gmx.com>
+;;;;
+;;;; SPDX-License-Identifier: GPL-3.0-or-later
+
 (add-to-list 'load-path "./subed")
 (require 'subed)
 
@@ -1133,3 +1138,7 @@ Baz.
          (expect (point) :to-equal (1- (point-max)))))
       )
     ))
+
+/* Local Variables:             */
+/* eval: (buttercup-minor-mode) */
+/* End:                         */

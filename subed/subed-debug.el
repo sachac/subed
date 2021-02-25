@@ -1,5 +1,9 @@
 ;;; subed-debug.el --- Debugging functions  -*- lexical-binding: t; -*-
 
+;;;; Copyright 2019 Random User <rndusr@posteo.de>
+;;;;
+;;;; SPDX-License-Identifier: GPL-3.0-or-later
+
 ;;; License:
 ;;
 ;; This file is not part of GNU Emacs.

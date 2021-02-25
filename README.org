@@ -1,3 +1,11 @@
+#+BEGIN_COMMENT
+Copyright 2019 Random User <rndusr@posteo.de>
+Copyright 2020 Sacha Chua <sacha@sachachua.com>
+Copyright 2021 Sebastian 'seabass' Crane <seabass-labrax@gmx.com>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+#+END_COMMENT
+
 * subed
 subed is an Emacs major mode for editing subtitles while playing the
 corresponding video with [[https://mpv.io/][mpv]].  At the moment, the only supported formats are
@@ -66,6 +74,19 @@ SubRip ( ~.srt~) and WebVTT ( ~.vtt~ ).
    #+END_SRC
 
    ~C-h f subed-mode~ should get you started.
+
+** Contributions
+   Contributions are most welcome! subed conforms to the [[https://reuse.software/spec/][REUSE Specification]];
+   this means that every file has copyright and license information. If you
+   modify a file, please add your copyright notice under the other ones in this
+   format:
+
+   ~Copyright YEAR NAME <email@example.com>~
+
+   This is a declaration that you are the holder of the changes' copyright, and
+   that you license these changes to others under the same license as the
+   original. Thank you for doing this; it greatly reduces the time needed for
+   licensing audits!
 
 ** License
    subed is free software: you can redistribute it and/or modify it under the

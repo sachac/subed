@@ -1,5 +1,10 @@
 ;;; subed-common.el --- Subtitle-format agnostic functions  -*- lexical-binding: t; -*-
 
+;;;; Copyright 2019-2020 Random User <rndusr@posteo.de>
+;;;; Copyright 2020 Sacha Chua <sacha@sachachua.com>
+;;;;
+;;;; SPDX-License-Identifier: GPL-3.0-or-later
+
 ;;; License:
 ;;
 ;; This file is not part of GNU Emacs.

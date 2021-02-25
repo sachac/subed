@@ -1,5 +1,11 @@
 ;;; subed-mpv.el --- mpv integration for subed  -*- lexical-binding: t; -*-
 
+;;;; Copyright 2019-2020 Random User <rndusr@posteo.de>
+;;;; Copyright 2019 riscy
+;;;; Copyright 2020 Sacha Chua <sacha@sachachua.com>
+;;;;
+;;;; SPDX-License-Identifier: GPL-3.0-or-later
+
 ;;; License:
 ;;
 ;; This file is not part of GNU Emacs.

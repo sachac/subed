@@ -1,3 +1,6 @@
+# Copyright 2019-2020 Random User <rndusr@posteo.de>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 clean:
 	find . -name "*.elc" -delete
 

@@ -1,5 +1,11 @@
 ;;; subed-config.el --- Customization variables and hooks for subed  -*- lexical-binding: t; -*-
 
+;;;; Copyright 2019-2020 Random User <rndusr@posteo.de>
+;;;; Copyright 2020 Dylan McDowell
+;;;; Copyright 2020 Sacha Chua <sacha@sachachua.com>
+;;;;
+;;;; SPDX-License-Identifier: GPL-3.0-or-later
+
 ;;; License:
 ;;
 ;; This file is not part of GNU Emacs.
