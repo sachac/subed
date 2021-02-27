@@ -36,10 +36,6 @@
 (defvar-local subed--subtitle-format nil
   "Short form of the name of the subtitle format in the current buffer (e.g. \"srt\").")
 
-(defvar subed--init-alist '(("srt" . subed-srt--init)
-                            ("vtt" . subed-vtt--init))
-  "Alist that maps file extensions to format-specific init functions.")
-
 ;; This variable is set in subed.el to avoid compiler warnings because it uses
 ;; functions defined in subed-common.el, and (require 'subed-common) results in
 ;; recursive requires.

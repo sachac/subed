@@ -73,6 +73,10 @@
     (define-key subed-mode-map (kbd "C-c ,") #'subed-toggle-sync-player-to-point)
     subed-mode-map))
 
+;;;###autoload
+(defvar subed--init-alist '(("srt" . subed-srt--init)
+                            ("vtt" . subed-vtt--init))
+  "Alist that maps file extensions to format-specific init functions.")
 
 ;;; Abstraction hack to support different subtitle formats
 ;;
