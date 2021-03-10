@@ -2132,3 +2132,18 @@ Baz.
       (expect 'cancel-timer :to-have-been-called-times 2))
     )
   )
+
+(describe "Converting a string to milliseconds"
+  (it "handles timestamps with hours, minutes, seconds, and milliseconds"
+    (expect (subed--string-to-msecs "00:00:01.500") :to-equal 1500))
+  (it "handles timestamps with minutes, seconds, and milliseconds"
+    (expect (subed--string-to-msecs "0:02.200") :to-equal 2200))
+  (it "handles timestamps with minutes and seconds"
+    (expect (subed--string-to-msecs "0:02") :to-equal 2000))
+  (it "handles timestamps with hours, minutes, and seconds"
+    (expect (subed--string-to-msecs "01:02:03") :to-equal (+ 3600000 120000 3000)))
+  (it "handles milliseconds"
+    (expect (subed--string-to-msecs "1234") :to-equal 1234))
+  (it "handles seconds"
+    (expect (subed--string-to-msecs "1.234") :to-equal 1234)))
+

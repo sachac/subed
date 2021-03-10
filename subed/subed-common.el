@@ -57,6 +57,54 @@ subtitles) as long the subtitle IDs don't change."
          ('beginning-of-buffer nil)
          ('end-of-buffer nil)))))
 
+(defun subed--string-to-msecs (s)
+  "Convert a string to milliseconds.
+Accepts a timestamp or a number.  If the number has a decimal
+point, consider it as the number of seconds instead of milliseconds."
+  (cond
+     ((string-match "\\(?:\\([0-9]+\\):\\)?\\([0-9]+\\):\\([0-9]+\\)\\(?:[\\.,]\\([0-9]+\\)\\)?" s)
+      (let ((hours (string-to-number (or (match-string 1 s) "0")))
+            (mins  (string-to-number (match-string 2 s)))
+            (secs  (string-to-number (match-string 3 s)))
+            (msecs (string-to-number (or (subed--right-pad (match-string 4 s) 3 ?0) "0"))))
+        (+ (* (truncate hours) 3600000)
+           (* (truncate mins) 60000)
+           (* (truncate secs) 1000)
+           (truncate msecs))))
+     ((string-match "\\." s)
+      (* (string-to-number s) 1000))
+     (t (string-to-number s))))
+
+(defun subed-narrow-to-times (start end)
+  "Narrow to the subtitles between START and END in milliseconds or timestamps.
+If START or END is nil, use the beginning or end of the buffer
+respectively.  If a number has a decimal point, consider it as the
+number of seconds instead of milliseconds."
+  (interactive (let ((start (read-string "Start: ")))
+                 (if (string-match " *--> *" start)
+                     (split-string start " *--> *")
+                   (list start (read-string "End: ")))))
+  (let ((start-msecs (subed--string-to-msecs start))
+        (end-msecs (subed--string-to-msecs end)))
+    (narrow-to-region
+     (if (or (null start) (string= start ""))
+         (point-min)
+       (goto-char (point-min))
+       (subed-forward-subtitle-id)
+       (while (and (not (eobp))
+                   (< (subed-subtitle-msecs-stop) start-msecs))
+         (or (subed-forward-subtitle-id)
+             (goto-char (point-max))))
+       (point))
+     (if (or (null end) (string= end ""))
+         (point-max)
+       (goto-char (point-max))
+       (while (and (not (bobp))
+                   (> (subed-subtitle-msecs-start) end-msecs))
+         (or (subed-backward-subtitle-id)
+             (goto-char (point-min))))
+       (point)))))
+
 (defmacro subed-for-each-subtitle (beg end reverse &rest body)
   "Run BODY for each subtitle between the region specified by BEG and END.
 If END is nil, it defaults to `point-max'.
