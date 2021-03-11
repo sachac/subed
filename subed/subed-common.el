@@ -62,18 +62,20 @@ subtitles) as long the subtitle IDs don't change."
 Accepts a timestamp or a number.  If the number has a decimal
 point, consider it as the number of seconds instead of milliseconds."
   (cond
-     ((string-match "\\(?:\\([0-9]+\\):\\)?\\([0-9]+\\):\\([0-9]+\\)\\(?:[\\.,]\\([0-9]+\\)\\)?" s)
-      (let ((hours (string-to-number (or (match-string 1 s) "0")))
-            (mins  (string-to-number (match-string 2 s)))
-            (secs  (string-to-number (match-string 3 s)))
-            (msecs (string-to-number (or (subed--right-pad (match-string 4 s) 3 ?0) "0"))))
-        (+ (* (truncate hours) 3600000)
-           (* (truncate mins) 60000)
-           (* (truncate secs) 1000)
-           (truncate msecs))))
-     ((string-match "\\." s)
-      (* (string-to-number s) 1000))
-     (t (string-to-number s))))
+   ((string-match "\\(?:-?\\([0-9]+\\):\\)?-?\\([0-9]+\\):\\([0-9]+\\)\\(?:[\\.,]\\([0-9]+\\)\\)?" s)
+    (let ((negative (save-match-data (string-match "-" s)))
+          (hours (string-to-number (or (match-string 1 s) "0")))
+          (mins  (string-to-number (match-string 2 s)))
+          (secs  (string-to-number (match-string 3 s)))
+          (msecs (string-to-number (or (subed--right-pad (match-string 4 s) 3 ?0) "0"))))
+      (* (+ (* (truncate hours) 3600000)
+            (* (truncate mins) 60000)
+            (* (truncate secs) 1000)
+            (truncate msecs))
+         (if negative -1 1))))
+   ((string-match "\\." s)
+    (truncate (* (string-to-number s) 1000)))
+   (t (truncate (string-to-number s)))))
 
 (defun subed-narrow-to-times (start end)
   "Narrow to the subtitles between START and END in milliseconds or timestamps.
