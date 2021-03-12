@@ -62,6 +62,7 @@ subtitles) as long the subtitle IDs don't change."
 Accepts a timestamp or a number.  If the number has a decimal
 point, consider it as the number of seconds instead of milliseconds."
   (cond
+   ((or (numberp s) (null s)) s)
    ((string-match "\\(?:-?\\([0-9]+\\):\\)?-?\\([0-9]+\\):\\([0-9]+\\)\\(?:[\\.,]\\([0-9]+\\)\\)?" s)
     (let ((negative (save-match-data (string-match "-" s)))
           (hours (string-to-number (or (match-string 1 s) "0")))
