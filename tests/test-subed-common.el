@@ -1,4 +1,4 @@
-;; -*- eval: (buttercup-minor-mode) -*-
+;; -*- lexical-binding: t; eval: (buttercup-minor-mode) -*-
 (add-to-list 'load-path "./subed")
 (require 'subed)
 (require 'subed-srt)
@@ -505,14 +505,14 @@ Baz.
                                                     "Foo.\n"))
           (expect (spy-calls-args-for 'foo 0) :to-equal `(,(+ 60000 2000 123)))
           (expect (spy-calls-count 'foo) :to-equal 1)))
-        (let ((subed-mpv-playback-position (+ 60000 5000 456)))
-          (expect (subed-copy-player-pos-to-stop-time) :to-be subed-mpv-playback-position)
-          (expect (buffer-string) :to-equal (concat "1\n"
-                                                    "00:01:02,123 --> 00:01:05,456\n"
-                                                    "Foo.\n"))
-          (expect (spy-calls-args-for 'foo 0) :to-equal `(,(+ 60000 2000 123)))
-          (expect (spy-calls-count 'foo) :to-equal 2)))
-        (remove-hook 'subed-subtitle-time-adjusted-hook 'foo))
+      (let ((subed-mpv-playback-position (+ 60000 5000 456)))
+        (expect (subed-copy-player-pos-to-stop-time) :to-be subed-mpv-playback-position)
+        (expect (buffer-string) :to-equal (concat "1\n"
+                                                  "00:01:02,123 --> 00:01:05,456\n"
+                                                  "Foo.\n"))
+        (expect (spy-calls-args-for 'foo 0) :to-equal `(,(+ 60000 2000 123)))
+        (expect (spy-calls-count 'foo) :to-equal 2)))
+    (remove-hook 'subed-subtitle-time-adjusted-hook 'foo))
   )
 
 (describe "Moving"
@@ -910,9 +910,9 @@ Baz.
       (spy-on 'subed-enable-replay-adjusted-subtitle :and-call-through)
       (spy-on 'subed-disable-replay-adjusted-subtitle :and-call-through)
       (spy-on 'subed-adjust-subtitle-time-start :and-call-fake
-              (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
+               (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
       (spy-on 'subed-adjust-subtitle-stop :and-call-fake
-              (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
+               (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
       (subed-move-subtitle-forward 100)
       (expect 'subed-disable-replay-adjusted-subtitle :to-have-been-called-times 1)
       (expect 'subed-enable-replay-adjusted-subtitle :to-have-been-called-times 1)
@@ -926,9 +926,9 @@ Baz.
       (spy-on 'subed-enable-replay-adjusted-subtitle :and-call-through)
       (spy-on 'subed-disable-replay-adjusted-subtitle :and-call-through)
       (spy-on 'subed-adjust-subtitle-time-start :and-call-fake
-              (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
+               (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
       (spy-on 'subed-adjust-subtitle-stop :and-call-fake
-              (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
+               (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
       (subed-move-subtitle-forward 100)
       (expect 'subed-disable-replay-adjusted-subtitle :to-have-been-called-times 1)
       (expect 'subed-enable-replay-adjusted-subtitle :to-have-been-called-times 0)
@@ -2117,10 +2117,10 @@ Baz.
     (it "schedules re-enabling of point-to-player syncing."
       (subed-disable-sync-point-to-player-temporarily)
       (expect 'run-at-time :to-have-been-called-with
-              subed-point-sync-delay-after-motion nil
-              '(closure (t) nil
-                        (setq subed--point-sync-delay-after-motion-timer nil)
-                        (subed-enable-sync-point-to-player :quiet))))
+               subed-point-sync-delay-after-motion nil
+               '(closure (t) nil
+                         (setq subed--point-sync-delay-after-motion-timer nil)
+                         (subed-enable-sync-point-to-player :quiet))))
     (it "cancels previously scheduled re-enabling of point-to-player syncing."
       (subed-disable-sync-point-to-player-temporarily)
       (expect 'cancel-timer :not :to-have-been-called-with "mock timer")
@@ -2132,3 +2132,182 @@ Baz.
       (expect 'cancel-timer :to-have-been-called-times 2))
     )
   )
+
+(describe "Splitting subtitles"
+  (describe "when there are multiple lines"
+    :var ((text "1
+00:01:23,000 --> 00:02:34,567
+This is a subtitle
+that has two lines.
+
+")
+          (subed-subtitle-spacing 100))
+    (it "properly splits text when called at the beginning of the subtitle."
+      (with-temp-srt-buffer
+        (insert text)
+        (re-search-backward "This is a subtitle")
+        (goto-char (match-beginning 0))
+        (save-excursion (subed-split-subtitle 100))
+        (expect (buffer-string) :to-equal "1
+00:01:23,000 --> 00:01:23,100
+
+
+0
+00:01:23,200 --> 00:02:34,567
+This is a subtitle
+that has two lines.
+")))
+    (it "properly splits text when called in the middle of the subtitle."
+      (with-temp-srt-buffer
+        (insert text)
+        (re-search-backward "This is a")
+        (goto-char (match-end 0))
+        (subed-split-subtitle 100)
+        (expect (subed-subtitle-text 1) :to-equal "This is a")
+        (subed-regenerate-ids)
+        (expect (subed-subtitle-text 2) :to-equal "subtitle\nthat has two lines.")))
+    (it "properly splits text when called at the end of a line in the middle of the subtitle"
+      (with-temp-srt-buffer
+        (insert text)
+        (re-search-backward "This is a subtitle")
+        (goto-char (match-end 0))
+        (subed-split-subtitle 100)
+        (expect (subed-subtitle-text 1) :to-equal "This is a subtitle")
+        (subed-regenerate-ids)
+        (expect (subed-subtitle-text 2) :to-equal "that has two lines.")))
+    (it "properly splits text when called at the beginning of a line in the middle of the subtitle."
+      (with-temp-srt-buffer
+        (insert text)
+        (re-search-backward "that has two lines")
+        (goto-char (match-beginning 0))
+        (subed-split-subtitle 100)
+        (expect (subed-subtitle-text 1) :to-equal "This is a subtitle")
+        (subed-regenerate-ids)
+        (expect (subed-subtitle-text 2) :to-equal "that has two lines.")))
+    (it "properly splits text when called at the end of the subtitle."
+      (with-temp-srt-buffer
+        (insert text)
+        (subed-jump-to-subtitle-end 1)
+        (subed-split-subtitle 100)
+        (expect (subed-subtitle-text 1) :to-equal "This is a subtitle\nthat has two lines.")
+        (subed-regenerate-ids)
+        (expect (subed-subtitle-text 2) :to-equal "")))
+    (it "properly splits text when called before whitespace at the end of the subtitle."
+      (with-temp-srt-buffer
+        (insert text)
+        (subed-jump-to-subtitle-end 1)
+        (save-excursion (insert "  "))
+        (subed-split-subtitle 100)
+        (expect (subed-subtitle-text 1) :to-equal "This is a subtitle\nthat has two lines.")
+        (subed-regenerate-ids)
+        (expect (subed-subtitle-text 2) :to-equal ""))))
+  (describe "when playing the video in MPV"
+    (it "splits at point in the middle of the subtitle."
+      (with-temp-srt-buffer
+        (insert mock-srt-data)
+        (re-search-backward "Foo\\.")
+        (end-of-line)
+        (save-excursion (insert " Some text here."))
+        (setq-local subed-mpv-playback-position 61600)
+        (setq-local subed-subtitle-spacing 100)
+        (subed-split-subtitle)
+        (prin1 (buffer-string))
+        (expect (subed-subtitle-msecs-start) :to-equal 61700)
+        (expect (subed-subtitle-msecs-stop) :to-equal 65123)
+        (expect (subed-subtitle-text) :to-equal "Some text here.")
+        (subed-backward-subtitle-time-start)
+        (expect (subed-subtitle-msecs-stop) :to-equal 61600)
+        (expect (subed-subtitle-text) :to-equal "Foo.")))
+    (it "splits at the end even if there are spaces."
+      (with-temp-srt-buffer
+        (insert mock-srt-data)
+        (re-search-backward "Foo\\.")
+        (subed-jump-to-subtitle-end)
+        (insert " ")
+        (setq-local subed-mpv-playback-position 61600)
+        (setq-local subed-subtitle-spacing 100)
+        (subed-split-subtitle)
+        (expect (subed-subtitle-text) :to-equal "")
+        (expect (subed-subtitle-msecs-start) :to-equal 61700)
+        (expect (subed-subtitle-msecs-stop) :to-equal 65123)
+        (subed-backward-subtitle-time-start)
+        (expect (subed-subtitle-text) :to-equal "Foo.")
+        (expect (subed-subtitle-msecs-stop) :to-equal 61600)))
+    (it "splits at the beginning."
+      (with-temp-srt-buffer
+        (save-excursion (insert mock-srt-data))
+        (subed-jump-to-subtitle-text)
+        (setq-local subed-mpv-playback-position 61600)
+        (setq-local subed-subtitle-spacing 100)
+        (subed-split-subtitle)
+        (expect (subed-subtitle-text) :to-equal "Foo.")
+        (expect (subed-subtitle-msecs-start) :to-equal 61700)
+        (expect (subed-subtitle-msecs-stop) :to-equal 65123)
+        (subed-backward-subtitle-time-start)
+        (expect (subed-subtitle-text) :to-equal "")
+        (expect (subed-subtitle-msecs-stop) :to-equal 61600))))
+  (describe "when a positive offset is specified"
+    (it "splits from the starting time."
+      (with-temp-srt-buffer
+        (insert mock-srt-data)
+        (re-search-backward "Foo\\.")
+        (end-of-line)
+        (save-excursion (insert " Some text here."))
+        (setq-local subed-subtitle-spacing 100)
+        (subed-split-subtitle 300)
+        (expect (subed-subtitle-msecs-start) :to-equal 61400)
+        (expect (subed-subtitle-msecs-stop) :to-equal 65123)
+        (expect (subed-subtitle-text) :to-equal "Some text here.")
+        (subed-backward-subtitle-time-start)
+        (expect (subed-subtitle-msecs-stop) :to-equal 61300)
+        (expect (subed-subtitle-text) :to-equal "Foo.")))
+    (it "uses the offset instead of the playing position."
+      (with-temp-srt-buffer
+        (insert mock-srt-data)
+        (re-search-backward "Foo\\.")
+        (setq-local subed-mpv-playback-position 61600)
+        (setq-local subed-subtitle-spacing 100)
+        (subed-split-subtitle 300)
+        (expect (subed-subtitle-msecs-start) :to-equal 61400)
+        (expect (subed-subtitle-msecs-stop) :to-equal 65123))))
+  (describe "when a negative offset is specified"
+    (it "splits from the ending time."
+      (with-temp-srt-buffer
+        (insert mock-srt-data)
+        (re-search-backward "Foo\\.")
+        (end-of-line)
+        (save-excursion (insert " Some text here."))
+        (setq-local subed-subtitle-spacing 100)
+        (subed-split-subtitle -300)
+        (expect (subed-subtitle-msecs-start) :to-equal 64923)
+        (expect (subed-subtitle-msecs-stop) :to-equal 65123)
+        (expect (subed-subtitle-text) :to-equal "Some text here.")
+        (subed-backward-subtitle-time-start)
+        (expect (subed-subtitle-msecs-stop) :to-equal 64823)
+        (expect (subed-subtitle-text) :to-equal "Foo.")))
+    (it "uses the offset instead of the playing position."
+      (with-temp-srt-buffer
+        (insert mock-srt-data)
+        (re-search-backward "Foo\\.")
+        (setq-local subed-subtitle-spacing 100)
+        (setq-local subed-mpv-playback-position 61600)
+        (subed-split-subtitle -300)
+        (expect (subed-subtitle-msecs-start) :to-equal 64923)
+        (expect (subed-subtitle-msecs-stop) :to-equal 65123)
+        (subed-backward-subtitle-time-start)
+        (expect (subed-subtitle-msecs-stop) :to-equal 64823))))
+  (describe "when nothing is specified"
+    (it "splits proportional to the location."
+      (with-temp-srt-buffer
+        (insert mock-srt-data)
+        (re-search-backward "Foo\\.")
+        (end-of-line)
+        (save-excursion (insert " Bar"))
+        (setq-local subed-subtitle-spacing 100)
+        (subed-split-subtitle)
+        (expect (subed-subtitle-msecs-start) :to-equal 63161)
+        (expect (subed-subtitle-msecs-stop) :to-equal 65123)
+        (expect (subed-subtitle-text) :to-equal "Bar")
+        (subed-backward-subtitle-time-start)
+        (expect (subed-subtitle-msecs-stop) :to-equal 63061)
+        (expect (subed-subtitle-text) :to-equal "Foo.")))))
