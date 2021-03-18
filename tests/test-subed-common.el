@@ -505,14 +505,14 @@ Baz.
                                                     "Foo.\n"))
           (expect (spy-calls-args-for 'foo 0) :to-equal `(,(+ 60000 2000 123)))
           (expect (spy-calls-count 'foo) :to-equal 1)))
-      (let ((subed-mpv-playback-position (+ 60000 5000 456)))
-        (expect (subed-copy-player-pos-to-stop-time) :to-be subed-mpv-playback-position)
-        (expect (buffer-string) :to-equal (concat "1\n"
-                                                  "00:01:02,123 --> 00:01:05,456\n"
-                                                  "Foo.\n"))
-        (expect (spy-calls-args-for 'foo 0) :to-equal `(,(+ 60000 2000 123)))
-        (expect (spy-calls-count 'foo) :to-equal 2)))
-    (remove-hook 'subed-subtitle-time-adjusted-hook 'foo))
+        (let ((subed-mpv-playback-position (+ 60000 5000 456)))
+          (expect (subed-copy-player-pos-to-stop-time) :to-be subed-mpv-playback-position)
+          (expect (buffer-string) :to-equal (concat "1\n"
+                                                    "00:01:02,123 --> 00:01:05,456\n"
+                                                    "Foo.\n"))
+          (expect (spy-calls-args-for 'foo 0) :to-equal `(,(+ 60000 2000 123)))
+          (expect (spy-calls-count 'foo) :to-equal 2)))
+        (remove-hook 'subed-subtitle-time-adjusted-hook 'foo))
   )
 
 (describe "Moving"
@@ -910,9 +910,9 @@ Baz.
       (spy-on 'subed-enable-replay-adjusted-subtitle :and-call-through)
       (spy-on 'subed-disable-replay-adjusted-subtitle :and-call-through)
       (spy-on 'subed-adjust-subtitle-time-start :and-call-fake
-               (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
+              (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
       (spy-on 'subed-adjust-subtitle-stop :and-call-fake
-               (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
+              (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
       (subed-move-subtitle-forward 100)
       (expect 'subed-disable-replay-adjusted-subtitle :to-have-been-called-times 1)
       (expect 'subed-enable-replay-adjusted-subtitle :to-have-been-called-times 1)
@@ -926,9 +926,9 @@ Baz.
       (spy-on 'subed-enable-replay-adjusted-subtitle :and-call-through)
       (spy-on 'subed-disable-replay-adjusted-subtitle :and-call-through)
       (spy-on 'subed-adjust-subtitle-time-start :and-call-fake
-               (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
+              (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
       (spy-on 'subed-adjust-subtitle-stop :and-call-fake
-               (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
+              (lambda (msecs &optional a b) (expect (subed-replay-adjusted-subtitle-p) :to-be nil)))
       (subed-move-subtitle-forward 100)
       (expect 'subed-disable-replay-adjusted-subtitle :to-have-been-called-times 1)
       (expect 'subed-enable-replay-adjusted-subtitle :to-have-been-called-times 0)
@@ -2117,10 +2117,10 @@ Baz.
     (it "schedules re-enabling of point-to-player syncing."
       (subed-disable-sync-point-to-player-temporarily)
       (expect 'run-at-time :to-have-been-called-with
-               subed-point-sync-delay-after-motion nil
-               '(closure (t) nil
-                         (setq subed--point-sync-delay-after-motion-timer nil)
-                         (subed-enable-sync-point-to-player :quiet))))
+              subed-point-sync-delay-after-motion nil
+              '(closure (t) nil
+                        (setq subed--point-sync-delay-after-motion-timer nil)
+                        (subed-enable-sync-point-to-player :quiet))))
     (it "cancels previously scheduled re-enabling of point-to-player syncing."
       (subed-disable-sync-point-to-player-temporarily)
       (expect 'cancel-timer :not :to-have-been-called-with "mock timer")
