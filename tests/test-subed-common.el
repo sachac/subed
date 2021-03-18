@@ -2153,20 +2153,21 @@ Baz.
 
 ")))
   (describe "when there are multiple lines"
-    :var ((text "1
+    (describe "at the last subtitle"
+      :var ((text "1
 00:01:23,000 --> 00:02:34,567
 This is a subtitle
 that has two lines.
 
 ")
-          (subed-subtitle-spacing 100))
-    (it "properly splits text when called at the beginning of the subtitle."
-      (with-temp-srt-buffer
-        (insert text)
-        (re-search-backward "This is a subtitle")
-        (goto-char (match-beginning 0))
-        (save-excursion (subed-split-subtitle 100))
-        (expect (buffer-string) :to-equal "1
+            (subed-subtitle-spacing 100))
+      (it "properly splits text when called at the beginning of the subtitle."
+        (with-temp-srt-buffer
+         (insert text)
+         (re-search-backward "This is a subtitle")
+         (goto-char (match-beginning 0))
+         (save-excursion (subed-split-subtitle 100))
+         (expect (buffer-string) :to-equal "1
 00:01:23,000 --> 00:01:23,100
 
 
@@ -2175,50 +2176,142 @@ that has two lines.
 This is a subtitle
 that has two lines.
 ")))
-    (it "properly splits text when called in the middle of the subtitle."
-      (with-temp-srt-buffer
-        (insert text)
-        (re-search-backward "This is a")
-        (goto-char (match-end 0))
-        (subed-split-subtitle 100)
-        (expect (subed-subtitle-text 1) :to-equal "This is a")
-        (subed-regenerate-ids)
-        (expect (subed-subtitle-text 2) :to-equal "subtitle\nthat has two lines.")))
-    (it "properly splits text when called at the end of a line in the middle of the subtitle"
-      (with-temp-srt-buffer
-        (insert text)
-        (re-search-backward "This is a subtitle")
-        (goto-char (match-end 0))
-        (subed-split-subtitle 100)
-        (expect (subed-subtitle-text 1) :to-equal "This is a subtitle")
-        (subed-regenerate-ids)
-        (expect (subed-subtitle-text 2) :to-equal "that has two lines.")))
-    (it "properly splits text when called at the beginning of a line in the middle of the subtitle."
-      (with-temp-srt-buffer
-        (insert text)
-        (re-search-backward "that has two lines")
-        (goto-char (match-beginning 0))
-        (subed-split-subtitle 100)
-        (expect (subed-subtitle-text 1) :to-equal "This is a subtitle")
-        (subed-regenerate-ids)
-        (expect (subed-subtitle-text 2) :to-equal "that has two lines.")))
-    (it "properly splits text when called at the end of the subtitle."
-      (with-temp-srt-buffer
-        (insert text)
-        (subed-jump-to-subtitle-end 1)
-        (subed-split-subtitle 100)
-        (expect (subed-subtitle-text 1) :to-equal "This is a subtitle\nthat has two lines.")
-        (subed-regenerate-ids)
-        (expect (subed-subtitle-text 2) :to-equal "")))
-    (it "properly splits text when called before whitespace at the end of the subtitle."
-      (with-temp-srt-buffer
-        (insert text)
-        (subed-jump-to-subtitle-end 1)
-        (save-excursion (insert "  "))
-        (subed-split-subtitle 100)
-        (expect (subed-subtitle-text 1) :to-equal "This is a subtitle\nthat has two lines.")
-        (subed-regenerate-ids)
-        (expect (subed-subtitle-text 2) :to-equal ""))))
+      (it "properly splits text when called in the middle of the subtitle."
+        (with-temp-srt-buffer
+         (insert text)
+         (re-search-backward "This is a")
+         (goto-char (match-end 0))
+         (subed-split-subtitle 100)
+         (expect (subed-subtitle-text 1) :to-equal "This is a")
+         (subed-regenerate-ids)
+         (expect (subed-subtitle-text 2) :to-equal "subtitle\nthat has two lines.")))
+      (it "properly splits text when called at the end of a line in the middle of the subtitle"
+        (with-temp-srt-buffer
+         (insert text)
+         (re-search-backward "This is a subtitle")
+         (goto-char (match-end 0))
+         (subed-split-subtitle 100)
+         (expect (subed-subtitle-text 1) :to-equal "This is a subtitle")
+         (subed-regenerate-ids)
+         (expect (subed-subtitle-text 2) :to-equal "that has two lines.")))
+      (it "properly splits text when called at the beginning of a line in the middle of the subtitle."
+        (with-temp-srt-buffer
+         (insert text)
+         (re-search-backward "that has two lines")
+         (goto-char (match-beginning 0))
+         (subed-split-subtitle 100)
+         (expect (buffer-string) :to-equal "1
+00:01:23,000 --> 00:01:23,100
+This is a subtitle
+
+0
+00:01:23,200 --> 00:02:34,567
+that has two lines.
+")  (expect (subed-subtitle-text 1) :to-equal "This is a subtitle")
+         (subed-regenerate-ids)
+         (expect (subed-subtitle-text 2) :to-equal "that has two lines.")))
+      (it "properly splits text when called at the end of the subtitle."
+        (with-temp-srt-buffer
+         (insert text)
+         (subed-jump-to-subtitle-end 1)
+         (subed-split-subtitle 100)
+         (expect (subed-subtitle-text 1) :to-equal "This is a subtitle\nthat has two lines.")
+         (subed-regenerate-ids)
+         (expect (subed-subtitle-text 2) :to-equal "")))
+      (it "properly splits text when called before whitespace at the end of the subtitle."
+        (with-temp-srt-buffer
+         (insert text)
+         (subed-jump-to-subtitle-end 1)
+         (save-excursion (insert "  "))
+         (subed-split-subtitle 100)
+         (expect (subed-subtitle-text 1) :to-equal "This is a subtitle\nthat has two lines.")
+         (subed-regenerate-ids)
+         (expect (subed-subtitle-text 2) :to-equal ""))))
+    (describe "with another subtitle after it"
+      :var ((text "1
+00:01:23,000 --> 00:02:34,567
+This is a subtitle
+that has two lines.
+
+2
+00:05:00,000 --> 00:06:00,000
+This is another.
+")
+            (subed-subtitle-spacing 100))
+      (it "properly splits text when called at the beginning of the subtitle."
+        (with-temp-srt-buffer
+         (insert text)
+         (re-search-backward "This is a subtitle")
+         (goto-char (match-beginning 0))
+         (save-excursion (subed-split-subtitle 100))
+         (expect (buffer-string) :to-equal "1
+00:01:23,000 --> 00:01:23,100
+
+0
+00:01:23,200 --> 00:02:34,567
+This is a subtitle
+that has two lines.
+
+2
+00:05:00,000 --> 00:06:00,000
+This is another.
+")))
+      (it "properly splits text when called in the middle of the subtitle."
+        (with-temp-srt-buffer
+         (insert text)
+         (re-search-backward "This is a subtitle")
+         (goto-char (match-end 0))
+         (backward-word 1)
+         (subed-split-subtitle 100)
+         (expect (subed-subtitle-text 1) :to-equal "This is a")
+         (subed-regenerate-ids)
+         (expect (subed-subtitle-text 2) :to-equal "subtitle\nthat has two lines.")))
+      (it "properly splits text when called at the end of a line in the middle of the subtitle"
+        (with-temp-srt-buffer
+         (insert text)
+         (re-search-backward "This is a subtitle")
+         (goto-char (match-end 0))
+         (subed-split-subtitle 100)
+         (expect (subed-subtitle-text 1) :to-equal "This is a subtitle")
+         (subed-regenerate-ids)
+         (expect (subed-subtitle-text 2) :to-equal "that has two lines.")))
+      (it "properly splits text when called at the beginning of a line in the middle of the subtitle."
+        (with-temp-srt-buffer
+         (insert text)
+         (re-search-backward "that has two lines")
+         (goto-char (match-beginning 0))
+         (subed-split-subtitle 100)
+         (expect (buffer-string) :to-equal "1
+00:01:23,000 --> 00:01:23,100
+This is a subtitle
+
+0
+00:01:23,200 --> 00:02:34,567
+that has two lines.
+
+2
+00:05:00,000 --> 00:06:00,000
+This is another.
+")  (expect (subed-subtitle-text 1) :to-equal "This is a subtitle")
+         (subed-regenerate-ids)
+         (expect (subed-subtitle-text 2) :to-equal "that has two lines.")))
+      (it "properly splits text when called at the end of the subtitle."
+        (with-temp-srt-buffer
+         (insert text)
+         (subed-jump-to-subtitle-end 1)
+         (subed-split-subtitle 100)
+         (expect (subed-subtitle-text 1) :to-equal "This is a subtitle\nthat has two lines.")
+         (subed-regenerate-ids)
+         (expect (subed-subtitle-text 2) :to-equal "")))
+      (it "properly splits text when called before whitespace at the end of the subtitle."
+        (with-temp-srt-buffer
+         (insert text)
+         (subed-jump-to-subtitle-end 1)
+         (save-excursion (insert "  "))
+         (subed-split-subtitle 100)
+         (expect (subed-subtitle-text 1) :to-equal "This is a subtitle\nthat has two lines.")
+         (subed-regenerate-ids)
+         (expect (subed-subtitle-text 2) :to-equal "")))))
   (describe "when playing the video in MPV"
     (it "splits at point in the middle of the subtitle."
       (with-temp-srt-buffer

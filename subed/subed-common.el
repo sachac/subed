@@ -675,6 +675,7 @@ position of the point."
            (new-text (string-trim (buffer-substring (point) text-end)))
            (new-start-timestamp (+ split-timestamp subed-subtitle-spacing)))
       (subed-set-subtitle-time-stop split-timestamp)
+      (skip-chars-backward "\n")
       (delete-region (point) (progn (subed-jump-to-subtitle-end) (skip-chars-forward " \t") (point)))
       (when (looking-at "[ \t]+") (replace-match ""))
       (subed-append-subtitle nil new-start-timestamp orig-end (string-trim new-text)))
