@@ -2134,6 +2134,24 @@ Baz.
   )
 
 (describe "Splitting subtitles"
+  (it "handles empty subtitles"
+    (with-temp-srt-buffer
+     (insert "1
+00:01:23,000 --> 00:02:34,567
+
+")
+     (forward-line -1)
+     (let ((subed-subtitle-spacing 100))
+       (subed-split-subtitle 100))
+     (expect (buffer-string) :to-equal
+"1
+00:01:23,000 --> 00:01:23,100
+
+
+0
+00:01:23,200 --> 00:02:34,567
+
+")))
   (describe "when there are multiple lines"
     :var ((text "1
 00:01:23,000 --> 00:02:34,567

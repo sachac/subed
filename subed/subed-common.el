@@ -621,16 +621,6 @@ following manner:
     (subed-regenerate-ids-soon))
   (point))
 
-(defun subed-set-subtitle-text (text &optional sub-id)
-  "Set subtitle text to TEXT.
-
-If SUB-ID is not given, set the text of the current subtitle.
-
-Return the new subtitle text."
-  (delete-region (subed-jump-to-subtitle-text sub-id)
-                 (or (subed-jump-to-subtitle-end sub-id) (point)))
-  (insert text))
-
 (defun subed-split-subtitle (&optional offset)
   "Split current subtitle at point.
 
@@ -685,7 +675,8 @@ position of the point."
            (new-text (string-trim (buffer-substring (point) text-end)))
            (new-start-timestamp (+ split-timestamp subed-subtitle-spacing)))
       (subed-set-subtitle-time-stop split-timestamp)
-      (subed-set-subtitle-text (string-trim (buffer-substring-no-properties text-beg (point))))
+      (delete-region (point) (progn (subed-jump-to-subtitle-end) (skip-chars-forward " \t") (point)))
+      (when (looking-at "[ \t]+") (replace-match ""))
       (subed-append-subtitle nil new-start-timestamp orig-end (string-trim new-text)))
     (subed-regenerate-ids-soon)
     (point)))
