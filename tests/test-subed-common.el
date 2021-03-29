@@ -1,4 +1,5 @@
 ;; -*- lexical-binding: t; eval: (buttercup-minor-mode) -*-
+
 (add-to-list 'load-path "./subed")
 (require 'subed)
 (require 'subed-srt)

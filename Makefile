@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019-2020 The subed Authors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 clean:
 	find . -name "*.elc" -delete
 

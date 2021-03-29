@@ -1,0 +1,15 @@
+#+BEGIN_COMMENT
+SPDX-FileCopyrightText: 2021 The subed Authors
+
+SPDX-License-Identifier: CC0-1.0
+#+END_COMMENT
+
+This is a list of people who have helped make subed the great Emacs
+package it is today! If you've contributed to this repository, feel
+free to leave your name (and optionally email address) below.
+
+Please note this shouldn't be taken as a list of copyright holders,
+nor is it necessarily complete.
+
+- Random User <rndusr@posteo.de> (original creator)
+- Sebastian 'seabass' Crane <seabass-labrax@gmx.com>
