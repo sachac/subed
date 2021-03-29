@@ -75,14 +75,14 @@ SubRip ( ~.srt~) and WebVTT ( ~.vtt~ ).
 
 =======
 ** Contributions
-   Contributions would be really appreciated! subed conforms to the
-   [[https://reuse.software/spec/][REUSE Specification]]; this means that every file has copyright and
-   license information. If you modify a file, please update the year
-   shown after ~SPDX-FileCopyrightText~. Thank you!
+   Contributions would be really appreciated! subed conforms to the [[https://reuse.software/spec/][REUSE
+   Specification]]; this means that every file has copyright and license
+   information. If you modify a file, please update the year shown after
+   ~SPDX-FileCopyrightText~. Thank you!
 
-   There's a list of authors in the file ~AUTHORS~. If you have at any
-   point contributed to subed, you are most welcome to add your name
-   (and email address if you like) to the list.
+   There's a list of authors in the file ~AUTHORS.org~. If you have at any point
+   contributed to subed, you are most welcome to add your name (and email
+   address if you like) to the list.
 
 ** License
    subed is free software: you can redistribute it and/or modify it under the
