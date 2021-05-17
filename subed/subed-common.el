@@ -1034,19 +1034,30 @@ Return nil if function `buffer-file-name' returns nil."
   "Whether CPS is shown for the current subtitle."
   (member #'subed--update-cps-overlay after-change-functions))
 
-(defun subed-enable-show-cps ()
+(defun subed-enable-show-cps (&optional quiet)
   "Enable showing CPS next to the subtitle heading."
-  (interactive)
+  (interactive "p")
   (add-hook 'after-change-functions #'subed--update-cps-overlay nil t)
   (add-hook 'subed-subtitle-motion-hook #'subed--move-cps-overlay-to-current-subtitle nil t)
-  (add-hook 'after-save-hook #'subed--move-cps-overlay-to-current-subtitle nil t))
+  (add-hook 'after-save-hook #'subed--move-cps-overlay-to-current-subtitle nil t)
+  (unless quiet
+    (message "Enabled showing characters per second")))
 
-(defun subed-disable-show-cps ()
-  "Enable showing CPS next to the subtitle heading."
+(defun subed-disable-show-cps (&optional quiet)
+  "Disable showing CPS next to the subtitle heading."
   (interactive)
   (remove-hook 'after-change-functions #'subed--update-cps-overlay t)
   (remove-hook 'subed-subtitle-motion-hook #'subed--move-cps-overlay-to-current-subtitle t)
-  (remove-hook 'after-save-hook #'subed--move-cps-overlay-to-current-subtitle t))
+  (remove-hook 'after-save-hook #'subed--move-cps-overlay-to-current-subtitle t)
+  (unless quiet
+    (message "Disabled showing characters per second")))
+
+(defun subed-toggle-show-cps ()
+  "Enable or disable showing CPS next to the subtitle heading."
+  (interactive)
+  (if (subed-show-cps-p)
+      (subed-disable-show-cps)
+    (subed-enable-show-cps)))
 
 (defvar subed-transform-for-cps #'subed--strip-tags)
 
