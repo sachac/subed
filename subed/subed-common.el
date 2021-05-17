@@ -1028,5 +1028,78 @@ Return nil if function `buffer-file-name' returns nil."
 	        (when (file-exists-p file-stem-video)
 	          (throw 'found-videofile file-stem-video))))))))
 
+;;; Characters per second computation
+
+(defun subed-show-cps-p ()
+  "Whether CPS is shown for the current subtitle."
+  (member #'subed--update-cps-overlay after-change-functions))
+
+(defun subed-enable-show-cps ()
+  "Enable showing CPS next to the subtitle heading."
+  (interactive)
+  (add-hook 'after-change-functions #'subed--update-cps-overlay nil t)
+  (add-hook 'subed-subtitle-motion-hook #'subed--move-cps-overlay-to-current-subtitle nil t)
+  (add-hook 'after-save-hook #'subed--move-cps-overlay-to-current-subtitle nil t))
+
+(defun subed-disable-show-cps ()
+  "Enable showing CPS next to the subtitle heading."
+  (interactive)
+  (remove-hook 'after-change-functions #'subed--update-cps-overlay t)
+  (remove-hook 'subed-subtitle-motion-hook #'subed--move-cps-overlay-to-current-subtitle t)
+  (remove-hook 'after-save-hook #'subed--move-cps-overlay-to-current-subtitle t))
+
+(defvar subed-transform-for-cps #'subed--strip-tags)
+
+(defun subed--strip-tags (string)
+  "Strip HTML-like tags from STRING."
+  (with-temp-buffer
+    (insert string)
+    (goto-char 1)
+    (while (re-search-forward "</?[^>]+>" nil t)
+      (delete-region (match-beginning 0) (match-end 0)))
+    (buffer-string)))
+
+(defun subed-calculate-cps (&optional print-message)
+  "Calculate characters per second of the current subtitle."
+  (interactive "p")
+  (let* ((msecs-start (subed-subtitle-msecs-start))
+	 (msecs-stop (subed-subtitle-msecs-stop))
+	 (text (if (fboundp subed-transform-for-cps)
+		   (funcall subed-transform-for-cps (subed-subtitle-text))
+		 (subed-subtitle-text)))
+	 (length (length text))
+	 (cps (when (and (numberp msecs-stop)
+			 (numberp msecs-start))
+		(/ length 0.001 (- msecs-stop msecs-start)))))
+    (if (and print-message cps)
+	(message "%.1f characters per second" cps)
+      cps)))
+
+(defvar-local subed--cps-overlay nil)
+
+(defun subed--move-cps-overlay-to-current-subtitle ()
+  "Move the CPS overlay to the current subtitle."
+  (let* ((begin (save-excursion
+		  (subed-jump-to-subtitle-time-start)
+		  (point)))
+	 (end (save-excursion
+		(goto-char begin)
+		(line-end-position))))
+    (if (overlayp subed--cps-overlay)
+	(move-overlay subed--cps-overlay begin end (current-buffer))
+      (setq subed--cps-overlay (make-overlay begin end)))
+    (subed--update-cps-overlay)))
+
+(defun subed--update-cps-overlay (&rest _rest)
+  "Update the CPS overlay.
+This accepts and ignores any number of arguments so that it can
+be run in `after-change-functions'."
+  (let ((cps (subed-calculate-cps)))
+    (when (numberp cps)
+      (overlay-put
+       subed--cps-overlay
+       'after-string
+       (propertize (format " %.1f CPS" cps) 'face 'shadow 'display '(height 0.9))))))
+
 (provide 'subed-common)
 ;;; subed-common.el ends here
