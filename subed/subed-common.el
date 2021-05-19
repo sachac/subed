@@ -1073,8 +1073,8 @@ Return nil if function `buffer-file-name' returns nil."
 (defun subed-calculate-cps (&optional print-message)
   "Calculate characters per second of the current subtitle."
   (interactive "p")
-  (let* ((msecs-start (subed-subtitle-msecs-start))
-	 (msecs-stop (subed-subtitle-msecs-stop))
+  (let* ((msecs-start (ignore-errors (subed-subtitle-msecs-start)))
+	 (msecs-stop (ignore-errors (subed-subtitle-msecs-stop)))
 	 (text (if (fboundp subed-transform-for-cps)
 		   (funcall subed-transform-for-cps (subed-subtitle-text))
 		 (subed-subtitle-text)))
