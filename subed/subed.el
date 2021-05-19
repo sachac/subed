@@ -71,6 +71,8 @@
     (define-key subed-mode-map (kbd "C-c ]") #'subed-copy-player-pos-to-stop-time)
     (define-key subed-mode-map (kbd "C-c .") #'subed-toggle-sync-point-to-player)
     (define-key subed-mode-map (kbd "C-c ,") #'subed-toggle-sync-player-to-point)
+    (define-key subed-mode-map (kbd "C-c C-t") #'subed-insert-html-tag)
+    (define-key subed-mode-map (kbd "C-c C-e") #'subed-insert-default-html-tag)
     subed-mode-map))
 
 ;;;###autoload

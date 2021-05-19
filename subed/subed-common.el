@@ -1028,6 +1028,43 @@ Return nil if function `buffer-file-name' returns nil."
 	        (when (file-exists-p file-stem-video)
 	          (throw 'found-videofile file-stem-video))))))))
 
+;;; Inserting HTML-like tags
+
+(defvar subed--html-tag-history nil
+  "History of HTML-like tags in subtitles.")
+(defvar subed--html-attr-history nil
+  "History of HTML-like attributes in subtitles.")
+
+(defun subed-insert-html-tag (begin end tag &optional attributes)
+  "Insert a pair of HTML-like tags around the region.
+If region is not active, insert a pair of tags and put the point
+between them.  If called with a prefix argument, also ask for
+attribute(s)."
+  (interactive (let* ((region-p (use-region-p))
+		      (begin (if region-p (region-beginning) (point)))
+		      (end (if region-p (region-end) (point)))
+		      (tag (read-string "Tag: " nil 'subed--html-tag-history))
+		      (attributes (when current-prefix-arg
+				    (read-string "Attribute(s): " nil 'subed--html-attr-history))))
+		 (list begin end tag attributes)))
+  (save-excursion
+    (push (point) buffer-undo-list)
+    (goto-char end)
+    (insert "</" tag ">")
+    (goto-char begin)
+    (insert-before-markers "<" tag)
+    (when attributes (insert-before-markers " " attributes))
+    (insert-before-markers ">")))
+
+(defun subed-insert-default-html-tag (begin end)
+  "Insert a pair of default tags at point or around the region.
+See `subed-insert-html-tag' and `subed-default-html-tag'."
+  (interactive (let* ((region-p (use-region-p))
+		      (begin (if region-p (region-beginning) (point)))
+		      (end (if region-p (region-end) (point))))
+		 (list begin end)))
+  (subed-insert-html-tag begin end subed-default-html-tag))
+
 ;;; Characters per second computation
 
 (defun subed-show-cps-p ()
