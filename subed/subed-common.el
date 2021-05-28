@@ -1056,14 +1056,21 @@ attribute(s)."
     (when attributes (insert-before-markers " " attributes))
     (insert-before-markers ">")))
 
-(defun subed-insert-default-html-tag (begin end)
-  "Insert a pair of default tags at point or around the region.
-See `subed-insert-html-tag' and `subed-default-html-tag'."
+(defun subed-insert-html-tag-italic (begin end)
+  "Insert a pair of <i> tags at point or around the region."
   (interactive (let* ((region-p (use-region-p))
 		      (begin (if region-p (region-beginning) (point)))
 		      (end (if region-p (region-end) (point))))
 		 (list begin end)))
-  (subed-insert-html-tag begin end subed-default-html-tag))
+  (subed-insert-html-tag begin end "i"))
+
+(defun subed-insert-html-tag-bold (begin end)
+  "Insert a pair of <b> tags at point or around the region."
+  (interactive (let* ((region-p (use-region-p))
+		      (begin (if region-p (region-beginning) (point)))
+		      (end (if region-p (region-end) (point))))
+		 (list begin end)))
+  (subed-insert-html-tag begin end "b"))
 
 ;;; Characters per second computation
 

@@ -199,11 +199,6 @@ remembers whether it was originally enabled by the user.")
   :type 'file
   :group 'subed)
 
-(defcustom subed-default-html-tag "i"
-  "Default HTML-like tag."
-  :type 'string
-  :group 'subed)
-
 (defcustom subed-mpv-arguments '("--osd-level=2" "--osd-fractions")
   "Additional arguments for \"mpv\".
 The options --input-ipc-server=SRTEDIT-MPV-SOCKET and --idle are
