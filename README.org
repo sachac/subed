@@ -30,6 +30,10 @@ SubRip ( ~.srt~) and WebVTT ( ~.vtt~ ).
    - Shift the current subtitle forward (~C-M-f~) or backward (~C-M-b~) together
      with all following subtitles.  This is basically a convenience shortcut for
      ~C-SPC M-> C-M-n/p~.
+   - Show CPS (characters per second) for the current subtitle.
+   - Insert HTML-like tags (~C-c C-t C-t~, with an optional attribute
+     when prefixed by ~C-u~), in particular italics (~C-c C-t C-i~) or
+     boldface (~C-c C-t C-b~).
    - Sort and re-number subtitles and remove any extra spaces and newlines
      (~M-s~).  This is done automatically every time the buffer is saved.
 
@@ -51,6 +55,9 @@ SubRip ( ~.srt~) and WebVTT ( ~.vtt~ ).
    - When a subtitle's start or stop time changes, mpv seeks to the subtitle's
      start time (~C-c C-r~).
    - Pause video playback without leaving Emacs (~M-SPC~).
+   - Move one frame forward or backward (~C-c C-f .~ and ~C-c C-f ,~;
+     pressing ~,~ or ~.~ afterwards moves by frames until any other
+     key is pressed).
 
 ** Installation
    For now, you have to install it manually.  For example, copy ~subed/*.el~ to
