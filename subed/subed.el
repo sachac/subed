@@ -39,6 +39,13 @@
 (require 'subed-vtt)
 (require 'subed-mpv)
 
+(defconst subed-mpv-frame-step-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "." #'subed-mpv-frame-step)
+    (define-key map "," #'subed-mpv-frame-back-step)
+    map)
+  "A keymap for stepping the video by frames.")
+
 (setq subed-mode-map
   (let ((subed-mode-map (make-keymap)))
     (define-key subed-mode-map (kbd "M-n") #'subed-forward-subtitle-text)
@@ -64,8 +71,7 @@
     (define-key subed-mode-map (kbd "C-c C-d") #'subed-toggle-debugging)
     (define-key subed-mode-map (kbd "C-c C-v") #'subed-mpv-find-video)
     (define-key subed-mode-map (kbd "C-c C-u") #'subed-mpv-play-video-from-url)
-    (define-key subed-mode-map (kbd "C-c <right>") #'subed-mpv-frame-step)
-    (define-key subed-mode-map (kbd "C-c <left>") #'subed-mpv-frame-back-step)
+    (define-key subed-mode-map (kbd "C-c C-f") subed-mpv-frame-step-map)
     (define-key subed-mode-map (kbd "C-c C-p") #'subed-toggle-pause-while-typing)
     (define-key subed-mode-map (kbd "C-c C-l") #'subed-toggle-loop-over-current-subtitle)
     (define-key subed-mode-map (kbd "C-c C-r") #'subed-toggle-replay-adjusted-subtitle)
