@@ -1294,5 +1294,103 @@ be run in `after-change-functions'."
          'after-string
          (propertize (format " %.1f CPS" cps) 'face 'shadow 'display '(height 0.9)))))))
 
+;;; handle overlapping subtitle timecodes
+
+(defcustom subed-trim-overlapping-subtitle-times-on-save nil
+  "Whether all overlapping subtitles should be trimmed on saving. A string of either 'start', to adjust the start time of the following subtitle or 'end', to adjust the end of the current subtitle. Defaults to nil."
+  :type 'string
+  :group 'subed)
+
+(defcustom subed-trim-overlapping-use-subed-subtitle-spacing t
+  "Whether `subed-subtitle-spacing' should be used when trimming overlapping subtitles. If nil, subtitles will trimmed to one millisecond less than adjacent one. Defaults to nil."
+  :type 'boolean
+  :group 'subed)
+
+(defun subed-sanitize-overlaps (&optional arg)
+  "Adjust all overlapping times in current file.
+
+Uses either `subed-trim-overlap-start-times' or `subed-trim-overlapping-end-times', the latter being the default. See `subed-trim-overlapping-subtitle-times-on-save' to customize this option."
+  (interactive "P")
+  (goto-char (point-min))
+  (save-excursion
+    (while (subed-forward-subtitle-time-start)
+      (if (equal subed-trim-overlapping-subtitle-times-on-save "start")
+          (subed-trim-overlap-start-times arg)
+        (if (equal subed-trim-overlapping-subtitle-times-on-save "end")
+            (subed-trim-overlap-end-times arg))))))
+
+(defun subed-trim-overlap-end-times (&optional arg)
+  "Check if end time of current subtitle is after start time of next.
+
+If so, trim the end time of current subtitle to 1 millisecond less than the start time of the next one.
+With a non-numerical prefix arg, or if `subed-trim-overlapping-use-subed-subtitle-spacing' is t, make a gap the between subtitles the length of `subed-subtitle-spacing'.
+With a numerical prefix arg, make the gap that many milliseconds."
+  (interactive "P")
+  (let ((next-sub-start-time (save-excursion
+                               (subed-forward-subtitle-time-start)
+                               (subed-subtitle-msecs-start))))
+    (if (>= (subed-subtitle-msecs-stop) next-sub-start-time)
+        (subed-set-subtitle-time-stop
+         (cond
+          ;; if plain C-u or custom option set:
+          ((or (consp arg)
+               subed-trim-overlapping-use-subed-subtitle-spacing)
+           (- next-sub-start-time subed-subtitle-spacing))
+          ;; if numeric prefix arg, use it as gap in ms:
+          ((integerp arg)
+           (- next-sub-start-time arg))
+          ;; else just make 1 ms difference:
+          (t
+           (1- next-sub-start-time)))))))
+
+(defun subed-trim-overlap-start-times (&optional arg)
+  "Check if end time of current subtitle is after start time of next.
+
+If so, trim the start time of current subtitle to 1 millisecond less than the end time of the current one.
+With a non-numerical prefix arg, or if `subed-trim-overlapping-use-subed-subtitle-spacing' is t, make a gap the between subtitles the length of `subed-subtitle-spacing'.
+With a numerical prefix arg, make the gap that many miliseconds."
+  (interactive "P")
+  (let ((this-sub-stop-time (subed-subtitle-msecs-stop))
+        (next-sub-start-time (save-excursion
+                               (subed-forward-subtitle-time-start)
+                               (subed-subtitle-msecs-start))))
+    (if (>= this-sub-stop-time next-sub-start-time)
+        (save-excursion
+          (subed-forward-subtitle-time-start)
+          (subed-set-subtitle-time-start
+           (cond
+            ;; if plain C-u or custom option set:
+            ((or (consp arg)
+                 subed-trim-overlapping-use-subed-subtitle-spacing)
+             (+ this-sub-stop-time subed-subtitle-spacing))
+            ;; if numeric prefix arg, use it as gap in ms:
+            ((integerp arg)
+             (+ this-sub-stop-time arg))
+            ;; else just make 1 ms difference:
+            (t
+             (1+ this-sub-stop-time))))))))
+
+;; mod subed-sort fun to run santize-overlaps if enabled:
+(defun subed-sort ()
+  "Sanitize, then sort subtitles by start time and re-number them."
+  (interactive)
+  (atomic-change-group
+    (subed-sanitize)
+    (when subed-trim-overlapping-subtitle-times-on-save
+      (subed-sanitize-overlaps))
+    (subed-validate)
+    (subed-save-excursion
+     (goto-char (point-min))
+     (sort-subr nil
+                ;; nextrecfun (move to next record/subtitle or to end-of-buffer
+                ;; if there are no more records)
+                (lambda () (unless (subed-forward-subtitle-id)
+                             (goto-char (point-max))))
+                ;; endrecfun (move to end of current record/subtitle)
+                #'subed-jump-to-subtitle-end
+                ;; startkeyfun (return sort value of current record/subtitle)
+                #'subed-subtitle-msecs-start))
+    (subed-regenerate-ids)))
+
 (provide 'subed-common)
 ;;; subed-common.el ends here
