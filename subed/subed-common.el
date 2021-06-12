@@ -1296,35 +1296,62 @@ be run in `after-change-functions'."
 
 ;;; handle overlapping subtitle timecodes
 
-(defcustom subed-trim-overlapping-subtitle-times-on-save nil
-  "Whether all overlapping subtitles should be trimmed on saving. A string of either 'start', to adjust the start time of the following subtitle or 'end', to adjust the end of the current subtitle. Defaults to nil."
-  :type 'string
-  :group 'subed)
+;; NB: runs in a hook, so this version cannot send prefix arg
+;; to subed-sanitize-overlaps!
+(defun subed-check-overlaps ()
+  "Test all subtitles for overlapping timecodes.
 
-(defcustom subed-trim-overlapping-use-subed-subtitle-spacing t
-  "Whether `subed-subtitle-spacing' should be used when trimming overlapping subtitles. If nil, subtitles will trimmed to one millisecond less than adjacent one. Defaults to nil."
-  :type 'boolean
-  :group 'subed)
+Creates a list of the ids of overlapping subtitles, moves point to the to the end time of the first one, and prompts to trim them.
+Designed to be run as a subed-mode-hook."
+  (interactive)
+  (let ((overlap-ids ()))
+    (save-excursion
+      (goto-char (point-min))
+      (while (save-excursion (subed-forward-subtitle-time-start))
+        (let ((next-sub-start-time (save-excursion
+                                     (subed-forward-subtitle-time-start)
+                                     (subed-subtitle-msecs-start))))
+          (if (>= (subed-subtitle-msecs-stop) next-sub-start-time)
+              (progn (subed-jump-to-subtitle-id)
+                     (push (string-to-number (word-at-point))
+                           overlap-ids))))
+        (subed-forward-subtitle-time-start)))
+    (when overlap-ids
+      (setq overlap-ids (nreverse overlap-ids))
+      (subed-jump-to-subtitle-id (car overlap-ids))
+      (subed-jump-to-subtitle-time-stop)
+      (when (yes-or-no-p "Overlapping subtitles found. Trim them? ")
+        (subed-sanitize-overlaps)))))
 
 (defun subed-sanitize-overlaps (&optional arg)
   "Adjust all overlapping times in current file.
 
-Uses either `subed-trim-overlap-start-times' or `subed-trim-overlapping-end-times', the latter being the default. See `subed-trim-overlapping-subtitle-times-on-save' to customize this option."
-  (interactive "P")
-  (goto-char (point-min))
-  (save-excursion
-    (while (subed-forward-subtitle-time-start)
-      (if (equal subed-trim-overlapping-subtitle-times-on-save "start")
-          (subed-trim-overlap-start-times arg)
-        (if (equal subed-trim-overlapping-subtitle-times-on-save "end")
-            (subed-trim-overlap-end-times arg))))))
+Uses either `subed-trim-overlap-start-times' or `subed-trim-overlapping-end-times', the latter being the default. See `subed-trim-overlapping-subtitle-trim-start' to customize this option.
 
-(defun subed-trim-overlap-end-times (&optional arg)
+With a non-numerical prefix ARG, or if `subed-trim-overlapping-use-subed-subtitle-spacing' is t, make a gap the between subtitles the length of `subed-subtitle-spacing'.
+With a numerical prefix ARG, make the gap that many milliseconds."
+  (interactive "P")
+  (let ((cpsp (subed-show-cps-p)))
+    (when cpsp
+      (subed-disable-show-cps t))
+    (switch-to-buffer (current-buffer))
+    (save-excursion
+      (goto-char (point-min))
+      (while (save-excursion (subed-forward-subtitle-time-start))
+        (if subed-trim-overlapping-subtitle-trim-start
+            (subed-trim-overlap-start-time arg)
+          (subed-trim-overlap-end-time arg))
+        (subed-forward-subtitle-time-start)))
+    (when cpsp
+      (subed-enable-show-cps t))))
+
+(defun subed-trim-overlap-end-time (&optional arg)
   "Check if end time of current subtitle is after start time of next.
 
 If so, trim the end time of current subtitle to 1 millisecond less than the start time of the next one.
-With a non-numerical prefix arg, or if `subed-trim-overlapping-use-subed-subtitle-spacing' is t, make a gap the between subtitles the length of `subed-subtitle-spacing'.
-With a numerical prefix arg, make the gap that many milliseconds."
+
+With a non-numerical prefix ARG, or if `subed-trim-overlapping-use-subed-subtitle-spacing' is t, make a gap the between subtitles the length of `subed-subtitle-spacing'.
+With a numerical prefix ARG, make the gap that many milliseconds."
   (interactive "P")
   (let ((next-sub-start-time (save-excursion
                                (subed-forward-subtitle-time-start)
@@ -1332,23 +1359,24 @@ With a numerical prefix arg, make the gap that many milliseconds."
     (if (>= (subed-subtitle-msecs-stop) next-sub-start-time)
         (subed-set-subtitle-time-stop
          (cond
+          ;; if numeric prefix arg, use it as gap in ms:
+          ((integerp arg)
+           (- next-sub-start-time arg))
           ;; if plain C-u or custom option set:
           ((or (consp arg)
                subed-trim-overlapping-use-subed-subtitle-spacing)
            (- next-sub-start-time subed-subtitle-spacing))
-          ;; if numeric prefix arg, use it as gap in ms:
-          ((integerp arg)
-           (- next-sub-start-time arg))
           ;; else just make 1 ms difference:
           (t
            (1- next-sub-start-time)))))))
 
-(defun subed-trim-overlap-start-times (&optional arg)
+(defun subed-trim-overlap-start-time (&optional arg)
   "Check if end time of current subtitle is after start time of next.
 
 If so, trim the start time of current subtitle to 1 millisecond less than the end time of the current one.
-With a non-numerical prefix arg, or if `subed-trim-overlapping-use-subed-subtitle-spacing' is t, make a gap the between subtitles the length of `subed-subtitle-spacing'.
-With a numerical prefix arg, make the gap that many miliseconds."
+
+With a non-numerical prefix ARG, or if `subed-trim-overlapping-use-subed-subtitle-spacing' is t, make a gap the between subtitles the length of `subed-subtitle-spacing'.
+With a numerical prefix ARG make the gap that many miliseconds."
   (interactive "P")
   (let ((this-sub-stop-time (subed-subtitle-msecs-stop))
         (next-sub-start-time (save-excursion
@@ -1359,13 +1387,13 @@ With a numerical prefix arg, make the gap that many miliseconds."
           (subed-forward-subtitle-time-start)
           (subed-set-subtitle-time-start
            (cond
+            ;; if numeric prefix arg, use it as gap in ms:
+            ((integerp arg)
+             (+ this-sub-stop-time arg))
             ;; if plain C-u or custom option set:
             ((or (consp arg)
                  subed-trim-overlapping-use-subed-subtitle-spacing)
              (+ this-sub-stop-time subed-subtitle-spacing))
-            ;; if numeric prefix arg, use it as gap in ms:
-            ((integerp arg)
-             (+ this-sub-stop-time arg))
             ;; else just make 1 ms difference:
             (t
              (1+ this-sub-stop-time))))))))

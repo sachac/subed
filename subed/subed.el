@@ -197,6 +197,8 @@ Key bindings:
   (add-hook 'after-save-hook #'subed-mpv-reload-subtitles :append :local)
   (add-hook 'kill-buffer-hook #'subed-mpv-kill :append :local)
   (add-hook 'kill-emacs-hook #'subed-mpv-kill :append :local)
+  (when subed-check-overlapping-subtitle-times-on-load
+    (add-hook 'subed-mode-hook #'subed-check-overlaps :append :local))
   (when subed-auto-find-video
     (let ((video-file (subed-guess-video-file)))
       (when video-file
