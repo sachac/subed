@@ -30,6 +30,17 @@ SubRip ( ~.srt~) and WebVTT ( ~.vtt~ ).
    - Shift the current subtitle forward (~C-M-f~) or backward (~C-M-b~) together
      with all following subtitles.  This is basically a convenience shortcut for
      ~C-SPC M-> C-M-n/p~.
+   - Scale all subtitles or all marked subtitles forward (~C-M-x~) or backward
+     (~C-M-S-x~) in time without changing subtitle duration.  A prefix argument
+     sets the number of milliseconds for the current session (e.g. ~C-u 500
+     C-M-x~ moves the last [or last marked] subtitle forward 500ms and
+     proportionally scales all [or all marked] subtitles based on this time
+     extension.  Similarly, ~C-u 500 C-M-S-x~ moves the last [or last marked]
+     subtitle backward 500ms and proportionally scales all [or all marked]
+     subtitles based on this time contraction).  This can be extremely useful to
+     correct synchronization issues in existing subtitle files.  First, adjust
+     the starting time if necessary (e.g. ~C-M-f~), then adjust the ending and
+     scale constituent subtitles (e.g. ~C-M-x~).
    - Show CPS (characters per second) for the current subtitle.
    - Insert HTML-like tags (~C-c C-t C-t~, with an optional attribute
      when prefixed by ~C-u~), in particular italics (~C-c C-t C-i~) or

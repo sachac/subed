@@ -2423,3 +2423,446 @@ This is another.
         (subed-backward-subtitle-time-start)
         (expect (subed-subtitle-msecs-stop) :to-equal 63061)
         (expect (subed-subtitle-text) :to-equal "Foo.")))))
+
+(describe "Scaling subtitles"
+  (it "without providing beginning and end."
+    (with-temp-srt-buffer
+      (insert mock-srt-data)
+      (spy-on 'subed-scale-subtitles :and-call-through)
+      (subed-scale-subtitles-forward 1000)
+      (expect (subed-subtitle-msecs-start 1) :to-equal 61000)
+      (expect (subed-subtitle-msecs-stop 1) :to-equal 65123)
+      (expect (subed-subtitle-msecs-start 2) :to-equal 122734)
+      (expect (subed-subtitle-msecs-stop 2) :to-equal 130845)
+      (expect (subed-subtitle-msecs-start 3) :to-equal 184450)
+      (expect (subed-subtitle-msecs-stop 3) :to-equal 196500)
+      (subed-scale-subtitles-backward 1000)
+      (expect (subed-subtitle-msecs-start 1) :to-equal 61000)
+      (expect (subed-subtitle-msecs-stop 1) :to-equal 65123)
+      (expect (subed-subtitle-msecs-start 2) :to-equal 122234)
+      (expect (subed-subtitle-msecs-stop 2) :to-equal 130345)
+      (expect (subed-subtitle-msecs-start 3) :to-equal 183450)
+      (expect (subed-subtitle-msecs-stop 3) :to-equal 195500)
+      (expect (spy-calls-all-args 'subed-scale-subtitles) :to-equal
+              '((+1000 nil nil)
+                (-1000 nil nil)))))
+  (it "without providing end."
+    (with-temp-srt-buffer
+      (insert mock-srt-data)
+      (subed-scale-subtitles 1000 (point-min) nil)
+      (expect (subed-subtitle-msecs-start 1) :to-equal 61000)
+      (expect (subed-subtitle-msecs-stop 1) :to-equal 65123)
+      (expect (subed-subtitle-msecs-start 2) :to-equal 122734)
+      (expect (subed-subtitle-msecs-stop 2) :to-equal 130845)
+      (expect (subed-subtitle-msecs-start 3) :to-equal 184450)
+      (expect (subed-subtitle-msecs-stop 3) :to-equal 196500)
+      (subed-scale-subtitles -1000 (point-min) nil)
+      (expect (subed-subtitle-msecs-start 1) :to-equal 61000)
+      (expect (subed-subtitle-msecs-stop 1) :to-equal 65123)
+      (expect (subed-subtitle-msecs-start 2) :to-equal 122234)
+      (expect (subed-subtitle-msecs-stop 2) :to-equal 130345)
+      (expect (subed-subtitle-msecs-start 3) :to-equal 183450)
+      (expect (subed-subtitle-msecs-stop 3) :to-equal 195500)))
+  (it "without providing beginning."
+    (with-temp-srt-buffer
+      (insert mock-srt-data)
+      (subed-scale-subtitles 1000 nil (point-max))
+      (expect (subed-subtitle-msecs-start 1) :to-equal 61000)
+      (expect (subed-subtitle-msecs-stop 1) :to-equal 65123)
+      (expect (subed-subtitle-msecs-start 2) :to-equal 122734)
+      (expect (subed-subtitle-msecs-stop 2) :to-equal 130845)
+      (expect (subed-subtitle-msecs-start 3) :to-equal 184450)
+      (expect (subed-subtitle-msecs-stop 3) :to-equal 196500)
+      (subed-scale-subtitles -1000 nil (point-max))
+      (expect (subed-subtitle-msecs-start 1) :to-equal 61000)
+      (expect (subed-subtitle-msecs-stop 1) :to-equal 65123)
+      (expect (subed-subtitle-msecs-start 2) :to-equal 122234)
+      (expect (subed-subtitle-msecs-stop 2) :to-equal 130345)
+      (expect (subed-subtitle-msecs-start 3) :to-equal 183450)
+      (expect (subed-subtitle-msecs-stop 3) :to-equal 195500)))
+  (it "with active region on entire buffer."
+    (with-temp-srt-buffer
+      (insert mock-srt-data)
+      (let ((beg (point-min))
+            (end (point-max)))
+        (spy-on 'subed-scale-subtitles :and-call-through)
+        (spy-on 'region-beginning :and-return-value beg)
+        (spy-on 'region-end :and-return-value end)
+        (setq mark-active t)
+        (subed-scale-subtitles-forward 1000)
+        (expect (subed-subtitle-msecs-start 1) :to-equal 61000)
+        (expect (subed-subtitle-msecs-stop 1) :to-equal 65123)
+        (expect (subed-subtitle-msecs-start 2) :to-equal 122734)
+        (expect (subed-subtitle-msecs-stop 2) :to-equal 130845)
+        (expect (subed-subtitle-msecs-start 3) :to-equal 184450)
+        (expect (subed-subtitle-msecs-stop 3) :to-equal 196500)
+        (subed-scale-subtitles-backward 1000)
+        (expect (subed-subtitle-msecs-start 1) :to-equal 61000)
+        (expect (subed-subtitle-msecs-stop 1) :to-equal 65123)
+        (expect (subed-subtitle-msecs-start 2) :to-equal 122234)
+        (expect (subed-subtitle-msecs-stop 2) :to-equal 130345)
+        (expect (subed-subtitle-msecs-start 3) :to-equal 183450)
+        (expect (subed-subtitle-msecs-stop 3) :to-equal 195500)
+        (expect (spy-calls-all-args 'subed-scale-subtitles) :to-equal
+                `((+1000 ,beg ,end)
+                  (-1000 ,beg ,end))))))
+  (it "with a zero msec extension/contraction."
+    (with-temp-srt-buffer
+      (insert mock-srt-data)
+      (subed-scale-subtitles-forward 0)
+      (expect (subed-subtitle-msecs-start 1) :to-equal 61000)
+      (expect (subed-subtitle-msecs-stop 1) :to-equal 65123)
+      (expect (subed-subtitle-msecs-start 2) :to-equal 122234)
+      (expect (subed-subtitle-msecs-stop 2) :to-equal 130345)
+      (expect (subed-subtitle-msecs-start 3) :to-equal 183450)
+      (expect (subed-subtitle-msecs-stop 3) :to-equal 195500)
+      (subed-scale-subtitles-backward 0)
+      (expect (subed-subtitle-msecs-start 1) :to-equal 61000)
+      (expect (subed-subtitle-msecs-stop 1) :to-equal 65123)
+      (expect (subed-subtitle-msecs-start 2) :to-equal 122234)
+      (expect (subed-subtitle-msecs-stop 2) :to-equal 130345)
+      (expect (subed-subtitle-msecs-start 3) :to-equal 183450)
+      (expect (subed-subtitle-msecs-stop 3) :to-equal 195500)))
+  (it "with active region on one subtitle."
+    (with-temp-srt-buffer
+      (insert mock-srt-data)
+      (let ((beg 77) ; point at ID of third subtitle
+            (end (point-max)))
+        (spy-on 'region-beginning :and-return-value beg)
+        (spy-on 'region-end :and-return-value end)
+        (spy-on 'user-error :and-call-through)
+        (setq mark-active t)
+        (expect (subed-scale-subtitles-forward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale with fewer than 3 subtitles")))
+        (expect (buffer-string) :to-equal mock-srt-data))))
+  (it "with active region on two subtitles."
+    (with-temp-srt-buffer
+      (insert mock-srt-data)
+      (let ((beg 39) ; point at ID of second subtitle
+            (end (point-max)))
+        (spy-on 'region-beginning :and-return-value beg)
+        (spy-on 'region-end :and-return-value end)
+        (spy-on 'user-error :and-call-through)
+        (setq mark-active t)
+        (expect (subed-scale-subtitles-forward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale with only 2 subtitles")))
+        (expect (buffer-string) :to-equal mock-srt-data))))
+  (it "with active region contraction."
+    (with-temp-srt-buffer
+      (insert (concat "1\n"
+                      "00:00:43,233 --> 00:00:45,861\n"
+                      "a\n"
+                      "\n"
+                      "2\n"
+                      "00:00:51,675 --> 00:00:54,542\n"
+                      "b\n"
+                      "\n"
+                      "3\n"
+                      "00:01:00,717 --> 00:01:02,378\n"
+                      "c\n"
+                      "\n"
+                      "4\n"
+                      "00:01:02,452 --> 00:01:05,216\n"
+                      "d\n"))
+      (let ((beg (point-min))
+            (end 103)) ; point at TEXT of third subtitle
+        (spy-on 'region-beginning :and-return-value beg)
+        (spy-on 'region-end :and-return-value end)
+        (setq mark-active t)
+        (subed-scale-subtitles-backward 1000)
+        (expect (subed-subtitle-msecs-start 1) :to-equal 43233)
+        (expect (subed-subtitle-msecs-stop 1) :to-equal 45861)
+        (expect (subed-subtitle-msecs-start 2) :to-equal 51192)
+        (expect (subed-subtitle-msecs-stop 2) :to-equal 54059)
+        (expect (subed-subtitle-msecs-start 3) :to-equal 59717)
+        (expect (subed-subtitle-msecs-stop 3) :to-equal 61378)
+        (expect (subed-subtitle-msecs-start 4) :to-equal 62452)
+        (expect (subed-subtitle-msecs-stop 4) :to-equal 65216))))
+  (it "with active region extension."
+    (with-temp-srt-buffer
+      (insert (concat "1\n"
+                      "00:00:43,233 --> 00:00:45,861\n"
+                      "a\n"
+                      "\n"
+                      "2\n"
+                      "00:00:51,192 --> 00:00:54,059\n"
+                      "b\n"
+                      "\n"
+                      "3\n"
+                      "00:00:59,717 --> 00:01:01,378\n"
+                      "c\n"
+                      "\n"
+                      "4\n"
+                      "00:01:02,452 --> 00:01:05,216\n"
+                      "d\n"))
+      (let ((beg (point-min))
+            (end 103)) ; point at TEXT of third subtitle
+        (spy-on 'region-beginning :and-return-value beg)
+        (spy-on 'region-end :and-return-value end)
+        (setq mark-active t)
+        (setq-local subed-subtitle-spacing 0)
+        (subed-scale-subtitles-forward 1000)
+        (expect (subed-subtitle-msecs-start 1) :to-equal 43233)
+        (expect (subed-subtitle-msecs-stop 1) :to-equal 45861)
+        (expect (subed-subtitle-msecs-start 2) :to-equal 51675)
+        (expect (subed-subtitle-msecs-stop 2) :to-equal 54542)
+        (expect (subed-subtitle-msecs-start 3) :to-equal 60717)
+        (expect (subed-subtitle-msecs-stop 3) :to-equal 62378)
+        (expect (subed-subtitle-msecs-start 4) :to-equal 62452)
+        (expect (subed-subtitle-msecs-stop 4) :to-equal 65216))))
+  (it "when active region extension overlaps next subtitle."
+    (with-temp-srt-buffer
+      (let ((initial-contents
+              (concat "1\n"
+                      "00:00:43,233 --> 00:00:45,861\n"
+                      "a\n"
+                      "\n"
+                      "2\n"
+                      "00:00:51,675 --> 00:00:54,542\n"
+                      "b\n"
+                      "\n"
+                      "3\n"
+                      "00:01:00,717 --> 00:01:02,378\n"
+                      "c\n"
+                      "\n"
+                      "4\n"
+                      "00:01:02,452 --> 00:01:05,216\n"
+                      "d\n"))
+            (beg 1)
+            (end 103)) ; point at TEXT of third subtitle
+        (spy-on 'region-beginning :and-return-value beg)
+        (spy-on 'region-end :and-return-value end)
+        (spy-on 'user-error :and-call-through)
+        (insert initial-contents)
+        (setq mark-active t)
+        (expect (subed-scale-subtitles-forward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale when extension would overlap subsequent subtitles")))
+        (expect (buffer-string) :to-equal initial-contents))))
+  (it "when end subtitle start time moved to same time as begin subtitle start time."
+    (with-temp-srt-buffer
+      (insert mock-srt-data)
+      (let ((beg (point-min))
+            (end (point-max))
+            (delta (- (subed-subtitle-msecs-start 3)
+                      (subed-subtitle-msecs-start 1))))
+        (spy-on 'region-beginning :and-return-value beg)
+        (spy-on 'region-end :and-return-value end)
+        (spy-on 'user-error :and-call-through)
+        (setq mark-active t)
+        (expect (subed-scale-subtitles-backward delta) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale when contraction would eliminate region")))
+        (expect (buffer-string) :to-equal mock-srt-data))))
+  (it "when end subtitle start time moved to just before begin subtitle start time."
+    (with-temp-srt-buffer
+      (insert mock-srt-data)
+      (let ((beg (point-min))
+            (end (point-max))
+            (delta (- (subed-subtitle-msecs-start 3)
+                      (subed-subtitle-msecs-start 1))))
+        (spy-on 'region-beginning :and-return-value beg)
+        (spy-on 'region-end :and-return-value end)
+        (spy-on 'user-error :and-call-through)
+        (setq mark-active t)
+        (expect (subed-scale-subtitles-backward (+ delta 1)) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale when contraction would eliminate region")))
+        (expect (buffer-string) :to-equal mock-srt-data))))
+  (it "when end subtitle start time moved to just after begin subtitle start time."
+    (with-temp-srt-buffer
+      (insert mock-srt-data)
+      (let ((beg (point-min))
+            (end (point-max))
+            (delta (- (subed-subtitle-msecs-start 3)
+                      (subed-subtitle-msecs-start 1))))
+        (spy-on 'region-beginning :and-return-value beg)
+        (spy-on 'region-end :and-return-value end)
+        (setq mark-active t)
+        (subed-scale-subtitles-backward (- delta 1))
+        (expect (subed-subtitle-msecs-start 1) :to-equal 61000)
+        (expect (subed-subtitle-msecs-stop 1) :to-equal 65123)
+        (expect (subed-subtitle-msecs-start 2) :to-equal 61001)
+        (expect (subed-subtitle-msecs-stop 2) :to-equal 69112)
+        (expect (subed-subtitle-msecs-start 3) :to-equal 61001)
+        (expect (subed-subtitle-msecs-stop 3) :to-equal 73051))))
+  (it "when begin start time same as end start time."
+    (with-temp-srt-buffer
+     (let ((initial-contents
+              (concat "1\n"
+                      "00:01:01,000 --> 00:01:05,123\n"
+                      "Foo.\n"
+                      "\n"
+                      "2\n"
+                      "00:01:01,000 --> 00:01:05,123\n"
+                      "Bar.\n"
+                      "\n"
+                      "3\n"
+                      "00:01:01,000 --> 00:01:05,123\n"
+                      "Baz.\n")))
+        (spy-on 'user-error :and-call-through)
+        (insert initial-contents)
+        (expect (subed-scale-subtitles-forward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale subtitle range with 0 time interval")))
+        (expect (buffer-string) :to-equal initial-contents)
+        (spy-calls-reset 'user-error)
+        (expect (subed-scale-subtitles-backward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale subtitle range with 0 time interval")))
+        (expect (buffer-string) :to-equal initial-contents))))
+  (it "when buffer is empty."
+    (spy-on 'user-error :and-call-through)
+    (with-temp-srt-buffer
+      (expect (subed-scale-subtitles-forward 1000) :to-throw 'error)
+      (expect (spy-calls-all-args 'user-error) :to-equal
+              '(("Can't scale with fewer than 3 subtitles")))
+      (expect (buffer-string) :to-equal "")
+      (spy-calls-reset 'user-error)
+      (expect (subed-scale-subtitles-backward 1000) :to-throw 'error)
+      (expect (spy-calls-all-args 'user-error) :to-equal
+              '(("Can't scale with fewer than 3 subtitles")))
+      (expect (buffer-string) :to-equal "")))
+  (it "when buffer contains one subtitle."
+    (spy-on 'user-error :and-call-through)
+    (with-temp-srt-buffer
+      (let ((initial-contents
+              (concat "1\n"
+                      "00:01:01,000 --> 00:01:05,123\n"
+                      "Foo.\n")))
+        (insert initial-contents)
+        (expect (subed-scale-subtitles-forward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale with fewer than 3 subtitles")))
+        (expect (buffer-string) :to-equal initial-contents)
+        (spy-calls-reset 'user-error)
+        (expect (subed-scale-subtitles-backward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale with fewer than 3 subtitles")))
+        (expect (buffer-string) :to-equal initial-contents))))
+  (it "when buffer contains two subtitles."
+    (spy-on 'user-error :and-call-through)
+    (with-temp-srt-buffer
+      (let ((initial-contents
+              (concat "1\n"
+                      "00:01:01,000 --> 00:01:05,123\n"
+                      "Foo.\n"
+                      "\n"
+                      "2\n"
+                      "00:02:02,234 --> 00:02:10,345\n"
+                      "Bar.\n")))
+        (insert initial-contents)
+        (expect (subed-scale-subtitles-forward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale with only 2 subtitles")))
+        (expect (buffer-string) :to-equal initial-contents)
+        (spy-calls-reset 'user-error)
+        (expect (subed-scale-subtitles-backward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale with only 2 subtitles")))
+        (expect (buffer-string) :to-equal initial-contents))))
+  (it "with subtitle in region containing start time after end start time."
+    (spy-on 'user-error :and-call-through)
+    (with-temp-srt-buffer
+      (let ((initial-contents
+              (concat "1\n"
+                      "00:01:01,000 --> 00:01:05,123\n"
+                      "Foo.\n"
+                      "\n"
+                      "2\n"
+                      "00:03:03,45 --> 00:03:15,5\n"
+                      "Baz.\n"
+                      "\n"
+                      "3\n"
+                      "00:02:02,234 --> 00:02:10,345\n"
+                      "Bar.\n")))
+        (insert initial-contents)
+        (expect (subed-scale-subtitles-forward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale when nonchronological subtitles exist")))
+        (expect (buffer-string) :to-equal initial-contents)
+        (spy-calls-reset 'user-error)
+        (expect (subed-scale-subtitles-backward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale when nonchronological subtitles exist")))
+        (expect (buffer-string) :to-equal initial-contents))))
+  (it "with first subtitle containing no timestamp."
+    (spy-on 'user-error :and-call-through)
+    (with-temp-srt-buffer
+      (let ((initial-contents
+              (concat "1\n"
+                      "a\n"
+                      "\n"
+                      "2\n"
+                      "00:00:51,675 --> 00:00:54,542\n"
+                      "b\n"
+                      "\n"
+                      "3\n"
+                      "00:01:00,717 --> 00:01:02,378\n"
+                      "c\n")))
+        (insert initial-contents)
+        (expect (subed-scale-subtitles-forward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale when first subtitle timestamp missing")))
+        (expect (buffer-string) :to-equal initial-contents)
+        (spy-calls-reset 'user-error)
+        (expect (subed-scale-subtitles-backward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale when first subtitle timestamp missing")))
+        (expect (buffer-string) :to-equal initial-contents))))
+  (it "with last subtitle containing no timestamp."
+    (spy-on 'user-error :and-call-through)
+    (with-temp-srt-buffer
+      (let ((initial-contents
+              (concat "1\n"
+                      "00:00:43,233 --> 00:00:45,861\n"
+                      "a\n"
+                      "\n"
+                      "2\n"
+                      "00:00:51,675 --> 00:00:54,542\n"
+                      "b\n"
+                      "\n"
+                      "3\n"
+                      "c\n")))
+        (insert initial-contents)
+        (expect (subed-scale-subtitles-forward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale when last subtitle timestamp missing")))
+        (expect (buffer-string) :to-equal initial-contents)
+        (spy-calls-reset 'user-error)
+        (expect (subed-scale-subtitles-backward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale when last subtitle timestamp missing")))
+        (expect (buffer-string) :to-equal initial-contents))))
+  (it "with subtitle in region containing no timestamp."
+    (spy-on 'user-error :and-call-through)
+    (with-temp-srt-buffer
+      (let ((initial-contents
+              (concat "1\n"
+                      "00:00:43,233 --> 00:00:45,861\n"
+                      "a\n"
+                      "\n"
+                      "2\n"
+                      "b\n"
+                      "\n"
+                      "3\n"
+                      "00:01:00,717 --> 00:01:02,378\n"
+                      "c\n")))
+        (insert initial-contents)
+        (expect (subed-scale-subtitles-forward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale when subtitle timestamp missing")))
+        (expect (buffer-string) :to-equal initial-contents)
+        (spy-calls-reset 'user-error)
+        (expect (subed-scale-subtitles-backward 1000) :to-throw 'error)
+        (expect (spy-calls-all-args 'user-error) :to-equal
+                '(("Can't scale when subtitle timestamp missing")))
+        (expect (buffer-string) :to-equal initial-contents))))
+  (it "with out-of-order range."
+    (spy-on 'user-error :and-call-through)
+    (with-temp-srt-buffer
+     (expect (subed-scale-subtitles 1000 5 4) :to-throw 'error)
+     (expect (spy-calls-all-args 'user-error) :to-equal
+             '(("Can't scale with improper range"))))))

@@ -60,6 +60,8 @@
     (define-key subed-mode-map (kbd "C-M-p") #'subed-move-subtitle-backward)
     (define-key subed-mode-map (kbd "C-M-f") #'subed-shift-subtitle-forward)
     (define-key subed-mode-map (kbd "C-M-b") #'subed-shift-subtitle-backward)
+    (define-key subed-mode-map (kbd "C-M-x") #'subed-scale-subtitles-forward)
+    (define-key subed-mode-map (kbd "C-M-S-x") #'subed-scale-subtitles-backward)
     (define-key subed-mode-map (kbd "M-i") #'subed-insert-subtitle)
     (define-key subed-mode-map (kbd "C-M-i") #'subed-insert-subtitle-adjacent)
     (define-key subed-mode-map (kbd "M-k") #'subed-kill-subtitle)

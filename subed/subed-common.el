@@ -27,6 +27,7 @@
 
 ;;; Code:
 
+(require 'cl-macs)
 (require 'subed-config)
 (require 'subed-debug)
 (require 'subed-mpv)
@@ -339,6 +340,88 @@ but we move the start time first."
       (cl-flet ((move-subtitle (subed--get-move-subtitle-func msecs)))
         (move-subtitle msecs)))))
 
+(defun subed--scale-subtitles-in-region (msecs beg end)
+  "Scale subtitles in region specified by BEG and END after moving END MSECS milliseconds."
+  (let* ((beg-point (save-excursion ; normalized to fixed location over BEG
+                      (goto-char beg)
+                      (subed-jump-to-subtitle-end)
+                      (point)))
+         (beg-next-point (save-excursion
+                           (goto-char beg-point)
+                           (subed-forward-subtitle-end)
+                           (point)))
+         (end-point (save-excursion ; normalized to fixed location over END
+                      (goto-char end)
+                      (subed-jump-to-subtitle-end)
+                      (point)))
+         (end-prev-point (save-excursion
+                           (goto-char end-point)
+                           (subed-backward-subtitle-end)
+                           (point)))
+         (beg-start-msecs (save-excursion
+                            (goto-char beg-point)
+                            (subed-subtitle-msecs-start)))
+         (old-end-start-msecs (save-excursion
+                                (goto-char end-point)
+                                (subed-subtitle-msecs-start))))
+    ;; check for improper range (BEG after END)
+    (unless (<= beg end)
+      (user-error "Can't scale with improper range"))
+    ;; check for 0 or 1 subtitle scenario
+    (unless (/= beg-point end-point)
+      (user-error "Can't scale with fewer than 3 subtitles"))
+    ;; check for 2 subtitle scenario
+    (unless (/= beg-point end-prev-point)
+      (user-error "Can't scale with only 2 subtitles"))
+    ;; check for missing timestamps
+    (unless beg-start-msecs
+      (user-error "Can't scale when first subtitle timestamp missing"))
+    (unless old-end-start-msecs
+      (user-error "Can't scale when last subtitle timestamp missing"))
+    ;; check for range with 0 time interval
+    (unless (/= beg-start-msecs old-end-start-msecs)
+      (user-error "Can't scale subtitle range with 0 time interval"))
+
+    (unless (= msecs 0)
+      (subed-with-subtitle-replay-disabled
+        (cl-flet ((move-subtitle (subed--get-move-subtitle-func msecs)))
+          (let* ((new-end-start-msecs (+ old-end-start-msecs msecs))
+                 (scale-factor (/ (float (- new-end-start-msecs beg-start-msecs))
+                                  (float (- old-end-start-msecs beg-start-msecs))))
+                 (scale-subtitles
+                  (lambda (&optional reverse)
+                    (subed-for-each-subtitle beg-next-point end-prev-point reverse
+                      (let ((old-start-msecs (subed-subtitle-msecs-start)))
+                        (unless old-start-msecs
+                          (user-error "Can't scale when subtitle timestamp missing"))
+                        (let* ((new-start-msecs
+                                (+ beg-start-msecs
+                                   (round (* (- old-start-msecs beg-start-msecs) scale-factor))))
+                               (delta-msecs (- new-start-msecs old-start-msecs)))
+                          (unless (and (<= beg-start-msecs old-start-msecs)
+                                       (>= old-end-start-msecs old-start-msecs))
+                            (user-error "Can't scale when nonchronological subtitles exist"))
+                          (move-subtitle delta-msecs :ignore-negative-duration)))))))
+            (atomic-change-group
+              (if (> msecs 0)
+                  (save-excursion
+                    ;; Moving forward - Start on last subtitle to see if we
+                    ;; can move forward.
+                    (goto-char end)
+                    (let ((adjusted-msecs (move-subtitle msecs)))
+                      (unless (and adjusted-msecs
+                                   (= msecs adjusted-msecs))
+                        (user-error "Can't scale when extension would overlap subsequent subtitles")))
+                    (funcall scale-subtitles :reverse))
+                (save-excursion
+                  ;; Moving backward - Make sure the last subtitle will not
+                  ;; precede the first subtitle.
+                  (unless (> new-end-start-msecs beg-start-msecs)
+                    (user-error "Can't scale when contraction would eliminate region"))
+                  (goto-char end)
+                  (move-subtitle msecs :ignore-negative-duration)
+                  (funcall scale-subtitles))))))))))
+
 (defun subed--move-subtitles-in-region (msecs beg end)
   "Move subtitles in region specified by BEG and END by MSECS milliseconds."
   (unless (= msecs 0)
@@ -373,6 +456,59 @@ but we move the start time first."
               (subed-forward-subtitle-id)
               (subed-for-each-subtitle (point) end nil
                 (move-subtitle msecs :ignore-negative-duration)))))))))
+
+(defun subed-scale-subtitles (msecs &optional beg end)
+  "Scale subtitles between BEG and END after moving END MSECS.
+Use a negative MSECS value to move END backward.
+If END is nil, END will be the last subtitle in the buffer.
+If BEG is nil, BEG will be the first subtitle in the buffer."
+  (let ((beg (or beg (point-min)))
+        (end (or end (point-max))))
+    (subed--scale-subtitles-in-region msecs beg end)
+    (when (subed-replay-adjusted-subtitle-p)
+      (save-excursion
+        (goto-char end)
+        (subed-jump-to-subtitle-id)
+        (subed-mpv-jump (subed-subtitle-msecs-start))))))
+
+(defun subed-scale-subtitles-forward (&optional arg)
+  "Scale subtitles after region is extended `subed-milliseconds-adjust'.
+
+Scaling adjusts start and stop by the same amount, preserving
+subtitle duration.
+
+All subtitles that are fully or partially in the active region
+are moved so they are placed proportionally in the new range.
+
+If prefix argument ARG is given, it is used to extend the end of the region
+`subed-milliseconds-adjust' before proportionally adjusting subtitles.  If the
+prefix argument is given but not numerical,
+`subed-milliseconds-adjust' is reset to its default value.
+
+Example usage:
+  \\[universal-argument] 1000 \\[subed-scale-subtitles-forward] Extend region 1000ms forward in time and scale subtitles in region
+           \\[subed-scale-subtitles-forward] Extend region another 1000ms forward in time and scale subtitles again
+   \\[universal-argument] 500 \\[subed-scale-subtitles-forward] Extend region 500ms forward in time and scale subtitles in region
+           \\[subed-scale-subtitles-forward] Extend region another 500ms forward in time and scale subtitles again
+       \\[universal-argument] \\[subed-scale-subtitles-forward] Extend region 100ms (the default) forward in time and scale subtitles in region
+           \\[subed-scale-subtitles-forward] Extend region another 100ms (the default) forward in time and scale subtitles again"
+  (interactive "P")
+  (let ((deactivate-mark nil)
+        (msecs (subed-get-milliseconds-adjust arg))
+        (beg (when mark-active (region-beginning)))
+        (end (when mark-active (region-end))))
+    (subed-scale-subtitles msecs beg end)))
+
+(defun subed-scale-subtitles-backward (&optional arg)
+  "Scale subtitles after region is shortened `subed-milliseconds-adjust'.
+
+See `subed-scale-subtitles-forward' about ARG."
+  (interactive "P")
+  (let ((deactivate-mark nil)
+        (msecs (* -1 (subed-get-milliseconds-adjust arg)))
+        (beg (when mark-active (region-beginning)))
+        (end (when mark-active (region-end))))
+    (subed-scale-subtitles msecs beg end)))
 
 (defun subed-move-subtitles (msecs &optional beg end)
   "Move subtitles between BEG and END MSECS milliseconds forward.
