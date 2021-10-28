@@ -1133,4 +1133,8 @@ Baz.
          (subed-vtt--sort)
          (expect (point) :to-equal (1- (point-max)))))
       )
-    ))
+    )
+  (describe "Converting msecs to timestamp"
+    (it "uses the right format"
+      (with-temp-vtt-buffer
+       (expect (subed-msecs-to-timestamp 1401) :to-equal "00:00:01.401")))))

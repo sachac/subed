@@ -1473,3 +1473,7 @@ Baz.
         (expect (point) :to-equal 33)))
     )
   )
+(describe "Converting msecs to timestamp"
+  (it "uses the right format"
+    (with-temp-srt-buffer
+     (expect (subed-msecs-to-timestamp 1401) :to-equal "00:00:01,401"))))
