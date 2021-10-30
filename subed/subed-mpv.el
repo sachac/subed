@@ -47,6 +47,8 @@
                                            subed-mpv-jump-to-current-subtitle)
   "Functions to call when mpv has loaded a file and starts playing.")
 
+(defvar-local subed-mpv-video-file nil "Current file or URL.")
+
 (defvar-local subed-mpv--server-proc nil
   "Running mpv process.")
 
@@ -315,6 +317,7 @@ See \"List of events\" in mpv(1)."
 
 (defun subed-mpv-jump-to-current-subtitle ()
   "Move playback position to start of currently focused subtitle if possible."
+  (interactive)
   (let ((cur-sub-start (subed-subtitle-msecs-start)))
     (when cur-sub-start
       (subed-debug "Seeking player to focused subtitle: %S" cur-sub-start)
@@ -373,6 +376,7 @@ See the mpv manual for a list of supported URL types.  If you
 have youtube-dl installed, mpv can open videos from a variety of
 hosting providers."
   (interactive "MURL: ")
+  (setq subed-mpv-video-file url)
   (subed-mpv--play url))
 
 (defun subed-mpv-find-video (file)
@@ -381,6 +385,7 @@ hosting providers."
 Video files are expected to have any of the extensions listed in
 `subed-video-extensions'."
   (interactive (list (read-file-name "Find video: " nil nil t nil #'subed-mpv--is-video-file-p)))
+  (setq subed-mpv-video-file (expand-file-name file))
   (subed-mpv--play (expand-file-name file)))
 
 (defun subed-mpv--add-subtitle-after-first-save ()
