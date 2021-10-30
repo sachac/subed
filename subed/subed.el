@@ -70,7 +70,6 @@
     (define-key subed-mode-map (kbd "M-.") #'subed-split-subtitle)
     (define-key subed-mode-map (kbd "M-s") #'subed-sort)
     (define-key subed-mode-map (kbd "M-SPC") #'subed-mpv-toggle-pause)
-    (define-key subed-mode-map (kbd "M-j") #'subed-mpv-jump-to-current-subtitle)
     (define-key subed-mode-map (kbd "C-c C-d") #'subed-toggle-debugging)
     (define-key subed-mode-map (kbd "C-c C-v") #'subed-mpv-find-video)
     (define-key subed-mode-map (kbd "C-c C-u") #'subed-mpv-play-video-from-url)

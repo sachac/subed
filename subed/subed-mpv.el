@@ -317,7 +317,6 @@ See \"List of events\" in mpv(1)."
 
 (defun subed-mpv-jump-to-current-subtitle ()
   "Move playback position to start of currently focused subtitle if possible."
-  (interactive)
   (let ((cur-sub-start (subed-subtitle-msecs-start)))
     (when cur-sub-start
       (subed-debug "Seeking player to focused subtitle: %S" cur-sub-start)
@@ -376,6 +375,7 @@ See the mpv manual for a list of supported URL types.  If you
 have youtube-dl installed, mpv can open videos from a variety of
 hosting providers."
   (interactive "MURL: ")
+  (setq subed-mpv-video-file url)
   (subed-mpv--play url))
 
 (defun subed-mpv-find-video (file)
