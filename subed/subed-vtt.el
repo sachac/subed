@@ -35,7 +35,7 @@
 
 (defconst subed-vtt-font-lock-keywords
   (list
-   '("[0-9]+:[0-9]+:[0-9]+\\.[0-9]+" . 'subed-vtt-time-face)
+   '("\\([0-9]+:\\)?[0-9]+:[0-9]+\\.[0-9]+" . 'subed-vtt-time-face)
    '(",[0-9]+ \\(-->\\) [0-9]+:" 1 'subed-vtt-time-separator-face t)
    '("^.*$" . 'subed-vtt-text-face))
   "Highlighting expressions for `subed-mode'.")
@@ -43,7 +43,7 @@
 
 ;;; Parsing
 
-(defconst subed-vtt--regexp-timestamp "\\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\)\\.\\([0-9]+\\)")
+(defconst subed-vtt--regexp-timestamp "\\(\\([0-9]+\\):\\)?\\([0-9]+\\):\\([0-9]+\\)\\.\\([0-9]+\\)")
 (defconst subed-vtt--regexp-separator "\\(?:[[:blank:]]*\n\\)+[[:blank:]]*\n")
 
 (defun subed-vtt--timestamp-to-msecs (time-string)
@@ -51,10 +51,10 @@
 Return nil if TIME-STRING doesn't match the pattern."
   (save-match-data
     (when (string-match subed-vtt--regexp-timestamp time-string)
-      (let ((hours (string-to-number (match-string 1 time-string)))
-            (mins  (string-to-number (match-string 2 time-string)))
-            (secs  (string-to-number (match-string 3 time-string)))
-            (msecs (string-to-number (subed--right-pad (match-string 4 time-string) 3 ?0))))
+      (let ((hours (string-to-number (or (match-string 2 time-string) "0")))
+            (mins  (string-to-number (match-string 3 time-string)))
+            (secs  (string-to-number (match-string 4 time-string)))
+            (msecs (string-to-number (subed--right-pad (match-string 5 time-string) 3 ?0))))
         (+ (* (truncate hours) 3600000)
            (* (truncate mins) 60000)
            (* (truncate secs) 1000)
@@ -170,7 +170,7 @@ WebVTT doesn't use IDs, so we use the starting timestamp instead."
         (when match-found
           (goto-char (match-beginning 2)))))
     ;; Make extra sure we're on a timestamp, return nil if we're not
-    (when (looking-at "^\\([0-9]+:[0-9]+:[0-9]+\\.[0-9]+\\)")
+    (when (looking-at "^\\(\\([0-9]+:\\)?[0-9]+:[0-9]+\\.[0-9]+\\)")
       (point))))
 
 (defun subed-vtt--jump-to-subtitle-id-at-msecs (msecs)

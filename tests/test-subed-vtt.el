@@ -39,6 +39,11 @@ Baz.
                                  (thing-at-point 'line)) :to-equal "00:03:03.45 --> 00:03:15.5\n")
          (expect (subed-vtt--subtitle-msecs-start) :to-equal (+ (* 3 60 1000) (*  3 1000) 450))
          (expect (subed-vtt--subtitle-msecs-stop)  :to-equal (+ (* 3 60 1000) (* 15 1000) 500))))
+      (it "handles lack of hours in milliseconds gracefully."
+        (with-temp-vtt-buffer
+         (insert "WEBVTT\n\n01:02.000 --> 03:04.000\nHello\n")
+         (expect (subed-vtt--subtitle-msecs-start) :to-equal (+ (* 1 60 1000) (* 2 1000)))
+         (expect (subed-vtt--subtitle-msecs-stop) :to-equal (+ (* 3 60 1000) (* 4 1000)))))
       (it "returns nil if time can't be found."
         (with-temp-vtt-buffer
          (expect (subed-vtt--subtitle-msecs-start) :to-be nil)
