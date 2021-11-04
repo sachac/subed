@@ -1286,12 +1286,13 @@ attribute(s)."
   "Update the CPS overlay.
 This accepts and ignores any number of arguments so that it can
 be run in `after-change-functions'."
-  (let ((cps (subed-calculate-cps)))
-    (when (numberp cps)
-      (overlay-put
-       subed--cps-overlay
-       'after-string
-       (propertize (format " %.1f CPS" cps) 'face 'shadow 'display '(height 0.9))))))
+  (when (overlayp subed--cps-overlay)
+    (let ((cps (subed-calculate-cps)))
+      (when (numberp cps)
+        (overlay-put
+         subed--cps-overlay
+         'after-string
+         (propertize (format " %.1f CPS" cps) 'face 'shadow 'display '(height 0.9)))))))
 
 (provide 'subed-common)
 ;;; subed-common.el ends here
