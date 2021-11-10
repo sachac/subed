@@ -232,7 +232,7 @@ can be found."
       ;; `subed-vtt--regexp-separator' here because if subtitle text is empty,
       ;; it may be the only empty line in the separator, i.e. there's only one
       ;; "\n".
-      (let ((regex (concat "\\([[:blank:]]*\n+" subed-vtt--regexp-timestamp "\\|\\([[:blank:]]*\n*\\)\\'\\)")))
+      (let ((regex (concat "\\([[:blank:]]*\n\\)+\\(" subed-vtt--regexp-timestamp "\\)\\|\\([[:blank:]]*\n*\\)\\'")))
         (when (re-search-forward regex nil t)
           (goto-char (match-beginning 0))))
       (unless (= (point) orig-point)

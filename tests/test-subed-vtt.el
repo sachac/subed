@@ -260,6 +260,15 @@ Baz.
          (backward-char 2)
          (expect (subed-vtt--jump-to-subtitle-end) :to-be 112)
          (expect (looking-back "^Baz.$") :to-be t)))
+      (it "handles spaces in between subtitles."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (goto-char (point-min))
+         (re-search-forward "Foo\\.\n")
+         (replace-match "Foo.\n ")
+         (goto-char (point-min))
+         (expect (subed-vtt--jump-to-subtitle-end) :to-be 43)
+         (expect (looking-back "^Foo.$") :to-be t)))
       (it "returns nil if subtitle end cannot be found."
         (with-temp-vtt-buffer
          (expect (subed-vtt--jump-to-subtitle-end) :to-be nil)))
