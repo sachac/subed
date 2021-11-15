@@ -111,7 +111,7 @@
   (list "subtitle-id" "subtitle-id-max" "subtitle-id-at-msecs"
         "subtitle-msecs-start" "subtitle-msecs-stop"
         "subtitle-text" "subtitle-relative-point"
-        "msecs-to-timestamp"
+        "msecs-to-timestamp" "timestamp-to-msecs"
         "jump-to-subtitle-id" "jump-to-subtitle-id-at-msecs"
         "jump-to-subtitle-time-start" "jump-to-subtitle-time-stop"
         "jump-to-subtitle-text" "jump-to-subtitle-text-at-msecs"
