@@ -124,7 +124,7 @@
         "set-subtitle-time-start" "set-subtitle-time-stop"
         "prepend-subtitle" "append-subtitle" "kill-subtitle" "merge-with-next"
         "regenerate-ids" "regenerate-ids-soon"
-        "sanitize" "validate" "sort"))
+        "sanitize" "validate" "sort" "make-subtitle"))
 
 (defun subed--get-generic-func (func-suffix)
   "Return the generic/public function for FUNC-SUFFIX."
