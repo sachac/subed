@@ -44,7 +44,7 @@
 ;;; Parsing
 
 (defconst subed-vtt--regexp-timestamp "\\(\\([0-9]+\\):\\)?\\([0-9]+\\):\\([0-9]+\\)\\.\\([0-9]+\\)")
-(defconst subed-vtt--regexp-separator "\\(?:[[:blank:]]*\n\\)+[[:blank:]]*\n")
+(defconst subed-vtt--regexp-separator "\\(?:[[:blank:]]*\n\\)+\\(?:NOTE[ \n]\\(?:.+?\n\\)+\n\\)*\n")
 
 (defun subed-vtt--timestamp-to-msecs (time-string)
   "Find HH:MM:SS.MS pattern in TIME-STRING and convert it to milliseconds.
@@ -232,7 +232,9 @@ can be found."
       ;; `subed-vtt--regexp-separator' here because if subtitle text is empty,
       ;; it may be the only empty line in the separator, i.e. there's only one
       ;; "\n".
-      (let ((regex (concat "\\([[:blank:]]*\n\\)+\\(" subed-vtt--regexp-timestamp "\\)\\|\\([[:blank:]]*\n*\\)\\'")))
+      (let ((regex (concat "\\([[:blank:]]*\n\\)+"
+                           "\\(?:NOTE[ \n]\\(?:.+?\n\\)+\n\\)*"
+                           "\\(" subed-vtt--regexp-timestamp "\\)\\|\\([[:blank:]]*\n*\\)\\'")))
         (when (re-search-forward regex nil t)
           (goto-char (match-beginning 0))))
       (unless (= (point) orig-point)

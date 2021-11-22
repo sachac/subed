@@ -1151,4 +1151,23 @@ Baz.
   (describe "Converting msecs to timestamp"
     (it "uses the right format"
       (with-temp-vtt-buffer
-       (expect (subed-msecs-to-timestamp 1401) :to-equal "00:00:01.401")))))
+       (expect (subed-msecs-to-timestamp 1401) :to-equal "00:00:01.401"))))
+  (describe "Working with comments"
+    (it "ignores the comment when jumping to the end of the subtitle"
+      (with-temp-vtt-buffer
+       (insert "WEBVTT
+
+00:00:00.000 --> 00:00:01.000
+This is a test.
+
+NOTE A comment can go here
+and have more text as needed.
+
+00:01:00.000 --> 00:00:02.000
+This is another test here.
+")
+       (goto-char (point-min))
+       (subed-forward-subtitle-end)
+       (expect (current-word) :to-equal "test")
+       (subed-forward-subtitle-end)
+       (expect (current-word) :to-equal "here")))))
