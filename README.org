@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * subed
 subed is an Emacs major mode for editing subtitles while playing the
 corresponding video with [[https://mpv.io/][mpv]].  At the moment, the only supported formats are
-SubRip ( ~.srt~) and WebVTT ( ~.vtt~ ).
+SubRip ( ~.srt~), WebVTT ( ~.vtt~ ), and Advanced SubStation Alpha ( ~.ass~, experimental ).
 
 [[file:https://raw.githubusercontent.com/rndusr/subed/master/screenshot.jpg]]
 

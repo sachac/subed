@@ -35,7 +35,7 @@ Baz.
         (with-temp-vtt-buffer
          (insert mock-vtt-data)
          (subed-vtt--jump-to-subtitle-id "00:03:03.45")
-         (expect (save-excursion (subed-jump-to-subtitle-time-start)
+         (expect (save-excursion (subed-vtt--jump-to-subtitle-time-start)
                                  (thing-at-point 'line)) :to-equal "00:03:03.45 --> 00:03:15.5\n")
          (expect (subed-vtt--subtitle-msecs-start) :to-equal (+ (* 3 60 1000) (*  3 1000) 450))
          (expect (subed-vtt--subtitle-msecs-stop)  :to-equal (+ (* 3 60 1000) (* 15 1000) 500))))
