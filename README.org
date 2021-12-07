@@ -71,27 +71,36 @@ SubRip ( ~.srt~), WebVTT ( ~.vtt~ ), and Advanced SubStation Alpha ( ~.ass~, exp
      key is pressed).
 
 ** Installation
-   For now, you have to install it manually.  For example, copy ~subed/*.el~ to
-   ~$HOME/.emacs.d/elisp/~ and add ~$HOME/.emacs.d/elisp/~ to your ~load-path~.
 
-   #+BEGIN_SRC elisp
-   (use-package subed
-     ;; Tell emacs where to find subed
-     :load-path "~/.emacs.d/elisp/"
-     :config
-     ;; Disable automatic movement of point by default
-     (add-hook 'subed-mode-hook 'subed-disable-sync-point-to-player)
-     ;; Remember cursor position between sessions
-     (add-hook 'subed-mode-hook 'save-place-local-mode)
-     ;; Break lines automatically while typing
-     (add-hook 'subed-mode-hook 'turn-on-auto-fill)
-      ;; Break lines at 40 characters
-     (add-hook 'subed-mode-hook (lambda () (setq-local fill-column 40))))
-   #+END_SRC
+~subed~ is now on [[https://elpa.nongnu.org/nongnu/subed.html][NonGNU ELPA]].  You may be able to install it with ~M-x package-install~ ~subed~.
+If not, you can install it manually.  For example, copy ~subed/*.el~ to
+~$HOME/.emacs.d/elisp/~ and add ~$HOME/.emacs.d/elisp/~ to your ~load-path~.
 
-   ~C-h f subed-mode~ should get you started.
+Here's some sample code for manual installation:
 
-=======
+#+begin_src emacs-lisp
+(add-to-list 'load-path "~/.emacs.d/elisp")
+(require 'subed)
+#+end_src
+
+Here's an example setup if you use use-package:
+
+#+BEGIN_SRC emacs-lisp
+(use-package subed
+  :ensure t
+  :config
+  ;; Disable automatic movement of point by default
+  (add-hook 'subed-mode-hook 'subed-disable-sync-point-to-player)
+  ;; Remember cursor position between sessions
+  (add-hook 'subed-mode-hook 'save-place-local-mode)
+  ;; Break lines automatically while typing
+  (add-hook 'subed-mode-hook 'turn-on-auto-fill)
+   ;; Break lines at 40 characters
+  (add-hook 'subed-mode-hook (lambda () (setq-local fill-column 40))))
+#+END_SRC
+
+~C-h f subed-mode~ should get you started.
+
 ** Contributions
    Contributions would be really appreciated! subed conforms to the [[https://reuse.software/spec/][REUSE
    Specification]]; this means that every file has copyright and license
