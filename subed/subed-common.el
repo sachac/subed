@@ -1296,13 +1296,14 @@ be run in `after-change-functions'."
 
 ;;; handle overlapping subtitle timecodes
 
-;; NB: runs in a hook, so this version cannot send prefix arg
-;; to subed-sanitize-overlaps!
+;; NB: runs in a hook, so this version cannot send prefix arg to
+;; subed-sanitize-overlaps
 (defun subed-check-overlaps ()
   "Test all subtitles for overlapping timecodes.
 
-Creates a list of the ids of overlapping subtitles, moves point to the to the end time of the first one, and prompts to trim them.
-Designed to be run as a subed-mode-hook."
+Creates a list of the ids of overlapping subtitles, moves point
+to the to the end time of the first one, and prompts to trim
+them. Designed to be run as a subed-mode-hook."
   (interactive)
   (let ((overlap-ids ()))
     (save-excursion
@@ -1326,10 +1327,15 @@ Designed to be run as a subed-mode-hook."
 (defun subed-sanitize-overlaps (&optional arg)
   "Adjust all overlapping times in current file.
 
-Uses either `subed-trim-overlap-start-times' or `subed-trim-overlapping-end-times', the latter being the default. See `subed-trim-overlapping-subtitle-trim-start' to customize this option.
+Uses either `subed-trim-overlap-start-times' or
+`subed-trim-overlapping-end-times', the latter being the default.
+See `subed-trim-overlapping-subtitle-trim-start' to customize
+this option.
 
-With a non-numerical prefix ARG, or if `subed-trim-overlapping-use-subed-subtitle-spacing' is t, make a gap the between subtitles the length of `subed-subtitle-spacing'.
-With a numerical prefix ARG, make the gap that many milliseconds."
+With a non-numerical prefix ARG, or if
+`subed-trim-overlapping-use-subed-subtitle-spacing' is t, make a gap the
+between subtitles the length of `subed-subtitle-spacing'. With a numerical
+prefix ARG, make the gap that many milliseconds."
   (interactive "P")
   (let ((cpsp (subed-show-cps-p)))
     (when cpsp
@@ -1348,10 +1354,14 @@ With a numerical prefix ARG, make the gap that many milliseconds."
 (defun subed-trim-overlap-end-time (&optional arg)
   "Check if end time of current subtitle is after start time of next.
 
-If so, trim the end time of current subtitle to 1 millisecond less than the start time of the next one.
+If so, trim the end time of current subtitle to 1 millisecond
+less than the start time of the next one.
 
-With a non-numerical prefix ARG, or if `subed-trim-overlapping-use-subed-subtitle-spacing' is t, make a gap the between subtitles the length of `subed-subtitle-spacing'.
-With a numerical prefix ARG, make the gap that many milliseconds."
+With a non-numerical prefix ARG, or if
+`subed-trim-overlapping-use-subed-subtitle-spacing' is t, make a
+gap the between subtitles the length of `subed-subtitle-spacing'.
+With a numerical prefix ARG, make the gap that many
+milliseconds."
   (interactive "P")
   (let ((next-sub-start-time (save-excursion
                                (subed-forward-subtitle-time-start)
@@ -1373,9 +1383,12 @@ With a numerical prefix ARG, make the gap that many milliseconds."
 (defun subed-trim-overlap-start-time (&optional arg)
   "Check if end time of current subtitle is after start time of next.
 
-If so, trim the start time of current subtitle to 1 millisecond less than the end time of the current one.
+If so, trim the start time of current subtitle to 1 millisecond
+less than the end time of the current one.
 
-With a non-numerical prefix ARG, or if `subed-trim-overlapping-use-subed-subtitle-spacing' is t, make a gap the between subtitles the length of `subed-subtitle-spacing'.
+With a non-numerical prefix ARG, or if
+`subed-trim-overlapping-use-subed-subtitle-spacing' is t, make a
+gap the between subtitles the length of `subed-subtitle-spacing'.
 With a numerical prefix ARG make the gap that many miliseconds."
   (interactive "P")
   (let ((this-sub-stop-time (subed-subtitle-msecs-stop))
@@ -1398,7 +1411,6 @@ With a numerical prefix ARG make the gap that many miliseconds."
             (t
              (1+ this-sub-stop-time))))))))
 
-;; mod subed-sort fun to run santize-overlaps if enabled:
 (defun subed-sort ()
   "Sanitize, then sort subtitles by start time and re-number them."
   (interactive)

@@ -212,23 +212,34 @@ hardcoded."
 
 ;; checked by subed-sort
 (defcustom subed-trim-overlapping-subtitle-times-on-save nil
-  "Whether all overlapping subtitles should be trimmed on saving. Subtitles are trimmed according to `subed-trim-overlapping-subtitle-start-or-end'."
+  "Whether all overlapping subtitles should be trimmed on saving.
+Subtitles are trimmed according to
+`subed-trim-overlapping-subtitle-start-or-end'."
   :type 'boolean
   :group 'subed)
 
 ;; checked by subed mode hook
 (defcustom subed-check-overlapping-subtitle-times-on-load nil
-  "Whether to check for, and optionally trim, overlapping subtitles on entering subed mode. Subtitles are trimmed according to `subed-trim-overlapping-subtitle-start-or-end'."
+  "Whether to check for, and optionally trim, overlapping
+subtitles on entering subed mode. Subtitles are trimmed according
+to `subed-trim-overlapping-subtitle-start'. Defaults to nil."
   :type 'boolean
   :group 'subed)
 
 (defcustom subed-trim-overlapping-subtitle-trim-start nil
-  "How overlapping subtitles should be trimmed. If t, adjust the start time of the following subtitle, if nil, adjust the end of the current subtitle. Defaults to nil."
+  "How overlapping subtitles should be trimmed. If t, adjust the
+start time of the following subtitle, if nil, adjust the end of
+the current subtitle. Defaults to nil."
   :type 'boolean
   :group 'subed)
 
 (defcustom subed-trim-overlapping-use-subed-subtitle-spacing nil
-  "Whether `subed-subtitle-spacing' should be used when trimming overlapping subtitles. If nil, subtitles will trimmed to one millisecond less than adjacent one. Defaults to nil. You can also set the spacing by using a prefix arg when calling `subed-sanitize-overlaps', which see."
+  "Whether `subed-subtitle-spacing' should be used when trimming
+overlapping subtitles. If nil, subtitles will trimmed to one
+millisecond less than adjacent one. Defaults to nil.
+
+Spacing can also be set by using a prefix arg when calling
+`subed-sanitize-overlaps', which see."
   :type 'boolean
   :group 'subed)
 
