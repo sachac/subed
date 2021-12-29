@@ -72,8 +72,18 @@ SubRip ( ~.srt~), WebVTT ( ~.vtt~ ), and Advanced SubStation Alpha ( ~.ass~, exp
 
 ** Installation
 
-~subed~ is now on [[https://elpa.nongnu.org/nongnu/subed.html][NonGNU ELPA]].  You may be able to install it with ~M-x package-install~ ~subed~.
-If not, you can install it manually.  For example, copy ~subed/*.el~ to
+~subed~ is now on [[https://elpa.nongnu.org/nongnu/subed.html][NonGNU ELPA]].  On Emacs 28 and later, you can install it with ~M-x package-install~ ~subed~.
+
+To install it on Emacs 27 or earlier, add the following to your Emacs configuration file:
+
+#+begin_src emacs-lisp :eval no
+(with-eval-after-load 'package (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/")))
+#+end_src
+
+Use ~M-x eval-buffer~ to run the code, and then use ~M-x package-install~ ~subed~.
+
+If that doesn't work, you can install it manually.  For example, copy ~subed/*.el~ to
+
 ~$HOME/.emacs.d/elisp/~ and add ~$HOME/.emacs.d/elisp/~ to your ~load-path~.
 
 Here's some sample code for manual installation:
