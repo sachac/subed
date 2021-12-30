@@ -7,7 +7,7 @@ clean:
 
 test:
 	emacs -batch -f package-initialize -L . -f buttercup-run-discover
-	emacs --no-init-file --batch \
+	emacs --no-init-file -f package-initialize --batch \
 		  --eval "(require 'package-lint)" \
 	      --file package-lint-batch-and-exit \
 	      ./subed/subed.el
