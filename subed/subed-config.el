@@ -34,7 +34,7 @@
   :prefix "subed-")
 
 (defvar-local subed--subtitle-format nil
-  "Short form of the name of the subtitle format in the current buffer (e.g. \"srt\").")
+  "Short form of the subtitle format in the current buffer (e.g. \"srt\").")
 
 ;; This variable is set in subed.el to avoid compiler warnings because it uses
 ;; functions defined in subed-common.el, and (require 'subed-common) results in
@@ -158,7 +158,9 @@ If set to zero or smaller, playback is paused."
   :group 'subed)
 
 (defcustom subed-enforce-time-boundaries t
-  "Whether to refuse time adjustments that result in overlapping subtitles or negative duration."
+  "Non-nil means refuse time adjustments that result in invalid subtitles.
+For example, refuse adjustments that result in overlapping
+subtitles or negative duration."
   :type 'boolean
   :group 'subed)
 
@@ -180,7 +182,9 @@ If set to zero or smaller, playback is paused."
 
 
 (defcustom subed-point-sync-delay-after-motion 1.0
-  "Number of seconds the player can't adjust point after point was moved by the user."
+  "Player sync point delay in seconds after the user moves the point.
+This prevents the player from moving the point while the user is
+doing so."
   :type 'float
   :group 'subed)
 
