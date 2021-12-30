@@ -47,6 +47,12 @@ SubRip ( ~.srt~), WebVTT ( ~.vtt~ ), and Advanced SubStation Alpha ( ~.ass~, exp
      boldface (~C-c C-t C-b~).
    - Sort and re-number subtitles and remove any extra spaces and newlines
      (~M-s~).  This is done automatically every time the buffer is saved.
+   - Trim subtitle overlaps with ~M-x subed-trim-overlaps~. By
+     default, this adjusts the stop time of overlapping subtitles to
+     ~subed-subtitle-spacing~ milliseconds before the next subtitle
+     starts. Use ~M-x customize-group~ ~subed~ to configure trimming
+     to happen automatically when buffers are loaded or saved, which
+     time is adjusted, and how much time to leave between subtitles.
 
 *** mpv integration (optional)
    - Open videos with ~C-c C-v~ or automatically when entering subed-mode if the

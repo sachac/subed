@@ -210,8 +210,42 @@ hardcoded."
   "Return base name of buffer file name or a default name."
   (file-name-nondirectory (or (buffer-file-name) "unnamed")))
 
+;;; Trim overlaps
 
-;; Hooks
+;; checked by subed-sort
+(defcustom subed-trim-overlap-on-save nil
+  "Non-nil means trim all overlapping subtitles when saving.
+Subtitles are trimmed according to `subed-trim-overlap-use-start'."
+  :type '(choice
+          (const :tag "Trim" nil)
+          (const :tag "Do not trim" t))
+  :group 'subed)
+
+(defcustom subed-trim-overlap-check-on-save nil
+  "Non-nil means check for overlapping subtitles when saving."
+  :type '(choice
+          (const :tag "Check" nil)
+          (const :tag "Do not check" t))
+  :group 'subed)
+
+;; checked by subed mode hook
+(defcustom subed-trim-overlap-check-on-load nil
+  "Non-nil means check for overlapping subtitles on entering subed mode.
+Subtitles are trimmed according to `subed-trim-overlap-use-start'."
+  :type '(choice
+          (const :tag "Check" t)
+          (const :tag "Do not check" nil))
+  :group 'subed)
+
+(defcustom subed-trim-overlap-use-start nil
+  "Non-nil means adjust the start time of the following subtitle for overlaps.
+Otherwise, adjust the stop time of the current subtitle."
+  :type '(choice
+          (const :tag "Adjust stop time of the current subtitle" nil)
+          (const :tag "Adjust start time of the next subtitle" t))
+  :group 'subed)
+
+;;; Hooks
 
 (defvar-local subed-subtitle-time-adjusted-hook ()
   "Functions to call when a subtitle's start or stop time has changed.

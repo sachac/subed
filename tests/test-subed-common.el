@@ -2323,7 +2323,6 @@ This is another.
         (setq-local subed-mpv-playback-position 61600)
         (setq-local subed-subtitle-spacing 100)
         (subed-split-subtitle)
-        (prin1 (buffer-string))
         (expect (subed-subtitle-msecs-start) :to-equal 61700)
         (expect (subed-subtitle-msecs-stop) :to-equal 65123)
         (expect (subed-subtitle-text) :to-equal "Some text here.")
@@ -2866,3 +2865,235 @@ This is another.
      (expect (subed-scale-subtitles 1000 5 4) :to-throw 'error)
      (expect (spy-calls-all-args 'user-error) :to-equal
              '(("Can't scale with improper range"))))))
+
+(describe "Trimming subtitles"
+  (describe "when spacing is 0"
+    (it "detects overlaps"
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:05,000\nA\n\n"
+               "2\n00:00:04,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 0))
+         (expect (subed--identify-overlaps)
+                 :to-equal '(1)))))
+    (it "ignores non-overlapping subtitles"
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:03,000 --> 00:00:04,000\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 0))
+         (expect (subed--identify-overlaps)
+                 :to-equal nil)))))
+  (describe "when spacing is 1"
+    (it "detects overlaps"
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:04,000\nA\n\n"
+               "2\n00:00:04,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 1))
+         (expect (subed--identify-overlaps)
+                 :to-equal '(1)))))
+    (it "ignores non-overlapping subtitles"
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,999\nA\n\n"
+               "2\n00:00:03,000 --> 00:00:04,000\nA\n\n")
+       (let ((subed-subtitle-spacing 1))
+         (expect (subed--identify-overlaps)
+                 :to-equal nil)))))
+  (describe "when spacing is greater"
+    (it "detects overlaps because of spacing"
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,999\nA\n\n"
+               "2\n00:00:03,000 --> 00:00:05,000\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100))
+         (expect (subed--identify-overlaps)
+                 :to-equal '(1 2)))))
+    (it "ignores non-overlapping subtitles."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:03,000 --> 00:00:03,500\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100))
+         (expect (subed--identify-overlaps)
+                 :to-equal nil)))))
+  (describe "overlap end time"
+    (it "sets it to the next timestamp minus spacing."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100))
+         (subed-jump-to-subtitle-id 2)
+         (subed-trim-overlap-stop)
+         (expect (subed-subtitle-msecs-stop) :to-equal 3900))))
+    (it "sets it to the next timestamp minus the argument."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100))
+         (subed-jump-to-subtitle-id 2)
+         (subed-trim-overlap-stop 500)
+         (expect (subed-subtitle-msecs-stop) :to-equal 3500))))
+    (it "ignores non-overlapping subtitles."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100))
+         (subed-jump-to-subtitle-id 1)
+         (subed-trim-overlap-stop)
+         (expect (subed-subtitle-msecs-stop) :to-equal 2000))))
+    (it "handles the last subtitle gracefully."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100))
+         (subed-jump-to-subtitle-id 3)
+         (subed-trim-overlap-stop 500)
+         (expect (subed-subtitle-msecs-stop) :to-equal 6000))))
+    (it "handles empty buffers gracefully."
+      (with-temp-srt-buffer
+       (subed-trim-overlap-stop 500)
+       (expect (subed-subtitle-msecs-stop) :to-equal nil)))
+    (it "adjusts the stop time if the new stop would be before the start time."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,500 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100))
+         (subed-jump-to-subtitle-id 1)
+         (expect (subed-trim-overlap-stop) :to-equal -500)
+         (expect (subed-subtitle-msecs-stop 1) :to-equal 1500)
+         (expect (subed-subtitle-msecs-start 1) :to-equal 1500)))))
+  (describe "overlap start time"
+    (it "sets next start to the current timestamp plus spacing."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100))
+         (subed-jump-to-subtitle-id 2)
+         (subed-trim-overlap-next-start)
+         (subed-forward-subtitle-time-start)
+         (expect (subed-subtitle-msecs-start) :to-equal 4600))))
+    (it "sets next start to the current timestamp plus the argument."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100))
+         (subed-jump-to-subtitle-id 2)
+         (subed-trim-overlap-next-start 500)
+         (subed-forward-subtitle-time-start)
+         (expect (subed-subtitle-msecs-start) :to-equal 5000))))
+    (it "handles the last subtitle gracefully."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100))
+         (subed-jump-to-subtitle-id 3)
+         (subed-trim-overlap-next-start 500)
+         (expect (subed-subtitle-msecs-start) :to-equal 4000))))
+    (it "adjusts the timestamp if the new start is past the stop time."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:01,500 --> 00:00:02,000\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100))
+         (subed-jump-to-subtitle-id 1)
+         (expect (subed-trim-overlap-next-start 500) :to-equal 500)
+         (expect (subed-subtitle-msecs-start 2) :to-equal 2000))))
+    (it "handles empty buffers gracefully."
+      (with-temp-srt-buffer
+       (subed-trim-overlap-next-start 500)
+       (expect (subed-subtitle-msecs-stop) :to-equal nil))))
+  (describe "trimming overlaps"
+    (it "adjusts stop times by default."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n"
+               "4\n00:00:05,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100))
+         (subed-trim-overlaps))
+       (expect (subed-subtitle-msecs-stop 1) :to-equal 2000)
+       (expect (subed-subtitle-msecs-stop 2) :to-equal 3900)
+       (expect (subed-subtitle-msecs-stop 3) :to-equal 4900)))
+    (it "adjusts start times if specified."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n"
+               "4\n00:00:05,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100)
+             (subed-trim-overlap-use-start t))
+         (subed-trim-overlaps)
+         (expect (subed-subtitle-msecs-stop 1) :to-equal 2000)
+         (expect (subed-subtitle-msecs-stop 2) :to-equal 4500)
+         (expect (subed-subtitle-msecs-start 3) :to-equal 4600)
+         (expect (subed-subtitle-msecs-start 4) :to-equal 6000))))
+    (it "can specify the number of milliseconds."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\nA\n\n"
+               "4\n00:00:05,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100))
+         (subed-trim-overlaps 200))
+       (expect (subed-subtitle-msecs-stop 1) :to-equal 2000)
+       (expect (subed-subtitle-msecs-stop 2) :to-equal 3800)
+       (expect (subed-subtitle-msecs-stop 3) :to-equal 4800)))
+    (it "handles empty buffers gracefully."
+      (with-temp-srt-buffer
+       (expect (subed-trim-overlaps) :not :to-throw)))
+    (it "handles single subtitles gracefully."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n")
+       (let ((subed-subtitle-spacing 100))
+         (expect (subed-trim-overlaps) :not :to-throw))
+       (expect (subed-subtitle-msecs-start 1) :to-equal 1000)
+       (expect (subed-subtitle-msecs-stop 1) :to-equal 2000))))
+  (describe "when configured to trim on save,"
+    (it "trims overlaps after sorting."
+      (with-temp-srt-buffer
+       (let ((subed-trim-overlap-on-save t)
+             (subed-subtitle-spacing 200))
+         (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+                 "2\n00:00:04,000 --> 00:00:06,000\nA\n\n"
+                 "3\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+                 "4\n00:00:05,000 --> 00:00:06,000\nA\n\n")
+         (subed-prepare-to-save)
+         (expect (subed-subtitle-msecs-stop 1) :to-equal 2000)
+         (expect (subed-subtitle-msecs-stop 2) :to-equal 3800)
+         (expect (subed-subtitle-msecs-stop 3) :to-equal 4800)))))
+  (describe "when configured to check on save,"
+    (it "reports overlaps after sorting."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:04,000 --> 00:00:06,000\nA\n\n"
+               "3\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+               "4\n00:00:05,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-trim-overlap-check-on-save t)
+             (subed-subtitle-spacing 200))
+         (spy-on 'yes-or-no-p :and-return-value t)
+         (subed-prepare-to-save)
+         (expect 'yes-or-no-p :to-have-been-called)
+         (expect (subed-subtitle-msecs-stop 1) :to-equal 2000)
+         (expect (subed-subtitle-msecs-stop 2) :to-equal 3800)
+         (expect (subed-subtitle-msecs-stop 3) :to-equal 4800)))))
+  (describe "when configured to check on load,"
+    (it "reports overlaps."
+      (with-temp-buffer
+        (setq buffer-file-name "test.srt")
+        (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+                "2\n00:00:04,000 --> 00:00:06,000\nA\n\n"
+                "3\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+                "4\n00:00:05,000 --> 00:00:06,000\nA\n\n")
+        (let ((subed-trim-overlap-check-on-load t)
+              (subed-subtitle-spacing 200))
+          (spy-on 'subed-trim-overlap-check :and-return-value nil)
+          (subed-mode)
+          (expect subed--subtitle-format :to-equal "srt")
+          (expect 'subed-trim-overlap-check :to-have-been-called))))))

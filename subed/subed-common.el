@@ -1313,13 +1313,120 @@ be run in `after-change-functions'."
          'after-string
          (propertize (format " %.1f CPS" cps) 'face 'shadow 'display '(height 0.9)))))))
 
+;;; Trimming overlaps
+
+(defun subed--identify-overlaps ()
+  "Return a list of IDs for subtitles that overlap the next one.
+This observes `subed-subtitle-spacing'."
+  (let (overlap-ids next-sub-start-time)
+    (save-excursion
+      (subed-for-each-subtitle (point-min) (point-max) t
+        (when (and next-sub-start-time
+                   (> (+ (subed-subtitle-msecs-stop)
+                         subed-subtitle-spacing)
+                      next-sub-start-time))
+          (push (subed-subtitle-id) overlap-ids))
+        (setq next-sub-start-time (subed-subtitle-msecs-start)))
+      overlap-ids)))
+
+;; NB: runs in a hook, so this version cannot send prefix arg to
+;; subed-trim-overlaps. Doesn't actually use the whole list of
+;; overlaps, so it may be more efficient to just find the first overlap.
+(defun subed-trim-overlap-check ()
+  "Test all subtitles for overlapping timecodes.
+
+Creates a list of the ids of overlapping subtitles, moves point
+to the end time of the first one, and prompts to trim
+them. Designed to be run in `subed-mode-hook'."
+  (interactive)
+  (let ((overlap-ids (subed--identify-overlaps)))
+    (when overlap-ids
+      (subed-jump-to-subtitle-time-stop (car overlap-ids))
+      (when (yes-or-no-p "Overlapping subtitles found. Trim them? ")
+        (subed-trim-overlaps)))))
+
+(defun subed-trim-overlaps (&optional msecs)
+  "Adjust all overlapping times in current file.
+
+Change the stop times to start MSECS before the next subtitle, or
+`subed-subtitle-spacing' if not specified.  If
+`subed-trim-overlap-use-start' is non-nil, change
+the start times instead."
+  (interactive "P")
+  (subed-batch-edit
+   (save-excursion
+     (subed-for-each-subtitle (point-min) (point-max) nil
+       (if subed-trim-overlap-use-start
+           (subed-trim-overlap-next-start msecs)
+         (subed-trim-overlap-stop msecs))))))
+
+(defun subed-trim-overlap-maybe-sanitize ()
+  "Trim overlaps if specified by `subed-trim-overlap-on-save'."
+  (when subed-trim-overlap-on-save
+    (subed-trim-overlaps)))
+
+(defun subed-trim-overlap-maybe-check ()
+  "Check overlaps if specified by `subed-trim-overlap-check-on-save'."
+  (when subed-trim-overlap-check-on-save
+    (subed-trim-overlap-check)))
+
+(defun subed-trim-overlap-stop (&optional msecs ignore-negative-duration)
+  "Trim the current subtitle so that it stops before the next one.
+
+Trim the end time of the current subtitle to MSECS or
+`subed-subtitle-spacing' less than the start time of the next
+subtitle.  Unless either IGNORE-NEGATIVE-DURATION or
+`subed-enforce-time-boundaries' are non-nil, adjust MSECS so that
+the stop time isn't smaller than the start time."
+  (interactive "P")
+  (let ((next-sub-start-time (save-excursion
+                               (and
+                                (subed-forward-subtitle-time-start)
+                                (subed-subtitle-msecs-start))))
+        (this-sub-stop-time (subed-subtitle-msecs-stop)))
+    (when (and next-sub-start-time this-sub-stop-time)
+      (subed-adjust-subtitle-time-stop
+       (min 0
+            (- (- next-sub-start-time
+                  (if (numberp msecs) msecs subed-subtitle-spacing))
+               this-sub-stop-time))
+       ignore-negative-duration
+       t))))
+
+(defun subed-trim-overlap-next-start (&optional msecs ignore-negative-duration)
+  "Trim the next subtitle so that it starts after the current one.
+
+Trim the start time of the next subtitle to MSECS or
+`subed-subtitle-spacing' greater than the end time of the current
+subtitle.  Unless either IGNORE-NEGATIVE-DURATION or
+`subed-enforce-time-boundaries' are non-nil, adjust MSECS so that
+the stop time isn't smaller than the start time."
+  (interactive "P")
+  (save-excursion
+    (let ((this-sub-stop-time (subed-subtitle-msecs-stop))
+          (next-sub-start-time (and
+                                (subed-forward-subtitle-time-start)
+                                (subed-subtitle-msecs-start))))
+      (when (and this-sub-stop-time
+                 next-sub-start-time
+                 (or msecs subed-subtitle-spacing))
+        (subed-adjust-subtitle-time-start
+         (max 0
+              (-
+               (+ this-sub-stop-time (or msecs subed-subtitle-spacing))
+               next-sub-start-time))
+         ignore-negative-duration
+         t)))))
+
 ;;; Sorting and sanitizing
 
-(defvar-local subed-sanitize-functions nil
+(defvar-local subed-sanitize-functions
+  '(subed-trim-overlap-maybe-sanitize)
   "Functions to sanitize this buffer.
 Functions can clean up whitespace, rearrange subtitles, etc.")
 
-(defvar-local subed-validate-functions nil
+(defvar-local subed-validate-functions
+  '(subed-trim-overlap-maybe-check)
   "Functions to validate this buffer.
 Validation functions should throw an error or prompt the user for
 action.")
