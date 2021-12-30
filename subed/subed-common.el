@@ -108,6 +108,19 @@ Before BODY is run, point is placed on the subtitle's ID."
      (when replay-was-enabled-p
        (subed-enable-replay-adjusted-subtitle :quiet))))
 
+(defvar-local subed--batch-editing nil "Non-nil means suppress hooks and commands meant for interactive use.")
+(defmacro subed-batch-edit (&rest body)
+  "Run BODY as a batch edit.  Suppress hooks and replays."
+  (declare (indent defun))
+  `(progn
+     (let ((subed--batch-editing t))
+       (subed-with-subtitle-replay-disabled
+         (subed-disable-sync-point-to-player-temporarily)
+         (progn ,@body)))
+     (when (subed-show-cps-p)
+       (subed--move-cps-overlay-to-current-subtitle)
+       (subed--update-cps-overlay))))
+
 (defun subed--right-pad (string length fillchar)
   "Use FILLCHAR to make STRING LENGTH characters long."
   (concat string (make-string (- length (length string)) fillchar)))
@@ -122,8 +135,10 @@ Before BODY is run, point is placed on the subtitle's ID."
   ;; Check for point motion first to avoid expensive calls to subed-subtitle-id
   ;; as often as possible.
   (let ((new-point (point)))
-    (when (and new-point subed--current-point
-               (not (= new-point subed--current-point)))
+    (when (and
+           (not subed--batch-editing)
+           new-point subed--current-point
+           (not (= new-point subed--current-point)))
 
       ;; If point is synced to playback position, temporarily disable that so
       ;; that manual moves aren't cancelled immediately by automated moves.
@@ -907,6 +922,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 (defun subed--sync-point-to-player (msecs)
   "Move point to subtitle at MSECS."
   (when (and (not (use-region-p)) ;; Don't sync with active-mark in transient-mark-mode
+             (not subed--batch-editing)
              (subed-jump-to-subtitle-text-at-msecs msecs))
     (subed-debug "Synchronized point to playback position: %s -> #%s"
                  (subed-msecs-to-timestamp msecs) (subed-subtitle-id))
@@ -976,15 +992,16 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 
 (defun subed--sync-player-to-point ()
   "Seek player to currently focused subtitle."
-  (subed-debug "Seeking player to subtitle at point %s" (point))
-  (let ((cur-sub-start (subed-subtitle-msecs-start))
-        (cur-sub-stop (subed-subtitle-msecs-stop)))
-    (when (and subed-mpv-playback-position cur-sub-start cur-sub-stop
-               (or (< subed-mpv-playback-position cur-sub-start)
-                   (> subed-mpv-playback-position cur-sub-stop)))
-      (subed-mpv-jump cur-sub-start)
-      (subed-debug "Synchronized playback position to point: #%s -> %s"
-                   (subed-subtitle-id) cur-sub-start))))
+  (unless subed--batch-editing
+    (subed-debug "Seeking player to subtitle at point %s" (point))
+    (let ((cur-sub-start (subed-subtitle-msecs-start))
+          (cur-sub-stop (subed-subtitle-msecs-stop)))
+      (when (and subed-mpv-playback-position cur-sub-start cur-sub-stop
+                 (or (< subed-mpv-playback-position cur-sub-start)
+                     (> subed-mpv-playback-position cur-sub-stop)))
+        (subed-mpv-jump cur-sub-start)
+        (subed-debug "Synchronized playback position to point: #%s -> %s"
+                     (subed-subtitle-id) cur-sub-start)))))
 
 
 ;;; Loop over single subtitle
@@ -1271,22 +1288,24 @@ attribute(s)."
 
 (defun subed--move-cps-overlay-to-current-subtitle ()
   "Move the CPS overlay to the current subtitle."
-  (let* ((begin (save-excursion
-		  (subed-jump-to-subtitle-time-start)
-		  (point)))
-	 (end (save-excursion
-		(goto-char begin)
-		(line-end-position))))
-    (if (overlayp subed--cps-overlay)
-	(move-overlay subed--cps-overlay begin end (current-buffer))
-      (setq subed--cps-overlay (make-overlay begin end)))
-    (subed--update-cps-overlay)))
+  (unless subed--batch-editing
+    (let* ((begin (save-excursion
+		                (subed-jump-to-subtitle-time-start)
+		                (point)))
+	         (end (save-excursion
+		              (goto-char begin)
+		              (line-end-position))))
+      (if (overlayp subed--cps-overlay)
+	        (move-overlay subed--cps-overlay begin end (current-buffer))
+        (setq subed--cps-overlay (make-overlay begin end)))
+      (subed--update-cps-overlay))))
 
 (defun subed--update-cps-overlay (&rest _rest)
   "Update the CPS overlay.
 This accepts and ignores any number of arguments so that it can
 be run in `after-change-functions'."
-  (when (overlayp subed--cps-overlay)
+  (when (and (not subed--batch-editing)
+             (overlayp subed--cps-overlay))
     (let ((cps (subed-calculate-cps)))
       (when (numberp cps)
         (overlay-put
