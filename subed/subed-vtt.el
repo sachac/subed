@@ -557,7 +557,9 @@ Update the end timestamp accordingly."
                                         ;; a "-" at the start of the line.
                                         (mapconcat 'identity '("^-"
                                                                "[[:graph:]]*$") "\\|")
-                                        "\\)"))))
+                                        "\\)"))
+    (add-hook 'subed-sanitize-functions #'subed-vtt--sort nil t)
+    (add-hook 'subed-validate-functions #'subed-vtt--validate t t)))
 
 (provide 'subed-vtt)
 ;;; subed-vtt.el ends here

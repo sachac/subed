@@ -955,6 +955,15 @@ Baz.
        (expect (subed-vtt--validate) :to-throw
                'error '("Found invalid stop time: \"00:01:01.000 --> 00:01:05.1323\""))
        (expect (point) :to-equal 26)))
+    (it "runs before saving."
+      (with-temp-vtt-buffer
+       (insert mock-vtt-data)
+       (subed-vtt--jump-to-subtitle-time-stop "00:01:01.000")
+       (forward-char 10)
+       (insert "3")
+       (expect (subed-prepare-to-save) :to-throw
+               'error '("Found invalid stop time: \"00:01:01.000 --> 00:01:05.1323\""))
+       (expect (point) :to-equal 26)))
     (it "reports invalid time separator."
       (with-temp-vtt-buffer
        (insert mock-vtt-data)
@@ -1095,6 +1104,19 @@ Baz.
        (expect (buffer-string) :not :to-equal mock-vtt-data)
        (subed-vtt--sanitize)
        (expect (buffer-string) :to-equal mock-vtt-data)))
+    (it "runs before saving."
+      (with-temp-vtt-buffer
+       (insert mock-vtt-data)
+       (goto-char (point-min))
+       (re-search-forward " --> ")
+       (replace-match "  --> ")
+       (re-search-forward " --> ")
+       (replace-match " -->  ")
+       (re-search-forward " --> ")
+       (replace-match "-->")
+       (expect (buffer-string) :not :to-equal mock-vtt-data)
+       (subed-prepare-to-save)
+       (expect (buffer-string) :to-equal mock-vtt-data)))
     (it "does not insert newline in empty buffer."
       (with-temp-vtt-buffer
        (expect (buffer-string) :to-equal "")
@@ -1117,6 +1139,31 @@ Baz.
        (re-search-forward "03:03")
        (replace-match "11:03")
        (subed-vtt--sort)
+       (expect (buffer-string) :to-equal
+               (concat
+                "WEBVTT\n"
+                "\n"
+                "00:10:02.234 --> 00:02:10.345\n"
+                "Bar.\n"
+                "\n"
+                "00:11:03.45 --> 00:03:15.5\n"
+                "Baz.\n"
+                "\n"
+                "00:12:01.000 --> 00:01:05.123\n"
+                "Foo.\n"))))
+    (it "runs before saving."
+      (with-temp-vtt-buffer
+       (insert mock-vtt-data)
+       (goto-char (point-min))
+       (re-search-forward "01:01")
+       (replace-match "12:01")
+       (goto-char (point-min))
+       (re-search-forward "02:02")
+       (replace-match "10:02")
+       (goto-char (point-min))
+       (re-search-forward "03:03")
+       (replace-match "11:03")
+       (subed-prepare-to-save)
        (expect (buffer-string) :to-equal
                (concat
                 "WEBVTT\n"

@@ -1263,7 +1263,15 @@ Baz.
       (forward-char 2)
       (subed-srt--validate)
       (expect (point) :to-equal 73)))
-  )
+  (it "runs before saving."
+    (with-temp-srt-buffer
+     (insert mock-srt-data)
+     (subed-srt--jump-to-subtitle-time-start 3)
+     (forward-char 3)
+     (insert "##")
+     (expect (subed-prepare-to-save) :to-throw
+             'error '("Found invalid start time: \"00:##03:03,45 --> 00:03:15,5\""))
+     (expect (point) :to-equal 79))))
 
 (describe "Sanitizing"
   (it "removes trailing tabs and spaces from all lines."
@@ -1400,7 +1408,19 @@ Baz.
       (expect (buffer-string) :to-equal "")
       (subed-srt--sanitize)
       (expect (buffer-string) :to-equal "")))
-  )
+  (it "runs before saving."
+    (with-temp-srt-buffer
+     (insert mock-srt-data)
+     (goto-char (point-min))
+     (re-search-forward " --> ")
+     (replace-match "  --> ")
+     (re-search-forward " --> ")
+     (replace-match " -->  ")
+     (re-search-forward " --> ")
+     (replace-match "-->")
+     (expect (buffer-string) :not :to-equal mock-srt-data)
+     (subed-prepare-to-save)
+     (expect (buffer-string) :to-equal mock-srt-data))))
 
 (describe "Renumbering"
   (it "ensures consecutive subtitle IDs."
@@ -1411,6 +1431,15 @@ Baz.
         (replace-match "123"))
       (expect (buffer-string) :not :to-equal mock-srt-data)
       (subed-srt--regenerate-ids)
+      (expect (buffer-string) :to-equal mock-srt-data)))
+  (it "runs before saving."
+    (with-temp-srt-buffer
+      (insert mock-srt-data)
+      (goto-char (point-min))
+      (while (looking-at "^[0-9]$")
+        (replace-match "123"))
+      (expect (buffer-string) :not :to-equal mock-srt-data)
+      (subed-prepare-to-save)
       (expect (buffer-string) :to-equal mock-srt-data)))
   (it "does not modify the kill-ring."
     (with-temp-srt-buffer

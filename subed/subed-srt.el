@@ -588,7 +588,10 @@ scheduled call is canceled and another call is scheduled in
                                         ;; a "-" at the start of the line.
                                         (mapconcat 'identity '("^-"
                                                                "[[:graph:]]*$") "\\|")
-                                        "\\)"))))
+                                        "\\)")))
+  (add-hook 'subed-sanitize-functions #'subed-srt--sort nil t)
+  (add-hook 'subed-sanitize-functions #'subed-srt--regenerate-ids t t)
+  (add-hook 'subed-validate-functions #'subed-srt--validate t t))
 
 (provide 'subed-srt)
 ;;; subed-srt.el ends here

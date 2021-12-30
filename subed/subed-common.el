@@ -1313,5 +1313,37 @@ be run in `after-change-functions'."
          'after-string
          (propertize (format " %.1f CPS" cps) 'face 'shadow 'display '(height 0.9)))))))
 
+;;; Sorting and sanitizing
+
+(defvar-local subed-sanitize-functions nil
+  "Functions to sanitize this buffer.
+Functions can clean up whitespace, rearrange subtitles, etc.")
+
+(defvar-local subed-validate-functions nil
+  "Functions to validate this buffer.
+Validation functions should throw an error or prompt the user for
+action.")
+
+(defun subed-prepare-to-save ()
+  "Sanitize and validate this buffer."
+  (interactive)
+  (atomic-change-group
+    (run-hooks 'subed-sanitize-functions)
+    (run-hooks 'subed-validate-functions)))
+
+(defun subed-sort ()
+  "Sort subtitles."
+  (subed-save-excursion
+   (goto-char (point-min))
+   (sort-subr nil
+              ;; nextrecfun (move to next record/subtitle or to end-of-buffer
+              ;; if there are no more records)
+              (lambda () (unless (subed-forward-subtitle-id)
+                           (goto-char (point-max))))
+              ;; endrecfun (move to end of current record/subtitle)
+              #'subed-jump-to-subtitle-end
+              ;; startkeyfun (return sort value of current record/subtitle)
+              #'subed-subtitle-msecs-start)))
+
 (provide 'subed-common)
 ;;; subed-common.el ends here
