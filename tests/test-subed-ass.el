@@ -25,7 +25,7 @@ Dialogue: 0,0:00:17.00,0:00:19.80,Default,,0,0,0,,I hope it works.
 (defmacro with-temp-ass-buffer (&rest body)
   "Call `subed-ass--init' in temporary buffer before running BODY."
   `(with-temp-buffer
-     (subed-ass--init)
+     (subed-ass-mode)
      (progn ,@body)))
 
 (describe "ASS"

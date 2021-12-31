@@ -3094,6 +3094,6 @@ This is another.
         (let ((subed-trim-overlap-check-on-load t)
               (subed-subtitle-spacing 200))
           (spy-on 'subed-trim-overlap-check :and-return-value nil)
-          (subed-mode)
+          (subed-srt-mode)
           (expect subed--subtitle-format :to-equal "srt")
           (expect 'subed-trim-overlap-check :to-have-been-called))))))

@@ -593,5 +593,14 @@ scheduled call is canceled and another call is scheduled in
   (add-hook 'subed-sanitize-functions #'subed-srt--regenerate-ids t t)
   (add-hook 'subed-validate-functions #'subed-srt--validate t t))
 
+;;;###autoload
+(define-derived-mode subed-srt-mode subed-mode "Subed-SRT"
+  "Major mode for editing SubRip subtitle files."
+  (subed--init "srt")
+  (subed-srt--init))
+
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.srt\\'" . subed-srt-mode))
+
 (provide 'subed-srt)
 ;;; subed-srt.el ends here

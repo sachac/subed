@@ -55,7 +55,7 @@ SubRip ( ~.srt~), WebVTT ( ~.vtt~ ), and Advanced SubStation Alpha ( ~.ass~, exp
      time is adjusted, and how much time to leave between subtitles.
 
 *** mpv integration (optional)
-   - Open videos with ~C-c C-v~ or automatically when entering subed-mode if the
+   - Open videos with ~C-c C-v~ or automatically when opening a subtitle file if the
      video file is named like the subtitle file but with a video extension
      (e.g. ~.mkv~ or ~.avi~).
    - Subtitles are automatically reloaded in mpv when the buffer is saved.
@@ -115,7 +115,10 @@ Here's an example setup if you use use-package:
   (add-hook 'subed-mode-hook (lambda () (setq-local fill-column 40))))
 #+END_SRC
 
-~C-h f subed-mode~ should get you started.
+~C-h f subed-mode~ should get you started. This is the parent mode for
+~subed-srt-mode~, ~subed-vtt-mode~, and ~subed-ass-mode~. When
+manually loading a mode, use those specific format modes instead of
+~subed-mode~.
 
 ** Contributions
    Contributions would be really appreciated! subed conforms to the [[https://reuse.software/spec/][REUSE

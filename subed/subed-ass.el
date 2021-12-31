@@ -457,5 +457,14 @@ Update the end timestamp accordingly."
   (setq-local subed--subtitle-format "ass")
   (setq-local font-lock-defaults '(subed-ass-font-lock-keywords)))
 
+;;;###autoload
+(define-derived-mode subed-ass-mode subed-mode "Subed-ASS"
+  "Major mode for editing Advanced SubStation Alpha subtitle files."
+  (subed--init "ass")
+  (subed-ass--init))
+
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.ass\\'" . subed-ass-mode))
+
 (provide 'subed-ass)
 ;;; subed-ass.el ends here

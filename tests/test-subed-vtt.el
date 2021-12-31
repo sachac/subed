@@ -19,7 +19,7 @@ Baz.
 (defmacro with-temp-vtt-buffer (&rest body)
   "Call `subed-vtt--init' in temporary buffer before running BODY."
   `(with-temp-buffer
-    (subed-vtt--init)
+    (subed-vtt-mode)
     (progn ,@body)))
 
 (describe "VTT"

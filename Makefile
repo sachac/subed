@@ -30,3 +30,6 @@ test-compile:
 	emacs --quick --batch --eval "(progn (add-to-list 'load-path (expand-file-name \"subed\" default-directory)) \
 	                                     (byte-compile-file \"subed/subed-debug.el\"))"
 	make clean
+
+test-emacs:
+	emacs -Q -L ./subed --eval "(require 'subed)"

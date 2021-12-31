@@ -561,5 +561,14 @@ Update the end timestamp accordingly."
     (add-hook 'subed-sanitize-functions #'subed-vtt--sort nil t)
     (add-hook 'subed-validate-functions #'subed-vtt--validate t t)))
 
+;;;###autoload
+(define-derived-mode subed-vtt-mode subed-mode "Subed-VTT"
+  "Major mode for editing WebVTT subtitle files."
+  (subed--init "vtt")
+  (subed-vtt--init))
+
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.vtt\\'" . subed-vtt-mode))
+
 (provide 'subed-vtt)
 ;;; subed-vtt.el ends here

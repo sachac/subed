@@ -20,7 +20,7 @@ Baz.
 (defmacro with-temp-srt-buffer (&rest body)
   "Call `subed-srt--init' in temporary buffer before running BODY."
   `(with-temp-buffer
-    (subed-srt--init)
+    (subed-srt-mode)
     (progn ,@body)))
 
 (describe "Getting"

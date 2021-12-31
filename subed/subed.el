@@ -136,13 +136,15 @@
   "Return the format-specific function for the current buffer for FUNC-SUFFIX."
   (intern (concat "subed-" subed--subtitle-format "--" func-suffix)))
 
-(defun subed--init ()
-  "Call subtitle format-specific init function and (re-)alias generic functions."
+(defun subed--init (&optional format)
+  "Call subtitle format-specific init function and (re-)alias generic functions.
+If FORMAT is specified, use that.  If not, load the format
+specified in `subed--init-alist'."
   ;; Call format-specific init function based on file extension and
   ;; `subed--init-alist'.
   (let* ((file-ext (when (buffer-file-name)
                      (file-name-extension (buffer-file-name))))
-         (init-func (alist-get file-ext subed--init-alist nil nil 'equal)))
+         (init-func (alist-get (or format file-ext) subed--init-alist nil nil 'equal)))
     (if (functionp init-func)
         (funcall init-func)
       (error "Missing init function: %S" init-func))
@@ -156,24 +158,44 @@
              (unless (functionp specific-func)
                (error "Missing subtitle format-specific function: %s" specific-func))
              (if (functionp specific-func)
-               (let* ((argspec (help-function-arglist specific-func))
-                      (argvars (seq-filter (lambda (argvar)
-                                             (let ((first-char (substring (symbol-name argvar) 0 1)))
-                                               (not (equal first-char "&"))))
-                                           argspec)))
-                 (defalias generic-func
-                   `(lambda ,argspec
-                      ,(interactive-form specific-func) ;; (interactive ...) or nil
-                      (let (;; Get the format-specific function for the current
-                            ;; buffer.  We must do this every time the generic
-                            ;; function is called because the result depends on
-                            ;; the buffer-local variable `subed--subtitle-format'.
-                            (specific-func (subed--get-specific-func ,func-suffix))
-                            ;; Turn the list of variable names into a list of
-                            ;; corresponding values.
-                            (argvals (mapcar 'eval ',argvars)))
-                        (apply specific-func argvals)))
-                   (documentation specific-func t)))))))
+                 (let* ((argspec (help-function-arglist specific-func))
+                        (argvars (seq-filter (lambda (argvar)
+                                               (let ((first-char (substring (symbol-name argvar) 0 1)))
+                                                 (not (equal first-char "&"))))
+                                             argspec)))
+                   (defalias generic-func
+                     `(lambda ,argspec
+                        ,(interactive-form specific-func) ;; (interactive ...) or nil
+                        (let (;; Get the format-specific function for the current
+                              ;; buffer.  We must do this every time the generic
+                              ;; function is called because the result depends on
+                              ;; the buffer-local variable `subed--subtitle-format'.
+                              (specific-func (subed--get-specific-func ,func-suffix))
+                              ;; Turn the list of variable names into a list of
+                              ;; corresponding values.
+                              (argvals (mapcar 'eval ',argvars)))
+                          (apply specific-func argvals)))
+                     (documentation specific-func t)))))))
+
+(defun subed-auto-find-video-maybe ()
+  "Load video associated with this subtitle file."
+  (let ((video-file (subed-guess-video-file)))
+      (when video-file
+        (subed-debug "Auto-discovered video file: %s" video-file)
+        (condition-case err
+            (subed-mpv-find-video video-file)
+          (error (message "%s -- Set subed-auto-find-video to nil to avoid this error."
+                          (car (cdr err))))))))
+
+;; TODO: Make these more configurable.
+(defun subed-set-up-defaults ()
+  "Quietly enable some recommended defaults."
+  (subed-enable-pause-while-typing :quiet)
+  (subed-enable-sync-point-to-player :quiet)
+  (subed-enable-sync-player-to-point :quiet)
+  (subed-enable-replay-adjusted-subtitle :quiet)
+  (subed-enable-loop-over-current-subtitle :quiet)
+  (subed-enable-show-cps :quiet))
 
 ;;;###autoload
 (define-derived-mode subed-mode text-mode "subed"
@@ -191,7 +213,6 @@ Adjust - Increase or decrease start or stop time of a subtitle
 Key bindings:
 \\{subed-mode-map}"
   :group 'subed
-  (subed--init)
   (add-hook 'post-command-hook #'subed--post-command-handler :append :local)
   (add-hook 'before-save-hook #'subed-prepare-for-save :append :local)
   (add-hook 'after-save-hook #'subed-mpv-reload-subtitles :append :local)
@@ -199,31 +220,9 @@ Key bindings:
   (add-hook 'kill-emacs-hook #'subed-mpv-kill :append :local)
   (when subed-trim-overlap-check-on-load
     (add-hook 'subed-mode-hook #'subed-trim-overlap-check :append :local))
+  (add-hook 'subed-mode-hook #'subed-set-up-defaults :append :local)
   (when subed-auto-find-video
-    (let ((video-file (subed-guess-video-file)))
-      (when video-file
-        (subed-debug "Auto-discovered video file: %s" video-file)
-        (condition-case err
-            (subed-mpv-find-video video-file)
-          (error (message "%s -- Set subed-auto-find-video to nil to avoid this error."
-                          (car (cdr err))))))))
-  (subed-enable-pause-while-typing :quiet)
-  (subed-enable-sync-point-to-player :quiet)
-  (subed-enable-sync-player-to-point :quiet)
-  (subed-enable-replay-adjusted-subtitle :quiet)
-  (subed-enable-loop-over-current-subtitle :quiet)
-  (subed-enable-show-cps :quiet))
-
-;; Internally, supported formats are listed in `subed--init-alist', which
-;; associates file extensions with format-specific init methods (e.g. "srt" ->
-;; subed-srt--init).  Here we map each file extension as a regexp to
-;; `subed-mode-enable', which will call the format-specific init method and do
-;; generic init stuff.
-;;;###autoload
-(dolist (item subed--init-alist)
-  (let ((file-ext-regex (car item)))
-    (add-to-list 'auto-mode-alist (cons (concat "\\." file-ext-regex "\\'")
-                                        'subed-mode))))
+    (add-hook 'subed-mode-hook #'subed-auto-find-video-maybe :append :local)))
 
 (provide 'subed)
 ;;; subed.el ends here
