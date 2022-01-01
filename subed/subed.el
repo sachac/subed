@@ -90,102 +90,15 @@
 						 html-tag-keymap))
     subed-mode-map))
 
-;;;###autoload
-(defvar subed--init-alist '(("srt" . subed-srt--init)
-                            ("vtt" . subed-vtt--init)
-                            ("ass" . subed-ass--init))
-  "Alist that maps file extensions to format-specific init functions.")
-
-;;; Abstraction hack to support different subtitle formats
-;;
-;; We need subtitle format-specific functions for each individual buffer so it
-;; is possible to open a .srt and a .sub file in the same Emacs session.
-;; Buffer-local functions don't exist in Elisp, but we can store the format in a
-;; buffer-local variable.
-;;
-;; `subed-mode-enable' runs a format-specific init function based on the file
-;; extension.  The init function sets the buffer-local variable
-;; `subed--subtitle-format' which is then used by generic functions to assemble
-;; the names of format-specific functions on the fly (e.g. (concat "subed-"
-;; subed-subtitle-format "--subtitle-id")).
-
-(defvar subed--generic-function-suffixes
-  (list "subtitle-id" "subtitle-id-max" "subtitle-id-at-msecs"
-        "subtitle-msecs-start" "subtitle-msecs-stop"
-        "subtitle-text" "subtitle-relative-point"
-        "msecs-to-timestamp" "timestamp-to-msecs"
-        "jump-to-subtitle-id" "jump-to-subtitle-id-at-msecs"
-        "jump-to-subtitle-time-start" "jump-to-subtitle-time-stop"
-        "jump-to-subtitle-text" "jump-to-subtitle-text-at-msecs"
-        "jump-to-subtitle-end"
-        "forward-subtitle-id" "backward-subtitle-id"
-        "forward-subtitle-text" "backward-subtitle-text"
-        "forward-subtitle-end" "backward-subtitle-end"
-        "forward-subtitle-time-start" "backward-subtitle-time-start"
-        "forward-subtitle-time-stop" "backward-subtitle-time-stop"
-        "set-subtitle-time-start" "set-subtitle-time-stop"
-        "prepend-subtitle" "append-subtitle" "kill-subtitle" "merge-with-next"
-        "regenerate-ids" "regenerate-ids-soon"
-        "sanitize" "validate" "sort" "make-subtitle"))
-
-(defun subed--get-generic-func (func-suffix)
-  "Return the generic/public function for FUNC-SUFFIX."
-  (intern (concat "subed-" func-suffix)))
-
-(defun subed--get-specific-func (func-suffix)
-  "Return the format-specific function for the current buffer for FUNC-SUFFIX."
-  (intern (concat "subed-" subed--subtitle-format "--" func-suffix)))
-
-(defun subed--init (&optional format)
-  "Call subtitle format-specific init function and (re-)alias generic functions.
-If FORMAT is specified, use that.  If not, load the format
-specified in `subed--init-alist'."
-  ;; Call format-specific init function based on file extension and
-  ;; `subed--init-alist'.
-  (let* ((file-ext (when (buffer-file-name)
-                     (file-name-extension (buffer-file-name))))
-         (init-func (alist-get (or format file-ext) subed--init-alist nil nil 'equal)))
-    (if (functionp init-func)
-        (funcall init-func)
-      (error "Missing init function: %S" init-func))
-    (unless subed--subtitle-format
-      (error "%S failed to set buffer-local variable: subed--subtitle-format"
-             init-func)))
-  ;; Define generic functions like `subed-subtitle-text'.
-  (cl-loop for func-suffix in subed--generic-function-suffixes do
-           (let ((generic-func (subed--get-generic-func func-suffix))
-                 (specific-func (subed--get-specific-func func-suffix)))
-             (unless (functionp specific-func)
-               (error "Missing subtitle format-specific function: %s" specific-func))
-             (if (functionp specific-func)
-                 (let* ((argspec (help-function-arglist specific-func))
-                        (argvars (seq-filter (lambda (argvar)
-                                               (let ((first-char (substring (symbol-name argvar) 0 1)))
-                                                 (not (equal first-char "&"))))
-                                             argspec)))
-                   (defalias generic-func
-                     `(lambda ,argspec
-                        ,(interactive-form specific-func) ;; (interactive ...) or nil
-                        (let (;; Get the format-specific function for the current
-                              ;; buffer.  We must do this every time the generic
-                              ;; function is called because the result depends on
-                              ;; the buffer-local variable `subed--subtitle-format'.
-                              (specific-func (subed--get-specific-func ,func-suffix))
-                              ;; Turn the list of variable names into a list of
-                              ;; corresponding values.
-                              (argvals (mapcar 'eval ',argvars)))
-                          (apply specific-func argvals)))
-                     (documentation specific-func t)))))))
-
 (defun subed-auto-find-video-maybe ()
   "Load video associated with this subtitle file."
   (let ((video-file (subed-guess-video-file)))
-      (when video-file
-        (subed-debug "Auto-discovered video file: %s" video-file)
-        (condition-case err
-            (subed-mpv-find-video video-file)
-          (error (message "%s -- Set subed-auto-find-video to nil to avoid this error."
-                          (car (cdr err))))))))
+    (when video-file
+      (subed-debug "Auto-discovered video file: %s" video-file)
+      (condition-case err
+          (subed-mpv-find-video video-file)
+        (error (message "%s -- Set subed-auto-find-video to nil to avoid this error."
+                        (car (cdr err))))))))
 
 ;; TODO: Make these more configurable.
 (defun subed-set-up-defaults ()

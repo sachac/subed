@@ -16,6 +16,10 @@ test:
 	emacs --quick --batch --eval "(checkdoc-file \"subed/subed-mpv.el\")"
 	emacs --quick --batch --eval "(checkdoc-file \"subed/subed-srt.el\")"
 
+autoloads:
+	emacs --quick --batch --eval "(progn (setq generated-autoload-file (expand-file-name \"subed-autoloads.el\" \"subed\") backup-inhibited t) \
+	(update-directory-autoloads \"./subed\"))"
+
 test-compile:
 	emacs --quick --batch --eval "(progn (add-to-list 'load-path (expand-file-name \"subed\" default-directory)) \
 	                                     (byte-compile-file \"subed/subed.el\"))"
@@ -27,6 +31,10 @@ test-compile:
 	                                     (byte-compile-file \"subed/subed-mpv.el\"))"
 	emacs --quick --batch --eval "(progn (add-to-list 'load-path (expand-file-name \"subed\" default-directory)) \
 	                                     (byte-compile-file \"subed/subed-srt.el\"))"
+	emacs --quick --batch --eval "(progn (add-to-list 'load-path (expand-file-name \"subed\" default-directory)) \
+	                                     (byte-compile-file \"subed/subed-vtt.el\"))"
+	emacs --quick --batch --eval "(progn (add-to-list 'load-path (expand-file-name \"subed\" default-directory)) \
+	                                     (byte-compile-file \"subed/subed-ass.el\"))"
 	emacs --quick --batch --eval "(progn (add-to-list 'load-path (expand-file-name \"subed\" default-directory)) \
 	                                     (byte-compile-file \"subed/subed-debug.el\"))"
 	make clean

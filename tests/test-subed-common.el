@@ -24,7 +24,7 @@ Baz.
   `(with-temp-buffer
      ;; subed--init uses file extension to detect format
      (setq buffer-file-name "test.srt")
-     (subed--init)
+     (subed-srt-mode)
      (progn ,@body)))
 
 (describe "Iterating over subtitles"
@@ -971,18 +971,18 @@ Baz.
       (it "a single subtile."
         (cl-loop for arg in (list nil 1) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (expect (subed-insert-subtitle arg) :to-equal 33)
                    (expect (buffer-string) :to-equal (concat "0\n"
                                                              "00:00:00,000 --> 00:00:01,000\n"
                                                              "\n"))
                    (expect (point) :to-equal 33)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       (it "multiple subtiles."
         (cl-loop for arg in (list 2) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (expect (subed-insert-subtitle arg) :to-equal 33)
                    (expect (buffer-string) :to-equal (concat "0\n"
                                                              "00:00:00,000 --> 00:00:01,000\n"
@@ -991,25 +991,25 @@ Baz.
                                                              "00:00:01,100 --> 00:00:02,100\n"
                                                              "\n"))
                    (expect (point) :to-equal 33)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       )
     (describe "prepending"
       (it "a single subtile."
         (cl-loop for arg in (list '- -1 (list 4)) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (expect (subed-insert-subtitle arg) :to-equal 33)
                    (expect (buffer-string) :to-equal (concat "0\n"
                                                              "00:00:00,000 --> 00:00:01,000\n"
                                                              "\n"))
                    (expect (point) :to-equal 33)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       (it "multiple subtiles."
         (cl-loop for arg in (list -2 (list -16)) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (expect (subed-insert-subtitle arg) :to-equal 33)
                    (expect (buffer-string) :to-equal (concat "0\n"
                                                              "00:00:00,000 --> 00:00:01,000\n"
@@ -1018,8 +1018,8 @@ Baz.
                                                              "00:00:01,100 --> 00:00:02,100\n"
                                                              "\n"))
                    (expect (point) :to-equal 33)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       )
     )
   (describe "in a non-empty buffer"
@@ -1027,7 +1027,7 @@ Baz.
       (it "a single subtitle."
         (cl-loop for arg in (list '- -1 (list 4)) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:00:59,000 --> 00:01:00,000\n"
                                    "Foo.\n\n"
@@ -1046,12 +1046,12 @@ Baz.
                                                              "00:02:00,000 --> 00:02:01,000\n"
                                                              "Bar.\n"))
                    (expect (point) :to-equal 71)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       (it "multiple subtitles."
         (cl-loop for arg in (list -2 (list 16)) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:00:59,000 --> 00:01:00,000\n"
                                    "Foo.\n\n"
@@ -1073,14 +1073,14 @@ Baz.
                                                              "00:02:00,000 --> 00:02:01,000\n"
                                                              "Bar.\n"))
                    (expect (point) :to-equal 71)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       )
     (describe "appending between subtitles"
       (it "a single subtitle."
         (cl-loop for arg in (list nil 1) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:00:59,000 --> 00:01:00,000\n"
                                    "Foo.\n\n"
@@ -1099,12 +1099,12 @@ Baz.
                                                              "00:02:00,000 --> 00:02:01,000\n"
                                                              "Bar.\n"))
                    (expect (point) :to-equal 71)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       (it "multiple subtitles."
         (cl-loop for arg in (list 2) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:00:59,000 --> 00:01:00,000\n"
                                    "Foo.\n\n"
@@ -1126,18 +1126,18 @@ Baz.
                                                              "00:02:00,000 --> 00:02:01,000\n"
                                                              "Bar.\n"))
                    (expect (point) :to-equal 71)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       )
     (describe "prepending to the first subtitle"
       (it "a single subtitle."
         (cl-loop for arg in (list '- -1 (list 4)) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:01:00,000 --> 00:01:01,000\n"
                                    "Foo.\n"))
-                   (subed-srt--jump-to-subtitle-text 1)
+                   (subed-jump-to-subtitle-text 1)
                    (expect (subed-insert-subtitle arg) :to-equal 33)
                    (expect (buffer-string) :to-equal (concat "0\n"
                                                              "00:00:30,000 --> 00:00:31,000\n"
@@ -1146,16 +1146,16 @@ Baz.
                                                              "00:01:00,000 --> 00:01:01,000\n"
                                                              "Foo.\n"))
                    (expect (point) :to-equal 33)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       (it "multiple subtitles."
         (cl-loop for arg in (list -2 (list 16)) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:01:00,000 --> 00:01:01,000\n"
                                    "Foo.\n"))
-                   (subed-srt--jump-to-subtitle-text 1)
+                   (subed-jump-to-subtitle-text 1)
                    (expect (subed-insert-subtitle arg) :to-equal 33)
                    (expect (buffer-string) :to-equal (concat "0\n"
                                                              "00:00:20,000 --> 00:00:21,000\n"
@@ -1167,18 +1167,18 @@ Baz.
                                                              "00:01:00,000 --> 00:01:01,000\n"
                                                              "Foo.\n"))
                    (expect (point) :to-equal 33)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       )
     (describe "appending to the last subtitle"
       (it "a single subtitle."
         (cl-loop for arg in (list nil 1) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:00:59,000 --> 00:01:00,000\n"
                                    "Foo.\n"))
-                   (subed-srt--jump-to-subtitle-text 1)
+                   (subed-jump-to-subtitle-text 1)
                    (expect (subed-insert-subtitle arg) :to-equal 71)
                    (expect (buffer-string) :to-equal (concat "1\n"
                                                              "00:00:59,000 --> 00:01:00,000\n"
@@ -1187,15 +1187,15 @@ Baz.
                                                              "00:01:00,100 --> 00:01:01,100\n"
                                                              "\n"))
                    (expect (point) :to-equal 71)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       (it "multiple subtitles."
         (cl-loop for arg in (list 2) do
                  (with-temp-srt-buffer
                    (insert (concat "1\n"
                                    "00:00:59,000 --> 00:01:00,000\n"
                                    "Foo.\n"))
-                   (subed-srt--jump-to-subtitle-text 3)
+                   (subed-jump-to-subtitle-text 3)
                    (expect (subed-insert-subtitle arg) :to-equal 71)
                    (expect (buffer-string) :to-equal (concat "1\n"
                                                              "00:00:59,000 --> 00:01:00,000\n"
@@ -1213,14 +1213,14 @@ Baz.
         (it "a single subtitle."
           (cl-loop for arg in (list nil 1) do
                    (with-temp-srt-buffer
-                     (spy-on 'subed-regenerate-ids-soon)
+                     (spy-on 'subed-srt--regenerate-ids-soon)
                      (insert (concat "1\n"
                                      "00:00:59,000 --> 00:01:00,000\n"
                                      "Foo.\n\n"
                                      "2\n"
                                      "00:01:00,600 --> 00:01:02,000\n"
                                      "Foo.\n"))
-                     (subed-srt--jump-to-subtitle-text 1)
+                     (subed-jump-to-subtitle-text 1)
                      (expect (subed-insert-subtitle arg) :to-equal 71)
                      (expect (buffer-string) :to-equal (concat "1\n"
                                                                "00:00:59,000 --> 00:01:00,000\n"
@@ -1232,19 +1232,19 @@ Baz.
                                                                "00:01:00,600 --> 00:01:02,000\n"
                                                                "Foo.\n"))
                      (expect (point) :to-equal 71)
-                     (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                     (spy-calls-reset 'subed-regenerate-ids-soon))))
+                     (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                     (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
         (it "multiple subtitles."
           (cl-loop for arg in (list 2) do
                    (with-temp-srt-buffer
-                     (spy-on 'subed-regenerate-ids-soon)
+                     (spy-on 'subed-srt--regenerate-ids-soon)
                      (insert (concat "1\n"
                                      "00:00:59,000 --> 00:01:00,000\n"
                                      "Foo.\n\n"
                                      "2\n"
                                      "00:01:00,600 --> 00:01:02,000\n"
                                      "Foo.\n"))
-                     (subed-srt--jump-to-subtitle-text 1)
+                     (subed-jump-to-subtitle-text 1)
                      (expect (subed-insert-subtitle arg) :to-equal 71)
                      (expect (buffer-string) :to-equal (concat "1\n"
                                                                "00:00:59,000 --> 00:01:00,000\n"
@@ -1259,22 +1259,22 @@ Baz.
                                                                "00:01:00,600 --> 00:01:02,000\n"
                                                                "Foo.\n"))
                      (expect (point) :to-equal 71)
-                     (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                     (spy-calls-reset 'subed-regenerate-ids-soon))))
+                     (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                     (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
         )
       (describe "to prepend"
         (describe "between subtitles"
           (it "a single subtitle."
             (cl-loop for arg in (list '- -1 (list 4)) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:57,000 --> 00:00:59,100\n"
                                        "Foo.\n\n"
                                        "2\n"
                                        "00:01:00,000 --> 00:01:02,000\n"
                                        "Foo.\n"))
-                       (subed-srt--jump-to-subtitle-text 2)
+                       (subed-jump-to-subtitle-text 2)
                        (expect (subed-insert-subtitle arg) :to-equal 71)
                        (expect (buffer-string) :to-equal (concat "1\n"
                                                                  "00:00:57,000 --> 00:00:59,100\n"
@@ -1286,19 +1286,19 @@ Baz.
                                                                  "00:01:00,000 --> 00:01:02,000\n"
                                                                  "Foo.\n"))
                        (expect (point) :to-equal 71)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           (it "multiple subtitles."
             (cl-loop for arg in (list -2 (list 16)) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:57,000 --> 00:00:59,100\n"
                                        "Foo.\n\n"
                                        "2\n"
                                        "00:01:00,000 --> 00:01:02,000\n"
                                        "Foo.\n"))
-                       (subed-srt--jump-to-subtitle-text 2)
+                       (subed-jump-to-subtitle-text 2)
                        (expect (subed-insert-subtitle arg) :to-equal 71)
                        (expect (buffer-string) :to-equal (concat "1\n"
                                                                  "00:00:57,000 --> 00:00:59,100\n"
@@ -1313,18 +1313,18 @@ Baz.
                                                                  "00:01:00,000 --> 00:01:02,000\n"
                                                                  "Foo.\n"))
                        (expect (point) :to-equal 71)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           )
         (describe "before the first subtitle"
           (it "a single subtitle."
             (cl-loop for arg in (list '- -1 (list 4)) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:00,500 --> 00:00:02,000\n"
                                        "Foo.\n"))
-                       (subed-srt--jump-to-subtitle-text 1)
+                       (subed-jump-to-subtitle-text 1)
                        (expect (subed-insert-subtitle arg) :to-equal 33)
                        (expect (buffer-string) :to-equal (concat "0\n"
                                                                  "00:00:00,100 --> 00:00:00,400\n"
@@ -1333,16 +1333,16 @@ Baz.
                                                                  "00:00:00,500 --> 00:00:02,000\n"
                                                                  "Foo.\n"))
                        (expect (point) :to-equal 33)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           (it "multiple subtitles."
             (cl-loop for arg in (list -2 (list 16)) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:00,600 --> 00:00:01,500\n"
                                        "Foo.\n"))
-                       (subed-srt--jump-to-subtitle-text 1)
+                       (subed-jump-to-subtitle-text 1)
                        (expect (subed-insert-subtitle arg) :to-equal 33)
                        (expect (buffer-string) :to-equal (concat "0\n"
                                                                  "00:00:00,100 --> 00:00:00,250\n"
@@ -1354,8 +1354,8 @@ Baz.
                                                                  "00:00:00,600 --> 00:00:01,500\n"
                                                                  "Foo.\n"))
                        (expect (point) :to-equal 33)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           )
         )
       )
@@ -1365,14 +1365,14 @@ Baz.
           (it "a single subtitle."
             (cl-loop for arg in (list '- -1 (list 4)) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:55,000 --> 00:00:59,950\n"
                                        "Foo.\n\n"
                                        "2\n"
                                        "00:01:00,000 --> 00:01:02,000\n"
                                        "Bar.\n"))
-                       (subed-srt--jump-to-subtitle-text 2)
+                       (subed-jump-to-subtitle-text 2)
                        (expect (subed-insert-subtitle arg) :to-equal 71)
                        (expect (buffer-string) :to-equal (concat "1\n"
                                                                  "00:00:55,000 --> 00:00:59,950\n"
@@ -1384,19 +1384,19 @@ Baz.
                                                                  "00:01:00,000 --> 00:01:02,000\n"
                                                                  "Bar.\n"))
                        (expect (point) :to-equal 71)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           (it "multiple subtitles."
             (cl-loop for arg in (list -2 (list 16)) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:57,000 --> 00:00:59,999\n"
                                        "Foo.\n\n"
                                        "2\n"
                                        "00:01:00,000 --> 00:01:02,000\n"
                                        "Bar.\n"))
-                       (subed-srt--jump-to-subtitle-text 2)
+                       (subed-jump-to-subtitle-text 2)
                        (expect (subed-insert-subtitle arg) :to-equal 71)
                        (expect (buffer-string) :to-equal (concat "1\n"
                                                                  "00:00:57,000 --> 00:00:59,999\n"
@@ -1411,21 +1411,21 @@ Baz.
                                                                  "00:01:00,000 --> 00:01:02,000\n"
                                                                  "Bar.\n"))
                        (expect (point) :to-equal 71)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           )
         (describe "when appending"
           (it "a single subtitle."
             (cl-loop for arg in (list nil 1) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:59,000 --> 00:01:00,000\n"
                                        "Foo.\n\n"
                                        "2\n"
                                        "00:01:00,010 --> 00:01:02,000\n"
                                        "Bar.\n"))
-                       (subed-srt--jump-to-subtitle-text 1)
+                       (subed-jump-to-subtitle-text 1)
                        (expect (subed-insert-subtitle arg) :to-equal 71)
                        (expect (buffer-string) :to-equal (concat "1\n"
                                                                  "00:00:59,000 --> 00:01:00,000\n"
@@ -1437,19 +1437,19 @@ Baz.
                                                                  "00:01:00,010 --> 00:01:02,000\n"
                                                                  "Bar.\n"))
                        (expect (point) :to-equal 71)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           (it "multiple subtitles."
             (cl-loop for arg in (list 2) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:59,000 --> 00:01:00,000\n"
                                        "Foo.\n\n"
                                        "2\n"
                                        "00:01:00,100 --> 00:01:02,000\n"
                                        "Bar.\n"))
-                       (subed-srt--jump-to-subtitle-text 1)
+                       (subed-jump-to-subtitle-text 1)
                        (expect (subed-insert-subtitle arg) :to-equal 71)
                        (expect (buffer-string) :to-equal (concat "1\n"
                                                                  "00:00:59,000 --> 00:01:00,000\n"
@@ -1464,19 +1464,19 @@ Baz.
                                                                  "00:01:00,100 --> 00:01:02,000\n"
                                                                  "Bar.\n"))
                        (expect (point) :to-equal 71)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           )
         )
       (describe "before the first subtitle"
         (it "a single subtitle."
           (cl-loop for arg in (list '- -1 (list 4)) do
                    (with-temp-srt-buffer
-                     (spy-on 'subed-regenerate-ids-soon)
+                     (spy-on 'subed-srt--regenerate-ids-soon)
                      (insert (concat "1\n"
                                      "00:00:00,050 --> 00:00:02,000\n"
                                      "Foo.\n"))
-                     (subed-srt--jump-to-subtitle-text 1)
+                     (subed-jump-to-subtitle-text 1)
                      (expect (subed-insert-subtitle arg) :to-equal 33)
                      (expect (buffer-string) :to-equal (concat "0\n"
                                                                "00:00:00,000 --> 00:00:00,000\n"
@@ -1485,16 +1485,16 @@ Baz.
                                                                "00:00:00,050 --> 00:00:02,000\n"
                                                                "Foo.\n"))
                      (expect (point) :to-equal 33)
-                     (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                     (spy-calls-reset 'subed-regenerate-ids-soon))))
+                     (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                     (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
         (it "multiple subtitles."
           (cl-loop for arg in (list -2 (list 16)) do
                    (with-temp-srt-buffer
-                     (spy-on 'subed-regenerate-ids-soon)
+                     (spy-on 'subed-srt--regenerate-ids-soon)
                      (insert (concat "1\n"
                                      "00:00:00,100 --> 00:00:01,500\n"
                                      "Foo.\n"))
-                     (subed-srt--jump-to-subtitle-text 1)
+                     (subed-jump-to-subtitle-text 1)
                      (expect (subed-insert-subtitle arg) :to-equal 33)
                      (expect (buffer-string) :to-equal (concat "0\n"
                                                                "00:00:00,000 --> 00:00:00,000\n"
@@ -1506,8 +1506,8 @@ Baz.
                                                                "00:00:00,100 --> 00:00:01,500\n"
                                                                "Foo.\n"))
                      (expect (point) :to-equal 33)
-                     (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                     (spy-calls-reset 'subed-regenerate-ids-soon))))
+                     (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                     (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
         )
       )
     )
@@ -1519,18 +1519,18 @@ Baz.
       (it "a single subtile."
         (cl-loop for arg in (list nil 1) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (expect (subed-insert-subtitle-adjacent arg) :to-equal 33)
                    (expect (buffer-string) :to-equal (concat "0\n"
                                                              "00:00:00,000 --> 00:00:01,000\n"
                                                              "\n"))
                    (expect (point) :to-equal 33)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       (it "multiple subtiles."
         (cl-loop for arg in (list 2) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (expect (subed-insert-subtitle-adjacent arg) :to-equal 33)
                    (expect (buffer-string) :to-equal (concat "0\n"
                                                              "00:00:00,000 --> 00:00:01,000\n"
@@ -1539,25 +1539,25 @@ Baz.
                                                              "00:00:01,100 --> 00:00:02,100\n"
                                                              "\n"))
                    (expect (point) :to-equal 33)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       )
     (describe "prepending"
       (it "a single subtile."
         (cl-loop for arg in (list '- -1 (list 4)) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (expect (subed-insert-subtitle-adjacent arg) :to-equal 33)
                    (expect (buffer-string) :to-equal (concat "0\n"
                                                              "00:00:00,000 --> 00:00:01,000\n"
                                                              "\n"))
                    (expect (point) :to-equal 33)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       (it "multiple subtiles."
         (cl-loop for arg in (list -2 (list -16)) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (expect (subed-insert-subtitle-adjacent arg) :to-equal 33)
                    (expect (buffer-string) :to-equal (concat "0\n"
                                                              "00:00:00,000 --> 00:00:01,000\n"
@@ -1566,8 +1566,8 @@ Baz.
                                                              "00:00:01,100 --> 00:00:02,100\n"
                                                              "\n"))
                    (expect (point) :to-equal 33)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       )
     )
   (describe "in a non-empty buffer"
@@ -1575,7 +1575,7 @@ Baz.
       (it "a single subtitle."
         (cl-loop for arg in (list '- -1 (list 4)) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:00:59,000 --> 00:01:00,000\n"
                                    "Foo.\n\n"
@@ -1594,12 +1594,12 @@ Baz.
                                                              "00:02:00,000 --> 00:02:01,000\n"
                                                              "Bar.\n"))
                    (expect (point) :to-equal 71)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       (it "multiple subtitles."
         (cl-loop for arg in (list -2 (list 16)) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:00:59,000 --> 00:01:00,000\n"
                                    "Foo.\n\n"
@@ -1621,14 +1621,14 @@ Baz.
                                                              "00:02:00,000 --> 00:02:01,000\n"
                                                              "Bar.\n"))
                    (expect (point) :to-equal 71)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       )
     (describe "appending between subtitles"
       (it "a single subtitle."
         (cl-loop for arg in (list nil 1) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:00:59,000 --> 00:01:00,000\n"
                                    "Foo.\n\n"
@@ -1647,12 +1647,12 @@ Baz.
                                                              "00:02:00,000 --> 00:02:01,000\n"
                                                              "Bar.\n"))
                    (expect (point) :to-equal 71)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       (it "multiple subtitles."
         (cl-loop for arg in (list 2) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:00:59,000 --> 00:01:00,000\n"
                                    "Foo.\n\n"
@@ -1674,18 +1674,18 @@ Baz.
                                                              "00:02:00,000 --> 00:02:01,000\n"
                                                              "Bar.\n"))
                    (expect (point) :to-equal 71)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       )
     (describe "prepending to the first subtitle"
       (it "a single subtitle."
         (cl-loop for arg in (list '- -1 (list 4)) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:01:00,000 --> 00:01:01,000\n"
                                    "Foo.\n"))
-                   (subed-srt--jump-to-subtitle-text 1)
+                   (subed-jump-to-subtitle-text 1)
                    (expect (subed-insert-subtitle-adjacent arg) :to-equal 33)
                    (expect (buffer-string) :to-equal (concat "0\n"
                                                              "00:00:58,900 --> 00:00:59,900\n"
@@ -1694,16 +1694,16 @@ Baz.
                                                              "00:01:00,000 --> 00:01:01,000\n"
                                                              "Foo.\n"))
                    (expect (point) :to-equal 33)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       (it "multiple subtitles."
         (cl-loop for arg in (list -2 (list 16)) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:01:00,000 --> 00:01:01,000\n"
                                    "Foo.\n"))
-                   (subed-srt--jump-to-subtitle-text 1)
+                   (subed-jump-to-subtitle-text 1)
                    (expect (subed-insert-subtitle-adjacent arg) :to-equal 33)
                    (expect (buffer-string) :to-equal (concat "0\n"
                                                              "00:00:57,800 --> 00:00:58,800\n"
@@ -1715,18 +1715,18 @@ Baz.
                                                              "00:01:00,000 --> 00:01:01,000\n"
                                                              "Foo.\n"))
                    (expect (point) :to-equal 33)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       )
     (describe "appending to the last subtitle"
       (it "a single subtitle."
         (cl-loop for arg in (list nil 1) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:00:59,000 --> 00:01:00,000\n"
                                    "Foo.\n"))
-                   (subed-srt--jump-to-subtitle-text 1)
+                   (subed-jump-to-subtitle-text 1)
                    (expect (subed-insert-subtitle-adjacent arg) :to-equal 71)
                    (expect (buffer-string) :to-equal (concat "1\n"
                                                              "00:00:59,000 --> 00:01:00,000\n"
@@ -1735,16 +1735,16 @@ Baz.
                                                              "00:01:00,100 --> 00:01:01,100\n"
                                                              "\n"))
                    (expect (point) :to-equal 71)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       (it "multiple subtitles."
         (cl-loop for arg in (list 2) do
                  (with-temp-srt-buffer
-                   (spy-on 'subed-regenerate-ids-soon)
+                   (spy-on 'subed-srt--regenerate-ids-soon)
                    (insert (concat "1\n"
                                    "00:00:59,000 --> 00:01:00,000\n"
                                    "Foo.\n"))
-                   (subed-srt--jump-to-subtitle-text 3)
+                   (subed-jump-to-subtitle-text 3)
                    (expect (subed-insert-subtitle-adjacent arg) :to-equal 71)
                    (expect (buffer-string) :to-equal (concat "1\n"
                                                              "00:00:59,000 --> 00:01:00,000\n"
@@ -1756,22 +1756,22 @@ Baz.
                                                              "00:01:01,200 --> 00:01:02,200\n"
                                                              "\n"))
                    (expect (point) :to-equal 71)
-                   (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                   (spy-calls-reset 'subed-regenerate-ids-soon))))
+                   (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                   (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
       )
     (describe "when there is not enough time for the subtitles"
       (describe "to append"
         (it "a single subtitle."
           (cl-loop for arg in (list nil 1) do
                    (with-temp-srt-buffer
-                     (spy-on 'subed-regenerate-ids-soon)
+                     (spy-on 'subed-srt--regenerate-ids-soon)
                      (insert (concat "1\n"
                                      "00:00:59,000 --> 00:01:00,000\n"
                                      "Foo.\n\n"
                                      "2\n"
                                      "00:01:00,500 --> 00:01:05,000\n"
                                      "Bar.\n"))
-                     (subed-srt--jump-to-subtitle-text 1)
+                     (subed-jump-to-subtitle-text 1)
                      (expect (subed-insert-subtitle-adjacent arg) :to-equal 71)
                      (expect (buffer-string) :to-equal (concat "1\n"
                                                                "00:00:59,000 --> 00:01:00,000\n"
@@ -1783,19 +1783,19 @@ Baz.
                                                                "00:01:00,500 --> 00:01:05,000\n"
                                                                "Bar.\n"))
                      (expect (point) :to-equal 71)
-                     (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                     (spy-calls-reset 'subed-regenerate-ids-soon))))
+                     (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                     (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
         (it "multiple subtitles."
           (cl-loop for arg in (list 2) do
                    (with-temp-srt-buffer
-                     (spy-on 'subed-regenerate-ids-soon)
+                     (spy-on 'subed-srt--regenerate-ids-soon)
                      (insert (concat "1\n"
                                      "00:00:59,000 --> 00:01:00,000\n"
                                      "Foo.\n\n"
                                      "2\n"
                                      "00:01:00,500 --> 00:01:05,000\n"
                                      "Bar.\n"))
-                     (subed-srt--jump-to-subtitle-text 1)
+                     (subed-jump-to-subtitle-text 1)
                      (expect (subed-insert-subtitle-adjacent arg) :to-equal 71)
                      (expect (buffer-string) :to-equal (concat "1\n"
                                                                "00:00:59,000 --> 00:01:00,000\n"
@@ -1810,22 +1810,22 @@ Baz.
                                                                "00:01:00,500 --> 00:01:05,000\n"
                                                                "Bar.\n"))
                      (expect (point) :to-equal 71)
-                     (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                     (spy-calls-reset 'subed-regenerate-ids-soon))))
+                     (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                     (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
         )
       (describe "to prepend"
         (describe "between subtitles"
           (it "a single subtitle."
             (cl-loop for arg in (list '- -1 (list 4)) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:59,000 --> 00:01:00,000\n"
                                        "Foo.\n\n"
                                        "2\n"
                                        "00:01:00,700 --> 00:01:05,000\n"
                                        "Bar.\n"))
-                       (subed-srt--jump-to-subtitle-text 2)
+                       (subed-jump-to-subtitle-text 2)
                        (expect (subed-insert-subtitle-adjacent arg) :to-equal 71)
                        (expect (buffer-string) :to-equal (concat "1\n"
                                                                  "00:00:59,000 --> 00:01:00,000\n"
@@ -1837,19 +1837,19 @@ Baz.
                                                                  "00:01:00,700 --> 00:01:05,000\n"
                                                                  "Bar.\n"))
                        (expect (point) :to-equal 71)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           (it "multiple subtitles."
             (cl-loop for arg in (list -2 (list 16)) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:59,000 --> 00:01:00,000\n"
                                        "Foo.\n\n"
                                        "2\n"
                                        "00:01:00,500 --> 00:01:05,000\n"
                                        "Bar.\n"))
-                       (subed-srt--jump-to-subtitle-text 2)
+                       (subed-jump-to-subtitle-text 2)
                        (expect (subed-insert-subtitle-adjacent arg) :to-equal 71)
                        (expect (buffer-string) :to-equal (concat "1\n"
                                                                  "00:00:59,000 --> 00:01:00,000\n"
@@ -1864,18 +1864,18 @@ Baz.
                                                                  "00:01:00,500 --> 00:01:05,000\n"
                                                                  "Bar.\n"))
                        (expect (point) :to-equal 71)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           )
         (describe "before the first subtitle"
           (it "a single subtitle."
             (cl-loop for arg in (list '- -1 (list 4)) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:01,000 --> 00:00:02,000\n"
                                        "Foo.\n"))
-                       (subed-srt--jump-to-subtitle-text 1)
+                       (subed-jump-to-subtitle-text 1)
                        (expect (subed-insert-subtitle-adjacent arg) :to-equal 33)
                        (expect (buffer-string) :to-equal (concat "0\n"
                                                                  "00:00:00,100 --> 00:00:00,900\n"
@@ -1884,16 +1884,16 @@ Baz.
                                                                  "00:00:01,000 --> 00:00:02,000\n"
                                                                  "Foo.\n"))
                        (expect (point) :to-equal 33)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           (it "multiple subtitles."
             (cl-loop for arg in (list -2 (list 16)) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:00,800 --> 00:00:03,000\n"
                                        "Foo.\n"))
-                       (subed-srt--jump-to-subtitle-text 2)
+                       (subed-jump-to-subtitle-text 2)
                        (expect (subed-insert-subtitle-adjacent arg) :to-equal 33)
                        (expect (buffer-string) :to-equal (concat "0\n"
                                                                  "00:00:00,100 --> 00:00:00,350\n"
@@ -1905,8 +1905,8 @@ Baz.
                                                                  "00:00:00,800 --> 00:00:03,000\n"
                                                                  "Foo.\n"))
                        (expect (point) :to-equal 33)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           )
         )
       )
@@ -1916,14 +1916,14 @@ Baz.
           (it "a single subtitle."
             (cl-loop for arg in (list '- -1 (list 4)) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:59,000 --> 00:01:00,000\n"
                                        "Foo.\n\n"
                                        "2\n"
                                        "00:01:00,005 --> 00:01:05,000\n"
                                        "Bar.\n"))
-                       (subed-srt--jump-to-subtitle-text 2)
+                       (subed-jump-to-subtitle-text 2)
                        (expect (subed-insert-subtitle-adjacent arg) :to-equal 71)
                        (expect (buffer-string) :to-equal (concat "1\n"
                                                                  "00:00:59,000 --> 00:01:00,000\n"
@@ -1935,19 +1935,19 @@ Baz.
                                                                  "00:01:00,005 --> 00:01:05,000\n"
                                                                  "Bar.\n"))
                        (expect (point) :to-equal 71)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           (it "multiple subtitles."
             (cl-loop for arg in (list -2 (list 16)) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:59,000 --> 00:01:00,000\n"
                                        "Foo.\n\n"
                                        "2\n"
                                        "00:01:00,025 --> 00:01:05,000\n"
                                        "Bar.\n"))
-                       (subed-srt--jump-to-subtitle-text 2)
+                       (subed-jump-to-subtitle-text 2)
                        (expect (subed-insert-subtitle-adjacent arg) :to-equal 71)
                        (expect (buffer-string) :to-equal (concat "1\n"
                                                                  "00:00:59,000 --> 00:01:00,000\n"
@@ -1962,21 +1962,21 @@ Baz.
                                                                  "00:01:00,025 --> 00:01:05,000\n"
                                                                  "Bar.\n"))
                        (expect (point) :to-equal 71)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           )
         (describe "when appending"
           (it "a single subtitle."
             (cl-loop for arg in (list nil 1) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:59,000 --> 00:01:00,000\n"
                                        "Foo.\n\n"
                                        "2\n"
                                        "00:01:00,099 --> 00:01:05,000\n"
                                        "Bar.\n"))
-                       (subed-srt--jump-to-subtitle-text 1)
+                       (subed-jump-to-subtitle-text 1)
                        (expect (subed-insert-subtitle-adjacent arg) :to-equal 71)
                        (expect (buffer-string) :to-equal (concat "1\n"
                                                                  "00:00:59,000 --> 00:01:00,000\n"
@@ -1988,19 +1988,19 @@ Baz.
                                                                  "00:01:00,099 --> 00:01:05,000\n"
                                                                  "Bar.\n"))
                        (expect (point) :to-equal 71)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           (it "multiple subtitles."
             (cl-loop for arg in (list 2) do
                      (with-temp-srt-buffer
-                       (spy-on 'subed-regenerate-ids-soon)
+                       (spy-on 'subed-srt--regenerate-ids-soon)
                        (insert (concat "1\n"
                                        "00:00:59,000 --> 00:01:00,000\n"
                                        "Foo.\n\n"
                                        "2\n"
                                        "00:01:00,075 --> 00:01:05,000\n"
                                        "Bar.\n"))
-                       (subed-srt--jump-to-subtitle-text 1)
+                       (subed-jump-to-subtitle-text 1)
                        (expect (subed-insert-subtitle-adjacent arg) :to-equal 71)
                        (expect (buffer-string) :to-equal (concat "1\n"
                                                                  "00:00:59,000 --> 00:01:00,000\n"
@@ -2015,19 +2015,19 @@ Baz.
                                                                  "00:01:00,075 --> 00:01:05,000\n"
                                                                  "Bar.\n"))
                        (expect (point) :to-equal 71)
-                       (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                       (spy-calls-reset 'subed-regenerate-ids-soon))))
+                       (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                       (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
           )
         )
       (describe "before the first subtitle"
         (it "a single subtitle."
           (cl-loop for arg in (list '- -1 (list 4)) do
                    (with-temp-srt-buffer
-                     (spy-on 'subed-regenerate-ids-soon)
+                     (spy-on 'subed-srt--regenerate-ids-soon)
                      (insert (concat "1\n"
                                      "00:00:00,040 --> 00:00:05,000\n"
                                      "Foo.\n"))
-                     (subed-srt--jump-to-subtitle-text 1)
+                     (subed-jump-to-subtitle-text 1)
                      (expect (subed-insert-subtitle-adjacent arg) :to-equal 33)
                      (expect (buffer-string) :to-equal (concat "0\n"
                                                                "00:00:00,040 --> 00:00:00,040\n"
@@ -2036,16 +2036,16 @@ Baz.
                                                                "00:00:00,040 --> 00:00:05,000\n"
                                                                "Foo.\n"))
                      (expect (point) :to-equal 33)
-                     (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                     (spy-calls-reset 'subed-regenerate-ids-soon))))
+                     (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                     (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
         (it "multiple subtitles."
           (cl-loop for arg in (list -2 (list 16)) do
                    (with-temp-srt-buffer
-                     (spy-on 'subed-regenerate-ids-soon)
+                     (spy-on 'subed-srt--regenerate-ids-soon)
                      (insert (concat "1\n"
                                      "00:00:00,024 --> 00:00:05,000\n"
                                      "Foo.\n"))
-                     (subed-srt--jump-to-subtitle-text 1)
+                     (subed-jump-to-subtitle-text 1)
                      (expect (subed-insert-subtitle-adjacent arg) :to-equal 33)
                      (expect (buffer-string) :to-equal (concat "0\n"
                                                                "00:00:00,024 --> 00:00:00,024\n"
@@ -2057,8 +2057,8 @@ Baz.
                                                                "00:00:00,024 --> 00:00:05,000\n"
                                                                "Foo.\n"))
                      (expect (point) :to-equal 33)
-                     (expect 'subed-regenerate-ids-soon :to-have-been-called-times 1)
-                     (spy-calls-reset 'subed-regenerate-ids-soon))))
+                     (expect 'subed-srt--regenerate-ids-soon :to-have-been-called-times 1)
+                     (spy-calls-reset 'subed-srt--regenerate-ids-soon))))
         )
       )
     )
@@ -2079,15 +2079,17 @@ Baz.
     (subed--sync-player-to-point)
     (expect 'subed-mpv-jump :not :to-have-been-called))
   (it "seeks player if point is on future subtitle."
-    (subed-srt--init)
-    (setq subed-mpv-playback-position 6501)
-    (subed--sync-player-to-point)
-    (expect 'subed-mpv-jump :to-have-been-called-with 5000))
+    (with-temp-buffer
+      (subed-srt-mode)
+      (setq subed-mpv-playback-position 6501)
+      (subed--sync-player-to-point)
+      (expect 'subed-mpv-jump :to-have-been-called-with 5000)))
   (it "seeks player if point is on past subtitle."
-    (subed-srt--init)
-    (setq subed-mpv-playback-position 4999)
-    (subed--sync-player-to-point)
-    (expect 'subed-mpv-jump :to-have-been-called-with 5000))
+    (with-temp-buffer
+      (subed-srt-mode)
+      (setq subed-mpv-playback-position 4999)
+      (subed--sync-player-to-point)
+      (expect 'subed-mpv-jump :to-have-been-called-with 5000)))
   )
 
 (describe "Temporarily disabling point-to-player syncing"
@@ -2184,7 +2186,7 @@ that has two lines.
          (goto-char (match-end 0))
          (subed-split-subtitle 100)
          (expect (subed-subtitle-text 1) :to-equal "This is a")
-         (subed-regenerate-ids)
+         (subed-srt--regenerate-ids)
          (expect (subed-subtitle-text 2) :to-equal "subtitle\nthat has two lines.")))
       (it "properly splits text when called at the end of a line in the middle of the subtitle"
         (with-temp-srt-buffer
@@ -2193,7 +2195,7 @@ that has two lines.
          (goto-char (match-end 0))
          (subed-split-subtitle 100)
          (expect (subed-subtitle-text 1) :to-equal "This is a subtitle")
-         (subed-regenerate-ids)
+         (subed-srt--regenerate-ids)
          (expect (subed-subtitle-text 2) :to-equal "that has two lines.")))
       (it "properly splits text when called at the beginning of a line in the middle of the subtitle."
         (with-temp-srt-buffer
@@ -2209,7 +2211,7 @@ This is a subtitle
 00:01:23,200 --> 00:02:34,567
 that has two lines.
 ")  (expect (subed-subtitle-text 1) :to-equal "This is a subtitle")
-         (subed-regenerate-ids)
+         (subed-srt--regenerate-ids)
          (expect (subed-subtitle-text 2) :to-equal "that has two lines.")))
       (it "properly splits text when called at the end of the subtitle."
         (with-temp-srt-buffer
@@ -2217,7 +2219,7 @@ that has two lines.
          (subed-jump-to-subtitle-end 1)
          (subed-split-subtitle 100)
          (expect (subed-subtitle-text 1) :to-equal "This is a subtitle\nthat has two lines.")
-         (subed-regenerate-ids)
+         (subed-srt--regenerate-ids)
          (expect (subed-subtitle-text 2) :to-equal "")))
       (it "properly splits text when called before whitespace at the end of the subtitle."
         (with-temp-srt-buffer
@@ -2226,7 +2228,7 @@ that has two lines.
          (save-excursion (insert "  "))
          (subed-split-subtitle 100)
          (expect (subed-subtitle-text 1) :to-equal "This is a subtitle\nthat has two lines.")
-         (subed-regenerate-ids)
+         (subed-srt--regenerate-ids)
          (expect (subed-subtitle-text 2) :to-equal ""))))
     (describe "with another subtitle after it"
       :var ((text "1
@@ -2265,7 +2267,7 @@ This is another.
          (backward-word 1)
          (subed-split-subtitle 100)
          (expect (subed-subtitle-text 1) :to-equal "This is a")
-         (subed-regenerate-ids)
+         (subed-srt--regenerate-ids)
          (expect (subed-subtitle-text 2) :to-equal "subtitle\nthat has two lines.")))
       (it "properly splits text when called at the end of a line in the middle of the subtitle"
         (with-temp-srt-buffer
@@ -2274,7 +2276,7 @@ This is another.
          (goto-char (match-end 0))
          (subed-split-subtitle 100)
          (expect (subed-subtitle-text 1) :to-equal "This is a subtitle")
-         (subed-regenerate-ids)
+         (subed-srt--regenerate-ids)
          (expect (subed-subtitle-text 2) :to-equal "that has two lines.")))
       (it "properly splits text when called at the beginning of a line in the middle of the subtitle."
         (with-temp-srt-buffer
@@ -2294,7 +2296,7 @@ that has two lines.
 00:05:00,000 --> 00:06:00,000
 This is another.
 ")  (expect (subed-subtitle-text 1) :to-equal "This is a subtitle")
-         (subed-regenerate-ids)
+         (subed-srt--regenerate-ids)
          (expect (subed-subtitle-text 2) :to-equal "that has two lines.")))
       (it "properly splits text when called at the end of the subtitle."
         (with-temp-srt-buffer
@@ -2302,7 +2304,7 @@ This is another.
          (subed-jump-to-subtitle-end 1)
          (subed-split-subtitle 100)
          (expect (subed-subtitle-text 1) :to-equal "This is a subtitle\nthat has two lines.")
-         (subed-regenerate-ids)
+         (subed-srt--regenerate-ids)
          (expect (subed-subtitle-text 2) :to-equal "")))
       (it "properly splits text when called before whitespace at the end of the subtitle."
         (with-temp-srt-buffer
@@ -2311,7 +2313,7 @@ This is another.
          (save-excursion (insert "  "))
          (subed-split-subtitle 100)
          (expect (subed-subtitle-text 1) :to-equal "This is a subtitle\nthat has two lines.")
-         (subed-regenerate-ids)
+         (subed-srt--regenerate-ids)
          (expect (subed-subtitle-text 2) :to-equal "")))))
   (describe "when playing the video in MPV"
     (it "splits at point in the middle of the subtitle."
