@@ -214,28 +214,29 @@ string."
   ;; Therefore we maintain a buffer and process only complete lines.
   (when (buffer-live-p (process-buffer proc))
     (let ((orig-buffer (current-buffer)))
-	  (with-current-buffer (process-buffer proc)
-        ;; Insert new response where previous response ended
-	    (let* ((proc-mark (process-mark proc))
-               (moving (= (point) proc-mark)))
-		  (save-excursion
-		    (goto-char proc-mark)
-		    (insert response)
-		    (set-marker proc-mark (point)))
-		  (if moving (goto-char proc-mark)))
-	    ;; Process and remove all complete lines of JSON (lines are complete if
-	    ;; they end with \n)
-	    (let ((p0 (point-min)))
-		  (while (progn (goto-char p0)
-                        (end-of-line)
-			            (equal (following-char) ?\n))
-		    (let* ((p1 (point))
-			       (line (buffer-substring p0 p1)))
-			  (delete-region p0 (+ p1 1))
-              ;; Return context to the subtitle file buffer because we're using
-              ;; buffer-local variables to store player state.
-              (with-current-buffer orig-buffer
-			    (subed-mpv--client-handle-json line)))))))))
+      (when (derived-mode-p 'subed-mode)
+	      (with-current-buffer (process-buffer proc)
+          ;; Insert new response where previous response ended
+	        (let* ((proc-mark (process-mark proc))
+                 (moving (= (point) proc-mark)))
+		        (save-excursion
+		          (goto-char proc-mark)
+		          (insert response)
+		          (set-marker proc-mark (point)))
+		        (if moving (goto-char proc-mark)))
+	        ;; Process and remove all complete lines of JSON (lines are complete if
+	        ;; they end with \n)
+	        (let ((p0 (point-min)))
+		        (while (progn (goto-char p0)
+                          (end-of-line)
+			                    (equal (following-char) ?\n))
+		          (let* ((p1 (point))
+			               (line (buffer-substring p0 p1)))
+			          (delete-region p0 (+ p1 1))
+                ;; Return context to the subtitle file buffer because we're using
+                ;; buffer-local variables to store player state.
+                (with-current-buffer orig-buffer
+			            (subed-mpv--client-handle-json line))))))))))
 
 (defun subed-mpv--client-handle-json (json-string)
   "Process server response JSON-STRING."
