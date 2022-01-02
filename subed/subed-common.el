@@ -128,15 +128,6 @@ See also `subed-subtitle-id-at-msecs'."
     (when (and target-sub-id current-sub-id (not (= target-sub-id current-sub-id)))
       (subed-jump-to-subtitle-id target-sub-id))))
 
-(subed-define-generic-function jump-to-subtitle-id-at-msecs (msecs)
-  "Move point to the ID of the subtitle that is playing at MSECS.
-Return point or nil if point is still on the same subtitle.
-See also `subed-subtitle-id-at-msecs'."
-  (let ((current-sub-id (subed-subtitle-id))
-        (target-sub-id (subed-subtitle-id-at-msecs msecs)))
-    (when (and target-sub-id current-sub-id (not (equal target-sub-id current-sub-id)))
-      (subed-jump-to-subtitle-id target-sub-id))))
-
 (subed-define-generic-function forward-subtitle-id ()
   "Move point to next subtitle's ID.
 Return point or nil if there is no next subtitle."
@@ -311,24 +302,6 @@ Return new point."
 
 (subed-define-generic-function validate ()
   "Move point to the first invalid subtitle and report an error.")
-
-(subed-define-generic-function sort ()
-  "Sanitize, then sort subtitles by start time and re-number them."
-  (interactive)
-  (atomic-change-group
-    (subed-sanitize)
-    (subed-validate)
-    (subed-save-excursion
-     (goto-char (point-min))
-     (sort-subr nil
-                ;; nextrecfun (move to next record/subtitle or to end-of-buffer
-                ;; if there are no more records)
-                (lambda () (unless (subed-forward-subtitle-id)
-                             (goto-char (point-max))))
-                ;; endrecfun (move to end of current record/subtitle)
-                #'subed-jump-to-subtitle-end
-                ;; startkeyfun (return sort value of current record/subtitle)
-                #'subed-subtitle-msecs-start))))
 
 ;;; Utilities
 
