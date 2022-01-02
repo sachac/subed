@@ -304,6 +304,26 @@ Return new point."
               end (save-excursion (goto-char (point-max)))))
     (delete-region beg end)))
 
+(subed-define-generic-function subtitle-list (&optional beg end)
+  "Return the subtitles from BEG to END as a list.
+The list will contain entries of the form (id start stop text).
+If BEG and END are not specified, use the whole buffer."
+  (let (result)
+    (subed-for-each-subtitle
+      (or beg (point-min))
+      (or end (point-max))
+      nil
+      (when (subed-subtitle-msecs-start)
+        (setq result
+              (cons
+               (list
+                (subed-subtitle-id)
+                (subed-subtitle-msecs-start)
+                (subed-subtitle-msecs-stop)
+                (subed-subtitle-text))
+               result))))
+    (nreverse result)))
+
 (subed-define-generic-function sanitize ()
   "Remove surplus newlines and whitespace.")
 

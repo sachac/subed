@@ -3109,4 +3109,25 @@ This is another.
             (subed-srt-mode)
             (expect subed--subtitle-format :to-equal "srt")
             (expect 'subed-trim-overlap-check :to-have-been-called))))))
+  (describe "Getting a list of subtitles"
+    (it "returns nil in an empty buffer."
+      (with-temp-srt-buffer
+       (expect (subed-subtitle-list) :to-equal nil)))
+    (it "returns the list."
+      (with-temp-srt-buffer
+       (insert mock-srt-data)
+       (expect (subed-subtitle-list) :to-equal
+               '((1 61000 65123 "Foo.")
+                 (2 122234 130345 "Bar.")
+                 (3 183450 195500 "Baz.")))))
+    (it "returns a subset when bounds are specified."
+      (with-temp-srt-buffer
+       (insert mock-srt-data)
+       (subed-jump-to-subtitle-id 3)
+       (backward-char 1)
+       (expect (subed-subtitle-list (point-min) (point))
+               :to-equal
+               '((1 61000 65123 "Foo.")
+                 (2 122234 130345 "Bar.")))))
+    )
   )
