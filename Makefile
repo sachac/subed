@@ -9,7 +9,7 @@ clean:
 test: test-coverage package-lint checkdoc
 
 test-coverage:
-  mkdir -p coverage
+	mkdir -p coverage
 	UNDERCOVER_FORCE=true emacs -batch -L . -f package-initialize -f buttercup-run-discover
 
 test-only:
