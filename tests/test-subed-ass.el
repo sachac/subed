@@ -1,7 +1,8 @@
 ;; -*- eval: (buttercup-minor-mode) -*-
 
-(add-to-list 'load-path "./subed")
+(load-file "./tests/undercover-init.el")
 (require 'subed)
+(require 'subed-ass)
 
 (defvar mock-ass-data
   "[Script Info]

@@ -27,6 +27,7 @@
 
 ;;; Code:
 
+(require 'subed)
 (require 'subed-config)
 (require 'subed-debug)
 (require 'subed-common)
@@ -48,7 +49,8 @@
 
 (cl-defmethod subed--timestamp-to-msecs (time-string &context (major-mode subed-vtt-mode))
   "Find HH:MM:SS.MS pattern in TIME-STRING and convert it to milliseconds.
-Return nil if TIME-STRING doesn't match the pattern."
+Return nil if TIME-STRING doesn't match the pattern.
+Use the format-specific function for MAJOR-MODE."
   (save-match-data
     (when (string-match subed--regexp-timestamp time-string)
       (let ((hours (string-to-number (or (match-string 2 time-string) "0")))
@@ -61,7 +63,8 @@ Return nil if TIME-STRING doesn't match the pattern."
            (truncate msecs))))))
 
 (cl-defmethod subed--msecs-to-timestamp (msecs &context (major-mode subed-vtt-mode))
-  "Convert MSECS to string in the format HH:MM:SS.MS."
+  "Convert MSECS to string in the format HH:MM:SS.MS.
+Use the format-specific function for MAJOR-MODE."
   ;; We need to wrap format-seconds in save-match-data because it does regexp
   ;; stuff and we need to preserve our own match-data.
   (concat (save-match-data (format-seconds "%02h:%02m:%02s" (/ msecs 1000)))
@@ -144,7 +147,8 @@ Use the format-specific function for MAJOR-MODE."
 (cl-defmethod subed--jump-to-subtitle-time-stop (&context (major-mode subed-vtt-mode) &optional sub-id)
   "Move point to subtitle's stop time.
 If SUB-ID is not given, use subtitle on point.
-Return point or nil if no stop time could be found."
+Return point or nil if no stop time could be found.
+Use the format-specific function for MAJOR-MODE."
   (save-match-data
     (when (subed-jump-to-subtitle-id sub-id)
       (re-search-forward " *--> *" (point-at-eol) t)
@@ -154,7 +158,8 @@ Return point or nil if no stop time could be found."
 (cl-defmethod subed--jump-to-subtitle-text (&context (major-mode subed-vtt-mode) &optional sub-id)
   "Move point on the first character of subtitle's text.
 If SUB-ID is not given, use subtitle on point.
-Return point or nil if a the subtitle's text can't be found."
+Return point or nil if a the subtitle's text can't be found.
+Use the format-specific function for MAJOR-MODE."
   (when (subed-jump-to-subtitle-id sub-id)
     (forward-line 1)
     (point)))
@@ -163,7 +168,7 @@ Return point or nil if a the subtitle's text can't be found."
   "Move point after the last character of the subtitle's text.
 If SUB-ID is not given, use subtitle on point.
 Return point or nil if point did not change or if no subtitle end
-can be found."
+can be found.  Use the format-specific function for MAJOR-MODE."
   (save-match-data
     (let ((orig-point (point)))
       (subed-jump-to-subtitle-text sub-id)
@@ -181,14 +186,16 @@ can be found."
 
 (cl-defmethod subed--forward-subtitle-id (&context (major-mode subed-vtt-mode))
   "Move point to next subtitle's ID.
-Return point or nil if there is no next subtitle."
+Return point or nil if there is no next subtitle.  Use the
+format-specific function for MAJOR-MODE."
   (save-match-data
     (when (re-search-forward (concat subed--regexp-separator subed--regexp-timestamp) nil t)
       (subed-jump-to-subtitle-id))))
 
 (cl-defmethod subed--backward-subtitle-id (&context (major-mode subed-vtt-mode))
   "Move point to previous subtitle's ID.
-Return point or nil if there is no previous subtitle."
+Return point or nil if there is no previous subtitle.  Use the
+format-specific function for MAJOR-MODE."
   (let ((orig-point (point)))
     (when (subed-jump-to-subtitle-id)
       (if (re-search-backward (concat "\\(" subed--regexp-separator "\\|\\`[[:space:]]*\\)\\(" subed--regexp-timestamp "\\)") nil t)
@@ -208,7 +215,8 @@ STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
 
 A newline is appended to TEXT, meaning you'll get two trailing
-newlines if TEXT is nil or empty."
+newlines if TEXT is nil or empty.  Use the format-specific
+function for MAJOR-MODE."
   (format "%s --> %s\n%s\n"
           (subed-msecs-to-timestamp (or start 0))
           (subed-msecs-to-timestamp (or stop (+ (or start 0)
@@ -222,8 +230,8 @@ ID and START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
 
-Move point to the text of the inserted subtitle.
-Return new point."
+Move point to the text of the inserted subtitle.  Return new
+point.  Use the format-specific function for MAJOR-MODE."
   (subed-jump-to-subtitle-id)
   (insert (subed-make-subtitle id start stop text))
   (save-match-data
@@ -278,7 +286,8 @@ Use the format-specific function for MAJOR-MODE."
 
 
 (cl-defmethod subed--sanitize (&context (major-mode subed-vtt-mode))
-  "Remove surplus newlines and whitespace."
+  "Remove surplus newlines and whitespace.
+Use the format-specific function for MAJOR-MODE."
   (atomic-change-group
     (save-match-data
       (subed-save-excursion
@@ -324,7 +333,8 @@ Use the format-specific function for MAJOR-MODE."
              (replace-match " --> "))))))))
 
 (cl-defmethod subed--validate (&context (major-mode subed-vtt-mode))
-  "Move point to the first invalid subtitle and report an error."
+  "Move point to the first invalid subtitle and report an error.
+Use the format-specific function for MAJOR-MODE."
   (when (> (buffer-size) 0)
     (atomic-change-group
       (save-match-data
@@ -348,7 +358,8 @@ Use the format-specific function for MAJOR-MODE."
           (goto-char orig-point))))))
 
 (cl-defmethod subed--sort (&context (major-mode subed-vtt-mode))
-  "Sanitize, then sort subtitles by start time."
+  "Sanitize, then sort subtitles by start time.
+Use the format-specific function for MAJOR-MODE."
   (atomic-change-group
     (subed-sanitize)
     (subed-validate)
@@ -365,18 +376,13 @@ Use the format-specific function for MAJOR-MODE."
                 ;; startkeyfun (return sort value of current record/subtitle)
                 #'subed-subtitle-msecs-start))))
 
-
-(cl-defmethod subed--init :after (&context (major-mode subed-vtt-mode))
-  "This function is called when subed-mode is entered for a SRT file."
-  )
-
 ;;;###autoload
 (define-derived-mode subed-vtt-mode subed-mode "Subed-VTT"
   "Major mode for editing WebVTT subtitle files."
   (setq-local subed--subtitle-format "vtt")
   (setq-local subed--regexp-timestamp subed-vtt--regexp-timestamp)
   (setq-local subed--regexp-separator subed-vtt--regexp-separator)
-  (setq-local font-lock-defaults '(subed-vtt-font-lock-keywords))  
+  (setq-local font-lock-defaults '(subed-vtt-font-lock-keywords))
   ;; Support for fill-paragraph (M-q)
   (let ((timestamps-regexp (concat subed--regexp-timestamp
                                    " *--> *"

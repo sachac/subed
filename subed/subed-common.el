@@ -1305,7 +1305,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
     (add-hook 'subed-subtitle-motion-hook #'subed--set-subtitle-loop :append :local)
     (subed-debug "Enabling loop: %s - %s" subed--subtitle-loop-start subed--subtitle-loop-stop)
     (when (subed-sync-point-to-player-p)
-      (subed-disable-sync-point-to-player)
+      (subed-disable-sync-point-to-player quiet)
       (setq subed--enable-point-to-player-sync-after-disabling-loop t))
     (unless quiet
       (message "Enabled looping over current subtitle"))))

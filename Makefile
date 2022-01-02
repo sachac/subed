@@ -4,17 +4,28 @@
 
 clean:
 	find . -name "*.elc" -delete
+	rm -f coverage/.*.json
 
-test:
+test: test-coverage package-lint checkdoc
+
+test-coverage:
+	UNDERCOVER_FORCE=true emacs -batch -L . -f package-initialize -f buttercup-run-discover
+
+test-only:
 	emacs -batch -f package-initialize -L . -f buttercup-run-discover
+
+package-lint:
 	emacs --no-init-file -f package-initialize --batch \
 		  --eval "(require 'package-lint)" \
 	      --file package-lint-batch-and-exit \
 	      ./subed/subed.el
+checkdoc:
 	emacs --quick --batch --eval "(checkdoc-file \"subed/subed.el\")"
 	emacs --quick --batch --eval "(checkdoc-file \"subed/subed-config.el\")"
 	emacs --quick --batch --eval "(checkdoc-file \"subed/subed-mpv.el\")"
 	emacs --quick --batch --eval "(checkdoc-file \"subed/subed-srt.el\")"
+	emacs --quick --batch --eval "(checkdoc-file \"subed/subed-vtt.el\")"
+	emacs --quick --batch --eval "(checkdoc-file \"subed/subed-ass.el\")"
 
 autoloads:
 	emacs --quick --batch --eval "(progn (setq generated-autoload-file (expand-file-name \"subed-autoloads.el\" \"subed\") backup-inhibited t) \

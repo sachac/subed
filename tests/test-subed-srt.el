@@ -1,8 +1,7 @@
 ;; -*- eval: (buttercup-minor-mode) -*-
 
-(add-to-list 'load-path "./subed")
-(require 'subed)
-
+(load-file "./tests/undercover-init.el")
+(require 'subed-srt)
 (defvar mock-srt-data
   "1
 00:01:01,000 --> 00:01:05,123

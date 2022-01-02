@@ -27,6 +27,7 @@
 
 ;;; Code:
 
+(require 'subed)
 (require 'subed-config)
 (require 'subed-debug)
 (require 'subed-common)
@@ -63,13 +64,16 @@ Use the format-specific function for MAJOR-MODE."
            (truncate msecs))))))
 
 (cl-defmethod subed--msecs-to-timestamp (msecs &context (major-mode subed-ass-mode))
-  "Convert MSECS to string in the format H:MM:SS.CS."
+  "Convert MSECS to string in the format H:MM:SS.CS.
+Use the format-specific function for MAJOR-MODE."
   ;; We need to wrap format-seconds in save-match-data because it does regexp
   ;; stuff and we need to preserve our own match-data.
   (concat (save-match-data (format-seconds "%h:%02m:%02s" (/ msecs 1000)))
           "." (format "%02d" (/ (mod msecs 1000) 10))))
 
 (cl-defmethod subed--subtitle-id (&context (major-mode subed-ass-mode))
+  "Return the ID of the subtitle at point or nil if there is no ID.
+Use the format-specific function for MAJOR-MODE."
   (save-excursion
     (when (and (subed--jump-to-subtitle-time-start)
                (looking-at subed--regexp-timestamp))
@@ -78,7 +82,7 @@ Use the format-specific function for MAJOR-MODE."
 (cl-defmethod subed--subtitle-id-at-msecs (msecs &context (major-mode subed-ass-mode))
   "Return the ID of the subtitle at MSECS milliseconds.
 Return nil if there is no subtitle at MSECS.
-Use the format-specific function for BACKEND."
+Use the format-specific function for MAJOR-MODE."
   (save-match-data
     (save-excursion
       (goto-char (point-min))
@@ -135,7 +139,8 @@ Use the format-specific function for MAJOR-MODE."
 (cl-defmethod subed--jump-to-subtitle-time-start (&context (major-mode subed-ass-mode) &optional sub-id)
   "Move point to subtitle's start time.
 If SUB-ID is not given, use subtitle on point.
-Return point or nil if no start time could be found."
+Return point or nil if no start time could be found.
+Use the format-specific function for MAJOR-MODE."
   (save-match-data
     (when (subed-jump-to-subtitle-id sub-id)
       (when (re-search-forward subed--regexp-timestamp (line-end-position) t)
@@ -144,8 +149,9 @@ Return point or nil if no start time could be found."
 
 (cl-defmethod subed--jump-to-subtitle-time-stop (&context (major-mode subed-ass-mode) &optional sub-id)
   "Move point to subtitle's stop time.
-If SUB-ID is not given, use subtitle on point.
-Return point or nil if no stop time could be found."
+If SUB-ID is not given, use subtitle on point.  Return point or
+nil if no stop time could be found.  Use the format-specific
+function for MAJOR-MODE."
   (save-match-data
     (when (subed-jump-to-subtitle-id sub-id)
       (re-search-forward (concat "\\(?:" subed--regexp-timestamp "\\),") (point-at-eol) t)
@@ -154,8 +160,9 @@ Return point or nil if no stop time could be found."
 
 (cl-defmethod subed--jump-to-subtitle-text (&context (major-mode subed-ass-mode) &optional sub-id)
   "Move point on the first character of subtitle's text.
-If SUB-ID is not given, use subtitle on point.
-Return point or nil if a the subtitle's text can't be found."
+If SUB-ID is not given, use subtitle on point.  Return point or
+nil if a the subtitle's text can't be found.  Use the
+format-specific function for MAJOR-MODE."
   (when (subed-jump-to-subtitle-id sub-id)
     (beginning-of-line)
     (when (looking-at ".*?,.*?,.*?,.*?,.*?,.*?,.*?,.*?,.*?,")
@@ -164,9 +171,9 @@ Return point or nil if a the subtitle's text can't be found."
 
 (cl-defmethod subed--jump-to-subtitle-end (&context (major-mode subed-ass-mode) &optional sub-id)
   "Move point after the last character of the subtitle's text.
-If SUB-ID is not given, use subtitle on point.
-Return point or nil if point did not change or if no subtitle end
-can be found."
+If SUB-ID is not given, use subtitle on point.  Return point or
+nil if point did not change or if no subtitle end can be found.
+Use the format-specific function for MAJOR-MODE."
   (save-match-data
     (let ((orig-point (point)))
       (when (subed-jump-to-subtitle-text sub-id)
@@ -176,7 +183,8 @@ can be found."
 
 (cl-defmethod subed--forward-subtitle-id (&context (major-mode subed-ass-mode))
   "Move point to next subtitle's ID.
-Return point or nil if there is no next subtitle."
+Return point or nil if there is no next subtitle.  Use the
+format-specific function for MAJOR-MODE."
   (save-match-data
     (let ((pos (point)))
       (forward-line 1)
@@ -190,7 +198,8 @@ Return point or nil if there is no next subtitle."
 
 (cl-defmethod subed--backward-subtitle-id (&context (major-mode subed-ass-mode))
   "Move point to previous subtitle's ID.
-Return point or nil if there is no previous subtitle."
+Return point or nil if there is no previous subtitle.  Use the
+format-specific function for MAJOR-MODE."
   (let ((orig-point (point)))
     (when (subed-jump-to-subtitle-id)
       (forward-line -1)
@@ -211,7 +220,8 @@ STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
 
 A newline is appended to TEXT, meaning you'll get two trailing
-newlines if TEXT is nil or empty."
+newlines if TEXT is nil or empty.  Use the format-specific
+function for MAJOR-MODE."
   (format "Dialogue: 0,%s,%s,Default,,0,0,0,,%s\n"
           (subed-msecs-to-timestamp (or start 0))
           (subed-msecs-to-timestamp (or stop (+ (or start 0)
@@ -225,8 +235,8 @@ ID and START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
 
-Move point to the text of the inserted subtitle.
-Return new point."
+Move point to the text of the inserted subtitle.  Return new
+point.  Use the format-specific function for MAJOR-MODE."
   (subed-jump-to-subtitle-id)
   (insert (subed-make-subtitle id start stop text))
   (forward-line -1)
@@ -239,8 +249,8 @@ ID, START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
 
-Move point to the text of the inserted subtitle.
-Return new point."
+Move point to the text of the inserted subtitle.  Return new
+point.  Use the format-specific function for MAJOR-MODE."
   (unless (subed-forward-subtitle-id)
     ;; Point is on last subtitle or buffer is empty
     (subed-jump-to-subtitle-end)
@@ -251,7 +261,8 @@ Return new point."
 
 (cl-defmethod subed--merge-with-next (&context (major-mode subed-ass-mode))
   "Merge the current subtitle with the next subtitle.
-Update the end timestamp accordingly."
+Update the end timestamp accordingly.  Use the format-specific
+function for MAJOR-MODE."
   (save-excursion
     (subed-jump-to-subtitle-end)
     (let ((pos (point)) new-end)
@@ -269,7 +280,7 @@ Update the end timestamp accordingly."
 ;;;###autoload
 (define-derived-mode subed-ass-mode subed-mode "Subed-ASS"
   "Major mode for editing Advanced SubStation Alpha subtitle files."
-  (setq-local subed--subtitle-format "ass")  
+  (setq-local subed--subtitle-format "ass")
   (setq-local subed--regexp-timestamp subed-ass--regexp-timestamp)
   (setq-local subed--regexp-separator subed-ass--regexp-separator)
   (setq-local font-lock-defaults '(subed-ass-font-lock-keywords)))

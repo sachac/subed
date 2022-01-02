@@ -1,7 +1,8 @@
 ;; -*- eval: (buttercup-minor-mode) -*-
 
-(add-to-list 'load-path "./subed")
+(load-file "./tests/undercover-init.el")
 (require 'subed)
+(require 'subed-vtt)
 
 (defvar mock-vtt-data
   "WEBVTT

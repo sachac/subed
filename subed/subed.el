@@ -35,9 +35,6 @@
 (require 'subed-config)
 (require 'subed-debug)
 (require 'subed-common)
-(require 'subed-srt)
-(require 'subed-vtt)
-(require 'subed-ass)
 (require 'subed-mpv)
 
 (defconst subed-mpv-frame-step-map

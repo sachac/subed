@@ -27,6 +27,7 @@
 
 ;;; Code:
 
+(require 'subed)
 (require 'subed-config)
 (require 'subed-debug)
 (require 'subed-common)
