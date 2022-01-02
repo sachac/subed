@@ -39,25 +39,34 @@
 (defvar-local subed--regexp-separator nil "Regexp separating subtitles.")
 (defvar-local subed--regexp-timestamp nil "Regexp matching timestamps.")
 
-(defmacro subed-define-generic-function (name args doc &rest body)
+(defmacro subed-define-generic-function (name args &rest body)
   "Declare an object method and provide the old way of calling it."
   (declare (indent 2))
-  `(progn
-     (cl-defgeneric ,(intern (concat "subed--" (symbol-name name)))
-         ,args
-       ,doc
-       ,@(if (eq (caar body) 'interactive)
-             (cdr body)
-           body))
-     (defun ,(intern (concat "subed-" (symbol-name name))) ,args
-       ,doc
-       ,(if (eq (caar body) 'interactive)
-            (car body))
-       (,(intern (concat "subed--" (symbol-name name)))
-        ,@(delq nil (mapcar (lambda (a)
-                              (unless (string-match "^&" (symbol-name a))
-                                a))
-                            args))))))
+  (let (is-interactive
+        doc)
+    (when (stringp (car body))
+      (setq doc (pop body)))
+    (setq is-interactive (eq (caar body) 'interactive))
+    `(progn
+       (cl-defgeneric ,(intern (concat "subed--" (symbol-name name)))
+           ,args
+         ,doc
+         ,@(if is-interactive
+               (cdr body)
+             body))
+       ,(if is-interactive
+            `(defun ,(intern (concat "subed-" (symbol-name name))) ,args
+               ,(concat doc "\n\nThis function calls the generic function `"
+                        (concat "subed--" (symbol-name name)) "' for the actual implementation.")
+               ,(car body)
+               (,(intern (concat "subed--" (symbol-name name)))
+                ,@(delq nil (mapcar (lambda (a)
+                                      (unless (string-match "^&" (symbol-name a))
+                                        a))
+                                    args))))
+          `(defalias (quote ,(intern (concat "subed-" (symbol-name name))))
+             (quote ,(intern (concat "subed--" (symbol-name name))))
+             ,doc)))))
 
 (subed-define-generic-function timestamp-to-msecs (time-string)
   "Find timestamp pattern in TIME-STRING and convert it to milliseconds.
