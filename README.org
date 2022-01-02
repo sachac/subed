@@ -77,7 +77,7 @@ SubRip ( ~.srt~), WebVTT ( ~.vtt~ ), and Advanced SubStation Alpha ( ~.ass~, exp
      key is pressed).
 
 ** Installation
-
+*** Installing the subed package from NonGNU Elpa
 ~subed~ is now on [[https://elpa.nongnu.org/nongnu/subed.html][NonGNU ELPA]].  On Emacs 28 and later, you can install it with ~M-x package-install~ ~subed~.
 
 To install it on Emacs 27 or earlier, add the following to your Emacs configuration file:
@@ -87,17 +87,35 @@ To install it on Emacs 27 or earlier, add the following to your Emacs configurat
 #+end_src
 
 Use ~M-x eval-buffer~ to run the code, and then use ~M-x package-install~ ~subed~.
+*** Manual installation
 
-If that doesn't work, you can install it manually.  For example, copy ~subed/*.el~ to
+If that doesn't work, you can install it manually. To install from the main branch:
 
-~$HOME/.emacs.d/elisp/~ and add ~$HOME/.emacs.d/elisp/~ to your ~load-path~.
+#+begin_src sh :eval no
+git clone https://github.com/sachac/subed.git
+#+end_src
 
-Here's some sample code for manual installation:
+This will create a =subed= directory with the code.  Then you can add
+the following to your Emacs configuration (typically
+=~/.config/emacs-init.el=, =~/.emacs.d/init.el=, or =~/.emacs=; you
+can create this file if it doesn't exist yet):
 
 #+begin_src emacs-lisp
-(add-to-list 'load-path "~/.emacs.d/elisp")
-(require 'subed)
+;; Note the reference to the subed subdirectory
+(add-to-list 'load-path "/path/to/subed/subed")
+(require 'subed-autoloads)
 #+end_src
+
+and reload your configuration with =M-x eval-buffer= or restart Emacs.
+
+If you want to try a branch (ex: =derived-mode=), you can use the
+following command inside the =subed= directory:
+
+#+begin_src sh :eval no
+git checkout branchname
+#+end_src
+
+*** use-package configuration
 
 Here's an example setup if you use use-package:
 
@@ -114,6 +132,8 @@ Here's an example setup if you use use-package:
    ;; Break lines at 40 characters
   (add-hook 'subed-mode-hook (lambda () (setq-local fill-column 40))))
 #+END_SRC
+
+** Getting started
 
 ~C-h f subed-mode~ should get you started. This is the parent mode for
 ~subed-srt-mode~, ~subed-vtt-mode~, and ~subed-ass-mode~. When
