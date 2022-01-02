@@ -128,6 +128,13 @@ See also `subed-subtitle-id-at-msecs'."
     (when (and target-sub-id current-sub-id (not (= target-sub-id current-sub-id)))
       (subed-jump-to-subtitle-id target-sub-id))))
 
+(subed-define-generic-function jump-to-subtitle-text-at-msecs (msecs)
+  "Move point to the text of the subtitle that is playing at MSECS.
+Return point or nil if point is still on the same subtitle.
+See also `subed-vtt--subtitle-id-at-msecs'."
+  (when (subed-jump-to-subtitle-id-at-msecs msecs)
+    (subed-jump-to-subtitle-text)))
+
 (subed-define-generic-function forward-subtitle-id ()
   "Move point to next subtitle's ID.
 Return point or nil if there is no next subtitle."
