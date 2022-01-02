@@ -25,6 +25,51 @@ Baz.
 
 (describe "VTT"
   (describe "Getting"
+    (describe "the subtitle ID"
+      (it "returns the subtitle ID if it can be found."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (subed-jump-to-subtitle-text "00:01:01.000")
+         (expect (subed-subtitle-id) :to-equal "00:01:01.000")))
+      (it "returns nil if no subtitle ID can be found."
+        (with-temp-vtt-buffer
+         (expect (subed-subtitle-id) :to-equal nil))))
+    (describe "the subtitle ID at playback time"
+      (it "returns subtitle ID if time is equal to start time."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (expect (subed-subtitle-id-at-msecs (subed-timestamp-to-msecs "00:01:01.000"))
+                 :to-equal "00:01:01.000")))
+      (it "returns subtitle ID if time is equal to stop time."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (expect (subed-subtitle-id-at-msecs (subed-timestamp-to-msecs "00:02:10.345"))
+                 :to-equal "00:02:02.234")))
+      (it "returns subtitle ID if time is between start and stop time."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (expect (subed-subtitle-id-at-msecs (subed-timestamp-to-msecs "00:02:05.345"))
+                 :to-equal "00:02:02.234")))
+      (it "returns nil if time is before the first subtitle's start time."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (let ((msecs (- (save-excursion
+                           (goto-char (point-min))
+                           (subed-subtitle-msecs-start))
+                         1)))
+           (expect (subed-subtitle-id-at-msecs msecs) :to-equal nil))))
+      (it "returns nil if time is after the last subtitle's start time."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (let ((msecs (+ (save-excursion
+                           (goto-char (point-max))
+                           (subed-subtitle-msecs-stop)) 1)))
+           (expect (subed-subtitle-id-at-msecs msecs) :to-equal nil))))
+      (it "returns nil if time is between subtitles."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (expect (subed-subtitle-id-at-msecs (subed-timestamp-to-msecs "00:01:06.123"))
+                 :to-equal nil))))
     (describe "the subtitle start/stop time"
       (it "returns the time in milliseconds."
         (with-temp-vtt-buffer
@@ -1218,4 +1263,22 @@ This is another test here.
        (subed-forward-subtitle-end)
        (expect (current-word) :to-equal "test")
        (subed-forward-subtitle-end)
-       (expect (current-word) :to-equal "here")))))
+       (expect (current-word) :to-equal "here"))))
+
+  (describe "Merging with next subtitle"
+    (it "throws an error in an empty buffer."
+      (with-temp-vtt-buffer
+       (expect (subed-merge-with-next) :to-throw 'error)))
+    (it "throws an error with the last subtitle."
+      (with-temp-vtt-buffer
+       (insert mock-vtt-data)
+       (subed-jump-to-subtitle-text 3)
+       (expect (subed-merge-with-next) :to-throw 'error)))
+    (it "combines the text and the time."
+      (with-temp-vtt-buffer
+       (insert mock-vtt-data)
+       (subed-jump-to-subtitle-text "00:02:02.234")
+       (subed-merge-with-next)
+       (expect (subed-subtitle-text) :to-equal "Bar.\nBaz.")
+       (expect (subed-subtitle-msecs-start) :to-equal 122234)
+       (expect (subed-subtitle-msecs-stop) :to-equal 195500)))))

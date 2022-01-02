@@ -1095,7 +1095,12 @@ position of the point."
 
 ;;; Merging
 
-(defun subed-merge-with-previous ()
+(subed-define-generic-function merge-with-next ()
+  "Merge the current subtitle with the next subtitle.
+Update the end timestamp accordingly."
+  (interactive))
+
+(subed-define-generic-function merge-with-previous ()
   "Merge the current subtitle with the previous subtitle.
 Update the end timestamp accordingly."
   (interactive)
