@@ -65,7 +65,7 @@
                                         a))
                                     args))))
           `(defalias (quote ,(intern (concat "subed-" (symbol-name name))))
-             (quote ,(intern (concat "subed--" (symbol-name name))))
+             (function ,(intern (concat "subed--" (symbol-name name))))
              ,doc)))))
 
 (subed-define-generic-function timestamp-to-msecs (time-string)
