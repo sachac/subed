@@ -32,6 +32,7 @@
 
 ;;; Code:
 
+(require 'subed-autoloads)
 (require 'subed-config)
 (require 'subed-debug)
 (require 'subed-common)
