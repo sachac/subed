@@ -1,6 +1,6 @@
 ;;; subed.el --- A major mode for editing subtitles  -*- lexical-binding: t; -*-
 
-;; Version: 0.1.0
+;; Version: 1.0.0
 ;; Keywords: convenience, files, hypermedia, multimedia
 ;; URL: https://github.com/rndusr/subed
 ;; Package-Requires: ((emacs "25.1"))
@@ -124,6 +124,7 @@ Adjust - Increase or decrease start or stop time of a subtitle
 Key bindings:
 \\{subed-mode-map}"
   :group 'subed
+  (add-hook 'subed-mode-hook #'subed-guess-format :local)
   (add-hook 'post-command-hook #'subed--post-command-handler :append :local)
   (add-hook 'before-save-hook #'subed-prepare-to-save :append :local)
   (add-hook 'after-save-hook #'subed-mpv-reload-subtitles :append :local)
@@ -134,6 +135,19 @@ Key bindings:
   (add-hook 'subed-mode-hook #'subed-set-up-defaults :append :local)
   (when subed-auto-find-video
     (add-hook 'subed-mode-hook #'subed-auto-find-video-maybe :append :local)))
+
+(defun subed-guess-format ()
+  "Set this buffer's format to a more specific subed mode format.
+This is a workaround for the transition to using format-specific
+modes such as `subed-srt-mode' while `auto-mode-alist' might
+still refer to `subed-mode'. It will also switch to the
+format-specific mode if `subed-mode' is called directly."
+  (when (and (eq major-mode 'subed-mode)
+             (buffer-file-name))
+    (pcase (file-name-extension (buffer-file-name))
+      ("vtt" (subed-vtt-mode))
+      ("srt" (subed-srt-mode))
+      ("ass" (subed-ass-mode)))))
 
 (provide 'subed)
 ;;; subed.el ends here

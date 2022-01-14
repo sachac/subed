@@ -10,6 +10,23 @@ corresponding video with [[https://mpv.io/][mpv]].  At the moment, the only supp
 SubRip ( ~.srt~), WebVTT ( ~.vtt~ ), and Advanced SubStation Alpha ( ~.ass~, experimental ).
 
 [[file:https://raw.githubusercontent.com/rndusr/subed/master/screenshot.jpg]]
+** Important change in v1.0.0
+
+~subed~ now uses ~subed-srt-mode~, ~subed-vtt-mode~, and
+~subed-ass-mode~ instead of directly using ~subed-mode~. These modes
+should be automatically associated with the ~.vtt~, ~.srt~, and ~.ass~
+extensions. If the generic ~subed-mode~ is loaded instead of the format-specific mode,
+you may get an error such as:
+
+#+begin_example
+Error in post-command-hook (subed--post-command-handler): (cl-no-applicable-method subed--subtitle-id)
+#+end_example
+
+If you set ~auto-mode-alist~ manually in your config, please make sure
+you associate extensions the appropriate format-specific mode instead
+of ~subed-mode~. The specific backend functions (ex:
+~subed-srt--jump-to-subtitle-id~) are also deprecated in favor of
+using generic functions such as ~subed-jump-to-subtitle-id~.
 
 ** Features
    - Quickly jump to next (~M-n~) and previous (~M-p~) subtitle text.
