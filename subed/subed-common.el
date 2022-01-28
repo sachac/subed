@@ -40,7 +40,11 @@
 (defvar-local subed--regexp-timestamp nil "Regexp matching timestamps.")
 
 (defmacro subed-define-generic-function (name args &rest body)
-  "Declare an object method and provide the old way of calling it."
+  "Declare an object method and provide the old way of calling it.
+NAME is the part of the function name that will go after the
+subed- prefix.  ARGS are the arguments for the function.  BODY is
+the body of the function, and may include a docstring or an
+interactive form."
   (declare (indent 2))
   (let (is-interactive
         doc)
