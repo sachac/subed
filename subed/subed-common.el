@@ -45,7 +45,9 @@ NAME is the part of the function name that will go after the
 subed- prefix.  ARGS are the arguments for the function.  BODY is
 the body of the function, and may include a docstring or an
 interactive form."
-  (declare (indent 2))
+  (declare
+   (indent defun)
+   (debug defun))
   (let (is-interactive
         doc)
     (when (stringp (car body))
@@ -68,8 +70,8 @@ interactive form."
                                       (unless (string-match "^&" (symbol-name a))
                                         a))
                                     args))))
-          `(defalias (quote ,(intern (concat "subed-" (symbol-name name))))
-             (function ,(intern (concat "subed--" (symbol-name name))))
+          `(defalias ',(intern (concat "subed-" (symbol-name name)))
+             #',(intern (concat "subed--" (symbol-name name)))
              ,doc)))))
 
 (subed-define-generic-function timestamp-to-msecs (time-string)
