@@ -1,5 +1,10 @@
 * subed news
-** Version 0.1.0 - [2022-01-02 Sun] - Sacha Chua
+** Version 1.0.1 - 2022-02-01 - Sacha Chua
+
+Added obsolete function aliases in case people are calling
+format-specific functions in their code.
+
+** Version 1.0.0 - 2022-01-02 - Sacha Chua
 
 Format-specific modes are now initialized with =(subed-srt-mode)=,
 =(subed-vtt-mode)=, or =(subed-ass-mode)= instead of the corresponding

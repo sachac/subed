@@ -1430,7 +1430,7 @@ Baz.
        (while (looking-at "^[0-9]$")
          (replace-match "123"))
        (expect (buffer-string) :not :to-equal mock-srt-data)
-       (subed-srt--regenerate-ids)
+       (subed-regenerate-ids)
        (expect (buffer-string) :to-equal mock-srt-data)))
     (it "runs before saving."
       (with-temp-srt-buffer
@@ -1448,11 +1448,11 @@ Baz.
        (goto-char (point-min))
        (while (looking-at "^[0-9]$")
          (insert "555"))
-       (subed-srt--regenerate-ids)
+       (subed-regenerate-ids)
        (expect (car kill-ring) :to-equal "asdf")))
     (it "does not modify empty buffer."
       (with-temp-srt-buffer
-       (subed-srt--regenerate-ids)
+       (subed-regenerate-ids)
        (expect (buffer-string) :to-equal "")))
     )
 

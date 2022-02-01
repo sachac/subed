@@ -268,12 +268,12 @@ Return new point.  Use the format-specific function for MAJOR-MODE."
 (cl-defmethod subed--kill-subtitle :after (&context (major-mode subed-srt-mode))
   "Remove subtitle at point.
 Use the format-specific function for MAJOR-MODE."
-  (subed-srt--regenerate-ids-soon))
+  (subed-regenerate-ids-soon))
 
 (cl-defmethod subed--split-subtitle :after (&context (major-mode subed-srt-mode) &optional offset)
   "Split current subtitle at point.
 Use the format-specific function for MAJOR-MODE."
-  (subed-srt--regenerate-ids-soon))
+  (subed-regenerate-ids-soon))
 
 (cl-defmethod subed--merge-with-next (&context (major-mode subed-srt-mode))
   "Merge the current subtitle with the next subtitle.
@@ -290,12 +290,12 @@ Use the format-specific function for MAJOR-MODE."
             (delete-region pos (point))
             (insert "\n")
             (subed-set-subtitle-time-stop new-end)
-            (subed-srt--regenerate-ids-soon))
+            (subed-regenerate-ids-soon))
         (error "No subtitle to merge into")))))
 
 ;;; Maintenance
 
-(defun subed-srt--regenerate-ids ()
+(cl-defmethod subed-regenerate-ids (&context (major-mode subed-srt-mode))
   "Ensure consecutive, unduplicated subtitle IDs."
   (interactive)
   (atomic-change-group
@@ -314,22 +314,6 @@ Use the format-specific function for MAJOR-MODE."
                 (delete-region (point) (progn (forward-word 1) (point)))
                 (insert id-str)))
             (setq id (1+ id))))))))
-
-(defvar-local subed-srt--regenerate-ids-soon-timer nil)
-(defun subed-srt--regenerate-ids-soon ()
-  "Delay regenerating subtitle IDs for a short amount of time.
-
-Run `subed-srt--regenerate-ids' in 100ms unless this function is
-called again within the next 100ms, in which case the previously
-scheduled call is canceled and another call is scheduled in
-100ms."
-  (interactive)
-  (when subed-srt--regenerate-ids-soon-timer
-    (cancel-timer subed-srt--regenerate-ids-soon-timer))
-  (setq subed-srt--regenerate-ids-soon-timer
-        (run-at-time 0.1 nil (lambda ()
-                               (setq subed-srt--regenerate-ids-soon-timer nil)
-                               (subed-srt--regenerate-ids)))))
 
 (cl-defmethod subed--sanitize (&context (major-mode subed-srt-mode))
   "Remove surplus newlines and whitespace.
@@ -409,16 +393,16 @@ Use the format-specific function for MAJOR-MODE."
 
 (cl-defmethod subed--sort :after (&context (major-mode subed-srt-mode))
   "Renumber after sorting. Format-specific for MAJOR-MODE."
-  (subed-srt--regenerate-ids))
+  (subed-regenerate-ids))
 
 (cl-defmethod subed--insert-subtitle :after (&context (major-mode subed-srt-mode) &optional arg)
   "Renumber afterwards. Format-specific for MAJOR-MODE."
-  (subed-srt--regenerate-ids-soon)
+  (subed-regenerate-ids-soon)
   (point))
 
 (cl-defmethod subed--insert-subtitle-adjacent :after (&context (major-mode subed-srt-mode) &optional arg)
   "Renumber afterwards. Format-specific for MAJOR-MODE."
-  (subed-srt--regenerate-ids-soon)
+  (subed-regenerate-ids-soon)
   (point))
 
 ;;;###autoload
@@ -444,7 +428,7 @@ Use the format-specific function for MAJOR-MODE."
                                         (mapconcat 'identity '("^-"
                                                                "[[:graph:]]*$") "\\|")
                                         "\\)")))
-  (add-hook 'subed-sanitize-functions #'subed-srt--regenerate-ids t t))
+  (add-hook 'subed-sanitize-functions #'subed-regenerate-ids t t))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.srt\\'" . subed-srt-mode))

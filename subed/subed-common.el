@@ -60,6 +60,14 @@ interactive form."
          ,@(if is-interactive
                (cdr body)
              body))
+       ;; Define old internal functions as obsolete aliases
+       ,@(mapcar (lambda (sub-format)
+                   `(define-obsolete-function-alias
+                      (quote ,(intern (format "subed-%s--%s" sub-format (symbol-name name))))
+                      (function ,(intern (format "subed-%s" (symbol-name name))))
+                      "1.0.0"
+                      ,doc))
+                 '("srt" "vtt" "ass"))
        ,(if is-interactive
             `(defun ,(intern (concat "subed-" (symbol-name name))) ,args
                ,(concat doc "\n\nThis function calls the generic function `"
@@ -335,6 +343,25 @@ If BEG and END are not specified, use the whole buffer."
 
 (subed-define-generic-function validate ()
   "Move point to the first invalid subtitle and report an error.")
+
+(subed-define-generic-function regenerate-ids ()
+  "Ensure consecutive, unduplicated subtitle IDs in formats that use them.")
+
+(defvar-local subed--regenerate-ids-soon-timer nil)
+(subed-define-generic-function regenerate-ids-soon ()
+  "Delay regenerating subtitle IDs for a short amount of time.
+
+  Run `subed-regenerate-ids' in 100ms unless this function is
+called again within the next 100ms, in which case the previously
+scheduled call is canceled and another call is scheduled in
+100ms."
+  (interactive)
+  (when subed--regenerate-ids-soon-timer
+    (cancel-timer subed-srt--regenerate-ids-soon-timer))
+  (setq subed--regenerate-ids-soon-timer
+        (run-at-time 0.1 nil (lambda ()
+                               (setq subed--regenerate-ids-soon-timer nil)
+                               (subed-regenerate-ids)))))
 
 ;;; Utilities
 
