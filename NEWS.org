@@ -1,0 +1,17 @@
+* subed news
+** Version 1.0.1 - 2022-02-01 - Sacha Chua
+
+Added obsolete function aliases in case people are calling
+format-specific functions in their code.
+
+** Version 1.0.0 - 2022-01-02 - Sacha Chua
+
+Format-specific modes are now initialized with =(subed-srt-mode)=,
+=(subed-vtt-mode)=, or =(subed-ass-mode)= instead of the corresponding
+=(subed-vtt--init)= functions.
+
+I implemented the format-specific functions with =cl-defmethod=, so if
+you have any code that refers to functions like
+=subed-vtt--timestamp-to-msecs=, you will need to change your code to
+use generic functions such as =subed-timestamp-to-msecs=.
+

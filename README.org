@@ -10,6 +10,23 @@ corresponding video with [[https://mpv.io/][mpv]].  At the moment, the only supp
 SubRip ( ~.srt~), WebVTT ( ~.vtt~ ), and Advanced SubStation Alpha ( ~.ass~, experimental ).
 
 [[file:https://raw.githubusercontent.com/rndusr/subed/master/screenshot.jpg]]
+** Important change in v1.0.0
+
+~subed~ now uses ~subed-srt-mode~, ~subed-vtt-mode~, and
+~subed-ass-mode~ instead of directly using ~subed-mode~. These modes
+should be automatically associated with the ~.vtt~, ~.srt~, and ~.ass~
+extensions. If the generic ~subed-mode~ is loaded instead of the format-specific mode,
+you may get an error such as:
+
+#+begin_example
+Error in post-command-hook (subed--post-command-handler): (cl-no-applicable-method subed--subtitle-id)
+#+end_example
+
+If you set ~auto-mode-alist~ manually in your config, please make sure
+you associate extensions the appropriate format-specific mode instead
+of ~subed-mode~. The specific backend functions (ex:
+~subed-srt--jump-to-subtitle-id~) are also deprecated in favor of
+using generic functions such as ~subed-jump-to-subtitle-id~.
 
 ** Features
    - Quickly jump to next (~M-n~) and previous (~M-p~) subtitle text.
@@ -55,7 +72,7 @@ SubRip ( ~.srt~), WebVTT ( ~.vtt~ ), and Advanced SubStation Alpha ( ~.ass~, exp
      time is adjusted, and how much time to leave between subtitles.
 
 *** mpv integration (optional)
-   - Open videos with ~C-c C-v~ or automatically when entering subed-mode if the
+   - Open videos with ~C-c C-v~ or automatically when opening a subtitle file if the
      video file is named like the subtitle file but with a video extension
      (e.g. ~.mkv~ or ~.avi~).
    - Subtitles are automatically reloaded in mpv when the buffer is saved.
@@ -77,7 +94,7 @@ SubRip ( ~.srt~), WebVTT ( ~.vtt~ ), and Advanced SubStation Alpha ( ~.ass~, exp
      key is pressed).
 
 ** Installation
-
+*** Installing the subed package from NonGNU Elpa
 ~subed~ is now on [[https://elpa.nongnu.org/nongnu/subed.html][NonGNU ELPA]].  On Emacs 28 and later, you can install it with ~M-x package-install~ ~subed~.
 
 To install it on Emacs 27 or earlier, add the following to your Emacs configuration file:
@@ -87,17 +104,35 @@ To install it on Emacs 27 or earlier, add the following to your Emacs configurat
 #+end_src
 
 Use ~M-x eval-buffer~ to run the code, and then use ~M-x package-install~ ~subed~.
+*** Manual installation
 
-If that doesn't work, you can install it manually.  For example, copy ~subed/*.el~ to
+If that doesn't work, you can install it manually. To install from the main branch:
 
-~$HOME/.emacs.d/elisp/~ and add ~$HOME/.emacs.d/elisp/~ to your ~load-path~.
+#+begin_src sh :eval no
+git clone https://github.com/sachac/subed.git
+#+end_src
 
-Here's some sample code for manual installation:
+This will create a =subed= directory with the code.  Then you can add
+the following to your Emacs configuration (typically
+=~/.config/emacs-init.el=, =~/.emacs.d/init.el=, or =~/.emacs=; you
+can create this file if it doesn't exist yet):
 
 #+begin_src emacs-lisp
-(add-to-list 'load-path "~/.emacs.d/elisp")
-(require 'subed)
+;; Note the reference to the subed subdirectory
+(add-to-list 'load-path "/path/to/subed/subed")
+(require 'subed-autoloads)
 #+end_src
+
+and reload your configuration with =M-x eval-buffer= or restart Emacs.
+
+If you want to try a branch (ex: =derived-mode=), you can use the
+following command inside the =subed= directory:
+
+#+begin_src sh :eval no
+git checkout branchname
+#+end_src
+
+*** use-package configuration
 
 Here's an example setup if you use use-package:
 
@@ -115,7 +150,12 @@ Here's an example setup if you use use-package:
   (add-hook 'subed-mode-hook (lambda () (setq-local fill-column 40))))
 #+END_SRC
 
-~C-h f subed-mode~ should get you started.
+** Getting started
+
+~C-h f subed-mode~ should get you started. This is the parent mode for
+~subed-srt-mode~, ~subed-vtt-mode~, and ~subed-ass-mode~. When
+manually loading a mode, use those specific format modes instead of
+~subed-mode~.
 
 ** Contributions
    Contributions would be really appreciated! subed conforms to the [[https://reuse.software/spec/][REUSE

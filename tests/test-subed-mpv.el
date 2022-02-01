@@ -1,7 +1,7 @@
 ;; -*- eval: (buttercup-minor-mode) -*-
 
-(add-to-list 'load-path "./subed")
-(require 'subed)
+(load-file "./tests/undercover-init.el")
+(require 'subed-mpv)
 
 (describe "Starting mpv"
   (it "passes arguments to make-process."

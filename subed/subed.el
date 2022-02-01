@@ -1,6 +1,6 @@
 ;;; subed.el --- A major mode for editing subtitles  -*- lexical-binding: t; -*-
 
-;; Version: 0.0.4
+;; Version: 1.0.1
 ;; Keywords: convenience, files, hypermedia, multimedia
 ;; URL: https://github.com/rndusr/subed
 ;; Package-Requires: ((emacs "25.1"))
@@ -32,12 +32,10 @@
 
 ;;; Code:
 
+(require 'subed-autoloads)
 (require 'subed-config)
 (require 'subed-debug)
 (require 'subed-common)
-(require 'subed-srt)
-(require 'subed-vtt)
-(require 'subed-ass)
 (require 'subed-mpv)
 
 (defconst subed-mpv-frame-step-map
@@ -90,90 +88,25 @@
 						 html-tag-keymap))
     subed-mode-map))
 
-;;;###autoload
-(defvar subed--init-alist '(("srt" . subed-srt--init)
-                            ("vtt" . subed-vtt--init)
-                            ("ass" . subed-ass--init))
-  "Alist that maps file extensions to format-specific init functions.")
+(defun subed-auto-find-video-maybe ()
+  "Load video associated with this subtitle file."
+  (let ((video-file (subed-guess-video-file)))
+    (when video-file
+      (subed-debug "Auto-discovered video file: %s" video-file)
+      (condition-case err
+          (subed-mpv-find-video video-file)
+        (error (message "%s -- Set subed-auto-find-video to nil to avoid this error."
+                        (car (cdr err))))))))
 
-;;; Abstraction hack to support different subtitle formats
-;;
-;; We need subtitle format-specific functions for each individual buffer so it
-;; is possible to open a .srt and a .sub file in the same Emacs session.
-;; Buffer-local functions don't exist in Elisp, but we can store the format in a
-;; buffer-local variable.
-;;
-;; `subed-mode-enable' runs a format-specific init function based on the file
-;; extension.  The init function sets the buffer-local variable
-;; `subed--subtitle-format' which is then used by generic functions to assemble
-;; the names of format-specific functions on the fly (e.g. (concat "subed-"
-;; subed-subtitle-format "--subtitle-id")).
-
-(defvar subed--generic-function-suffixes
-  (list "subtitle-id" "subtitle-id-max" "subtitle-id-at-msecs"
-        "subtitle-msecs-start" "subtitle-msecs-stop"
-        "subtitle-text" "subtitle-relative-point"
-        "msecs-to-timestamp" "timestamp-to-msecs"
-        "jump-to-subtitle-id" "jump-to-subtitle-id-at-msecs"
-        "jump-to-subtitle-time-start" "jump-to-subtitle-time-stop"
-        "jump-to-subtitle-text" "jump-to-subtitle-text-at-msecs"
-        "jump-to-subtitle-end"
-        "forward-subtitle-id" "backward-subtitle-id"
-        "forward-subtitle-text" "backward-subtitle-text"
-        "forward-subtitle-end" "backward-subtitle-end"
-        "forward-subtitle-time-start" "backward-subtitle-time-start"
-        "forward-subtitle-time-stop" "backward-subtitle-time-stop"
-        "set-subtitle-time-start" "set-subtitle-time-stop"
-        "prepend-subtitle" "append-subtitle" "kill-subtitle" "merge-with-next"
-        "regenerate-ids" "regenerate-ids-soon"
-        "sanitize" "validate" "sort" "make-subtitle"))
-
-(defun subed--get-generic-func (func-suffix)
-  "Return the generic/public function for FUNC-SUFFIX."
-  (intern (concat "subed-" func-suffix)))
-
-(defun subed--get-specific-func (func-suffix)
-  "Return the format-specific function for the current buffer for FUNC-SUFFIX."
-  (intern (concat "subed-" subed--subtitle-format "--" func-suffix)))
-
-(defun subed--init ()
-  "Call subtitle format-specific init function and (re-)alias generic functions."
-  ;; Call format-specific init function based on file extension and
-  ;; `subed--init-alist'.
-  (let* ((file-ext (when (buffer-file-name)
-                     (file-name-extension (buffer-file-name))))
-         (init-func (alist-get file-ext subed--init-alist nil nil 'equal)))
-    (if (functionp init-func)
-        (funcall init-func)
-      (error "Missing init function: %S" init-func))
-    (unless subed--subtitle-format
-      (error "%S failed to set buffer-local variable: subed--subtitle-format"
-             init-func)))
-  ;; Define generic functions like `subed-subtitle-text'.
-  (cl-loop for func-suffix in subed--generic-function-suffixes do
-           (let ((generic-func (subed--get-generic-func func-suffix))
-                 (specific-func (subed--get-specific-func func-suffix)))
-             (unless (functionp specific-func)
-               (error "Missing subtitle format-specific function: %s" specific-func))
-             (if (functionp specific-func)
-               (let* ((argspec (help-function-arglist specific-func))
-                      (argvars (seq-filter (lambda (argvar)
-                                             (let ((first-char (substring (symbol-name argvar) 0 1)))
-                                               (not (equal first-char "&"))))
-                                           argspec)))
-                 (defalias generic-func
-                   `(lambda ,argspec
-                      ,(interactive-form specific-func) ;; (interactive ...) or nil
-                      (let (;; Get the format-specific function for the current
-                            ;; buffer.  We must do this every time the generic
-                            ;; function is called because the result depends on
-                            ;; the buffer-local variable `subed--subtitle-format'.
-                            (specific-func (subed--get-specific-func ,func-suffix))
-                            ;; Turn the list of variable names into a list of
-                            ;; corresponding values.
-                            (argvals (mapcar 'eval ',argvars)))
-                        (apply specific-func argvals)))
-                   (documentation specific-func t)))))))
+;; TODO: Make these more configurable.
+(defun subed-set-up-defaults ()
+  "Quietly enable some recommended defaults."
+  (subed-enable-pause-while-typing :quiet)
+  (subed-enable-sync-point-to-player :quiet)
+  (subed-enable-sync-player-to-point :quiet)
+  (subed-enable-replay-adjusted-subtitle :quiet)
+  (subed-enable-loop-over-current-subtitle :quiet)
+  (subed-enable-show-cps :quiet))
 
 ;;;###autoload
 (define-derived-mode subed-mode text-mode "subed"
@@ -191,7 +124,7 @@ Adjust - Increase or decrease start or stop time of a subtitle
 Key bindings:
 \\{subed-mode-map}"
   :group 'subed
-  (subed--init)
+  (add-hook 'subed-mode-hook #'subed-guess-format :local)
   (add-hook 'post-command-hook #'subed--post-command-handler :append :local)
   (add-hook 'before-save-hook #'subed-prepare-to-save :append :local)
   (add-hook 'after-save-hook #'subed-mpv-reload-subtitles :append :local)
@@ -199,31 +132,22 @@ Key bindings:
   (add-hook 'kill-emacs-hook #'subed-mpv-kill :append :local)
   (when subed-trim-overlap-check-on-load
     (add-hook 'subed-mode-hook #'subed-trim-overlap-check :append :local))
+  (add-hook 'subed-mode-hook #'subed-set-up-defaults :append :local)
   (when subed-auto-find-video
-    (let ((video-file (subed-guess-video-file)))
-      (when video-file
-        (subed-debug "Auto-discovered video file: %s" video-file)
-        (condition-case err
-            (subed-mpv-find-video video-file)
-          (error (message "%s -- Set subed-auto-find-video to nil to avoid this error."
-                          (car (cdr err))))))))
-  (subed-enable-pause-while-typing :quiet)
-  (subed-enable-sync-point-to-player :quiet)
-  (subed-enable-sync-player-to-point :quiet)
-  (subed-enable-replay-adjusted-subtitle :quiet)
-  (subed-enable-loop-over-current-subtitle :quiet)
-  (subed-enable-show-cps :quiet))
+    (add-hook 'subed-mode-hook #'subed-auto-find-video-maybe :append :local)))
 
-;; Internally, supported formats are listed in `subed--init-alist', which
-;; associates file extensions with format-specific init methods (e.g. "srt" ->
-;; subed-srt--init).  Here we map each file extension as a regexp to
-;; `subed-mode-enable', which will call the format-specific init method and do
-;; generic init stuff.
-;;;###autoload
-(dolist (item subed--init-alist)
-  (let ((file-ext-regex (car item)))
-    (add-to-list 'auto-mode-alist (cons (concat "\\." file-ext-regex "\\'")
-                                        'subed-mode))))
+(defun subed-guess-format ()
+  "Set this buffer's format to a more specific subed mode format.
+This is a workaround for the transition to using format-specific
+modes such as `subed-srt-mode' while `auto-mode-alist' might
+still refer to `subed-mode'. It will also switch to the
+format-specific mode if `subed-mode' is called directly."
+  (when (and (eq major-mode 'subed-mode)
+             (buffer-file-name))
+    (pcase (file-name-extension (buffer-file-name))
+      ("vtt" (subed-vtt-mode))
+      ("srt" (subed-srt-mode))
+      ("ass" (subed-ass-mode)))))
 
 (provide 'subed)
 ;;; subed.el ends here
