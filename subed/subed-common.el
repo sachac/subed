@@ -484,6 +484,7 @@ Before BODY is run, point is placed on the subtitle's ID."
 
 ;;; Adjusting start/stop time individually
 
+(define-error 'subed-subtitle-overlap-error "Overlapping subtitle")
 
 (defun subed-trim-overlap-at-start (&optional strategy)
   "Fix the subtitle so that it does not overlap with the previous subtitle.
@@ -514,12 +515,14 @@ it was not changed."
               (save-excursion
                 (goto-char pos)
                 (setq strategy
-                      (pcase (read-char-choice "Start time overlap detected. Adjust (c)urrent, adjust (o)ther, or (i)gnore? "
+                      (pcase (read-char-choice "Start time overlap detected. Adjust (c)urrent, adjust (o)ther, (i)gnore, or (e)rror? "
                                                '(?c ?o ?i))
                         (?c 'current)
                         (?o 'other)
-                        (?i 'ignore)))))
+                        (?i 'ignore)
+                        (?e 'error)))))
             (cond
+             ((eq strategy 'error) (signal 'subed-subtitle-overlap-error '("Overlapping subtitle")))
              ((eq strategy 'other)
               (prog1 (- (subed-subtitle-msecs-stop)
                         (- start-ms subed-subtitle-spacing))
@@ -558,12 +561,14 @@ it was not changed."
               (save-excursion
                 (goto-char pos)
                 (setq strategy
-                      (pcase (read-char-choice "Stop time overlap detected. Adjust (c)urrent, adjust (o)ther, or (i)gnore? "
+                      (pcase (read-char-choice "Stop time overlap detected. Adjust (c)urrent, adjust (o)ther, (i)gnore overlap, or (e)rror? "
                                                '(?c ?o ?i))
                         (?c 'current)
                         (?o 'other)
-                        (?i 'ignore)))))
+                        (?i 'ignore)
+                        (?e 'error)))))
             (cond
+             ((eq strategy 'error) (signal 'subed-subtitle-overlap-error '("Overlapping subtitle")))
              ((eq strategy 'other)
               (prog1 (- (+ stop-ms subed-subtitle-spacing)
                         (subed-subtitle-msecs-start))
@@ -582,8 +587,7 @@ it was not changed."
 
 (defun subed-adjust-subtitle-time-start (msecs &optional
                                                ignore-negative-duration
-                                               ignore-overlap
-                                               trim-strategy)
+                                               ignore-overlap)
   "Add MSECS milliseconds to start time (use negative value to subtract).
 
 Unless either IGNORE-NEGATIVE-DURATION or
@@ -594,8 +598,7 @@ subtitles are always allowed.
 Unless either IGNORE-OVERLAP or `subed-enforce-time-boundaries'
 are non-nil, ensure that there are no gaps between subtitles
 smaller than `subed-subtitle-spacing' milliseconds by adjusting
-MSECS if necessary.  Use TRIM-STRATEGY to control
-`subed-trim-overlap-at-stop' as needed.
+MSECS if necessary.
 
 Return the number of milliseconds the start time was adjusted or
 nil if nothing changed."
