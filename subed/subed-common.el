@@ -713,6 +713,27 @@ Example usage:
   (interactive "P")
   (subed-adjust-subtitle-time-start (subed-get-milliseconds-adjust arg)))
 
+(defun subed-increase-start-time-and-adjust-previous (&optional arg)
+  "Add `subed-milliseconds-adjust' milliseconds to start time.
+Adjust the previous subtitle (if any) to keep at least `subed-subtitle-spacing'.
+
+See `subed-increase-start-time' about ARG."
+  (interactive "P")
+  (let ((subed-enforce-time-boundaries nil)
+        (start-msecs (subed-subtitle-msecs-start))
+        new-msecs)
+    (subed-batch-edit
+      (when (subed-adjust-subtitle-time-start
+             (subed-get-milliseconds-adjust arg))
+        (save-excursion
+          (setq new-msecs (subed-subtitle-msecs-start))
+          (subed-backward-subtitle-time-start)
+          (when (>= (subed-subtitle-msecs-stop)
+                    (- start-msecs subed-subtitle-spacing))
+            (subed-set-subtitle-time-stop
+             (- new-msecs subed-subtitle-spacing)))))
+      (subed--run-subtitle-time-adjusted-hook))))
+
 (defun subed-decrease-start-time (&optional arg)
   "Subtract `subed-milliseconds-adjust' milliseconds from start time.
 
@@ -721,6 +742,19 @@ Return new start time in milliseconds or nil if it didn't change.
 See `subed-increase-start-time' about ARG."
   (interactive "P")
   (subed-adjust-subtitle-time-start (* -1 (subed-get-milliseconds-adjust arg))))
+
+(defun subed-decrease-start-time-and-adjust-previous (&optional arg)
+  "Subtract `subed-milliseconds-adjust' milliseconds from start time.
+Adjust the previous subtitle (if any) to keep at least `subed-subtitle-spacing'.
+
+See `subed-increase-start-time' about ARG."
+  (interactive "P")
+  (let ((subed-enforce-time-boundaries nil))
+    (subed-batch-edit
+      (subed-adjust-subtitle-time-start
+       (* -1 (subed-get-milliseconds-adjust arg)))
+      (subed-trim-overlap-at-start 'other)
+      (subed--run-subtitle-time-adjusted-hook))))
 
 (defun subed-increase-stop-time (&optional arg)
   "Add `subed-milliseconds-adjust' milliseconds to stop time.
@@ -731,6 +765,19 @@ See `subed-increase-start-time' about ARG."
   (interactive "P")
   (subed-adjust-subtitle-time-stop (subed-get-milliseconds-adjust arg)))
 
+(defun subed-increase-stop-time-and-adjust-next (&optional arg)
+  "Add `subed-milliseconds-adjust' milliseconds to stop time.
+Adjust the next subtitle (if any) to keep at least `subed-subtitle-spacing'.
+
+See `subed-increase-start-time' about ARG."
+  (interactive "P")
+  (let ((subed-enforce-time-boundaries nil))
+    (subed-batch-edit
+      (subed-adjust-subtitle-time-stop
+       (subed-get-milliseconds-adjust arg))
+      (subed-trim-overlap-at-stop 'other)
+      (subed--run-subtitle-time-adjusted-hook))))
+
 (defun subed-decrease-stop-time (&optional arg)
   "Subtract `subed-milliseconds-adjust' milliseconds from stop time.
 
@@ -739,6 +786,29 @@ Return new stop time in milliseconds or nil if it didn't change.
 See `subed-increase-start-time' about ARG."
   (interactive "P")
   (subed-adjust-subtitle-time-stop (* -1 (subed-get-milliseconds-adjust arg))))
+
+(defun subed-decrease-stop-time-and-adjust-next (&optional arg)
+  "Subtract `subed-milliseconds-adjust' milliseconds from stop time.
+
+If the next subtitle starts within `subed-subtitle-spacing' of
+the original stop time, adjust it so that it starts after
+`subed-subtitle-spacing' based on the new stop time.
+
+See `subed-increase-start-time' about ARG."
+  (interactive "P")
+  (subed-batch-edit
+    (let ((stop-ms (subed-subtitle-msecs-stop))
+          new-msecs)
+      (when (subed-adjust-subtitle-time-stop
+             (* -1 (subed-get-milliseconds-adjust arg)))
+        (setq new-msecs (subed-subtitle-msecs-stop))
+        (save-excursion
+          (when (and (subed-forward-subtitle-time-stop)
+                     (>= (subed-subtitle-msecs-start)
+                         (+ stop-msecs subed-subtitle-spacing)))
+            (subed-set-subtitle-time-start
+             (+ new-msecs subed-subtitle-spacing))))
+        (subed--run-subtitle-time-adjusted-hook)))))
 
 (defun subed-copy-player-pos-to-start-time ()
   "Replace current subtitle's start time with current playback time."

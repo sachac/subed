@@ -349,6 +349,56 @@ Baz."))
        (expect (subed-adjust-subtitle-time-stop -100) :to-equal -100)
        (expect (save-excursion (subed-jump-to-subtitle-time-start)
                                (thing-at-point 'line)) :to-equal "00:01:00,900 --> 00:01:05,223\n")))
+
+    (describe "using convenience commands"
+      (it "decreases start time without adjusting."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-time-start 2)
+         (subed-decrease-start-time 35000)
+         (expect (subed-subtitle-msecs-start) :to-equal 90100)))
+      (it "decreases start time and adjusts the previous one."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-time-start 2)
+         (subed-decrease-start-time-and-adjust-previous 35000)
+         (expect (subed-subtitle-msecs-start) :to-equal (- 120000 35000))
+         (expect (subed-subtitle-msecs-stop 1)
+                 :to-equal (- 120000 35000 100))
+         ))
+      (it "increases start time without adjusting."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-time-start 2)
+         (subed-increase-start-time 1000)
+         (expect (subed-subtitle-msecs-start) :to-equal 121000)))
+      (it "increases start time and adjusts the previous one."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-time-start 3)
+         (subed-increase-start-time-and-adjust-previous 1000)
+         (expect (subed-subtitle-msecs-start) :to-equal 181000)
+         (expect (subed-subtitle-msecs-stop 2)
+                 :to-equal (- 181000 100))))
+      (it "increases stop time without adjusting."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-time-start 2)
+         (subed-increase-stop-time 1000)
+         (expect (subed-subtitle-msecs-stop) :to-equal 240000)))
+      (it "increases stop time and adjusts the next one."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-time-start 2)
+         (subed-increase-stop-time-and-adjust-next 1000)
+         (expect (subed-subtitle-msecs-stop) :to-equal 241000)
+         (expect (subed-subtitle-msecs-start 3) :to-equal 241100)))
+      (it "decreases stop time."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-time-start 2)
+         (subed-decrease-stop-time 1000)
+         (expect (subed-subtitle-msecs-stop) :to-equal 239000))))
     (describe "enforces boundaries"
       (describe "when decreasing start time"
         (it "of the first subtitle."
