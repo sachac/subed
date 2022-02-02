@@ -280,6 +280,39 @@ Baz."))
         (with-temp-srt-buffer
          (expect (subed-trim-overlap-at-stop 'current) :to-be nil))))
     
+    (describe "when adjusting the current subtitle"
+      (it "ignores non-overlapping subtitles."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 1)
+         (subed-trim-overlaps-for-current-subtitle)
+         (expect (subed-subtitle-msecs-stop) :to-equal 90000)))
+      (it "adjusts the current subtitle's time if specified."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 3)
+         (subed-trim-overlaps-for-current-subtitle)
+         (expect (subed-subtitle-msecs-start) :to-equal (+ 240000 100))
+         (expect (subed-subtitle-msecs-stop) :to-equal (- 270000 100))
+         (expect (subed-subtitle-msecs-stop 2) :to-equal 240000)
+         (expect (subed-subtitle-msecs-start 4) :to-equal 270000))))
+    (describe "when adjusting the surrounding subtitles"
+      (it "ignores non-overlapping subtitles."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 1)
+         (subed-trim-overlaps-by-adjusting-surrounding-subtitles)
+         (expect (subed-subtitle-msecs-stop) :to-equal 90000)))
+      (it "adjusts the other subtitles' times."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 3)
+         (subed-trim-overlaps-by-adjusting-surrounding-subtitles)
+         (expect (subed-subtitle-msecs-start) :to-equal 180000)
+         (expect (subed-subtitle-msecs-stop) :to-equal 300000)
+         (expect (subed-subtitle-msecs-stop 2) :to-equal (- 180000 100))
+         (expect (subed-subtitle-msecs-start 4) :to-equal (+ 300000 100)))))
+
     (it "runs the appropriate hook."
       (let ((foo (setf (symbol-function 'foo) (lambda (msecs) ()))))
         (spy-on 'foo)

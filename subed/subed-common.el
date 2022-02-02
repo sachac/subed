@@ -503,6 +503,9 @@ the following symbols:
 
 Return the number of milliseconds the time was adjusted or nil if
 it was not changed."
+  (interactive (list (if (member subed-trim-overlap-strategy '(ignore error))
+                         'prompt
+                       subed-trim-overlap-strategy)))
   (setq strategy (or strategy subed-trim-overlap-strategy))
   (unless (eq strategy 'ignore)
     (subed-batch-edit
@@ -549,6 +552,9 @@ the following symbols:
 
 Return the number of milliseconds the time was adjusted or nil if
 it was not changed."
+  (interactive (list (if (member subed-trim-overlap-strategy '(ignore error))
+                         'prompt
+                       subed-trim-overlap-strategy)))
   (setq strategy (or strategy subed-trim-overlap-strategy))
   (unless (eq strategy 'ignore)
     (subed-batch-edit
@@ -584,6 +590,18 @@ it was not changed."
                                    0))
                 (subed-backward-subtitle-id)
                 (subed-set-subtitle-time-stop stop-ms))))))))))
+
+(defun subed-trim-overlaps-for-current-subtitle ()
+  "Trim the current subtitle so that it doesn't overlap."
+  (interactive)
+  (subed-trim-overlap-at-start 'current)
+  (subed-trim-overlap-at-stop 'current))
+
+(defun subed-trim-overlaps-by-adjusting-surrounding-subtitles ()
+  "Adjust the previous and next subtitle to avoid overlaps with the current one."
+  (interactive)
+  (subed-trim-overlap-at-start 'other)
+  (subed-trim-overlap-at-stop 'other))
 
 (defun subed-adjust-subtitle-time-start (msecs &optional
                                                ignore-negative-duration
@@ -623,8 +641,8 @@ nil if nothing changed."
               (setq msecs-new (max msecs-new msecs-min))))))
       ;; MSECS-NEW must be bigger than the current start time if we are adding
       ;; or smaller if we are subtracting.
-      (when (and (>= msecs-new 0)                                  ;; Ignore negative times
-                 (or (and (> msecs 0) (> msecs-new msecs-start))   ;; Adding
+      (when (and (>= msecs-new 0) ;; Ignore negative times
+                 (or (and (> msecs 0) (> msecs-new msecs-start)) ;; Adding
                      (and (< msecs 0) (< msecs-new msecs-start)))) ;; Subtracting
         (subed-set-subtitle-time-start msecs-new)
         (subed--run-subtitle-time-adjusted-hook)
