@@ -243,7 +243,7 @@ Baz."))
          (subed-jump-to-subtitle-id 3)
          (expect
           (subed-trim-overlap-at-stop 'current)
-          :to-equal (- 300000 (- 270000 100)))
+          :to-equal (- (- 270000 100) 300000))
          (expect (subed-subtitle-msecs-stop) :to-equal (- 270000 100))
          (subed-forward-subtitle-time-stop)
          (expect (subed-subtitle-msecs-start) :to-equal 270000)))
