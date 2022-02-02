@@ -295,9 +295,8 @@ Use the format-specific function for MAJOR-MODE."
 
 ;;; Maintenance
 
-(cl-defmethod subed-regenerate-ids (&context (major-mode subed-srt-mode))
+(cl-defmethod subed--regenerate-ids (&context (major-mode subed-srt-mode))
   "Ensure consecutive, unduplicated subtitle IDs."
-  (interactive)
   (atomic-change-group
     (save-match-data
       (save-excursion
