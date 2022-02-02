@@ -241,6 +241,22 @@ Subtitles are trimmed according to `subed-trim-overlap-use-start'."
           (const :tag "Do not check" nil))
   :group 'subed)
 
+(defcustom subed-trim-overlap-strategy 'other
+  "Strategy to use when trimming overlaps to maintain `subed-subtitle-spacing'.
+
+- current: Adjust the current subtitle's start or stop time,
+  depending on the command.
+- other: Adjust the previous subtitle's stop time or the next subtitle's
+  stop time, depending on the command.
+- allow: Allow the overlap.
+- prompt: Ask the user."
+  :type '(choice
+          (const :tag "Adjust the current subtitle's start or stop time" current)
+          (const :tag "Adjust the other subtitle's start or stop time" other)
+          (const :tag "Ignore the overlap" ignore)
+          (const :tag "Ask the user" prompt))
+  :group 'subed)
+
 (defcustom subed-trim-overlap-use-start nil
   "Non-nil means adjust the start time of the following subtitle for overlaps.
 Otherwise, adjust the stop time of the current subtitle."

@@ -162,7 +162,124 @@ Baz.
     )
 
   (describe "Adjusting subtitle start/stop time"
-    :var (subed-subtitle-time-adjusted-hook)
+    :var (subed-subtitle-time-adjusted-hook
+          (subed-subtitle-spacing 100)
+          (temp-overlapping-data "1
+00:01:00,000 --> 00:01:30,000
+Foo.
+
+2
+00:02:00,000 --> 00:04:00,000
+Bar.
+
+3
+00:03:00,000 --> 00:05:00,000
+Baz.
+
+4
+00:04:30,000 --> 00:06:00,000
+Baz."))
+    (describe "when adjusting the current subtitle's start time"
+      (it "ignores non-overlapping subtitles."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 2)
+         (expect (subed-trim-overlap-at-start 'other) :to-be nil)
+         (expect (subed-subtitle-msecs-start) :to-equal 120000)
+         (subed-backward-subtitle-time-stop)
+         (expect (subed-subtitle-msecs-stop) :to-equal 90000)))
+      (it "adjusts the current subtitle's time if specified."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 3)
+         (expect (subed-trim-overlap-at-start 'current)
+                 :to-equal (- 240100 180000))
+         (expect (subed-subtitle-msecs-start) :to-equal 240100)
+         (subed-backward-subtitle-time-stop)
+         (expect (subed-subtitle-msecs-stop) :to-equal 240000)))
+      (it "adjusts the other subtitle's time if specified."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 3)
+         (expect (subed-trim-overlap-at-start 'other)
+                 :to-equal (- 240000 179900))
+         (expect (subed-subtitle-msecs-start) :to-equal 180000)
+         (subed-backward-subtitle-time-stop)
+         (expect (subed-subtitle-msecs-stop) :to-equal 179900)))
+      (it "ignores the overlap if specified."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 3)
+         (subed-trim-overlap-at-start 'ignore)
+         (expect (buffer-string) :to-equal temp-overlapping-data)))
+      (it "prompts if specified."
+        (with-temp-srt-buffer
+         (spy-on 'read-char-choice :and-return-value ?c)
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 3)
+         (subed-trim-overlap-at-start 'prompt)
+         (expect 'read-char-choice :to-have-been-called-times 1)))
+      (it "returns nil at the first subtitle."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 1)
+         (expect (subed-trim-overlap-at-start 'current) :to-be nil)))
+      (it "returns nil in an empty buffer"
+        (with-temp-srt-buffer
+         (expect (subed-trim-overlap-at-start 'current) :to-be nil))))
+    (describe "when adjusting the current subtitle's stop time"
+      (it "ignores non-overlapping subtitles."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 1)
+         (expect (subed-trim-overlap-at-stop 'other)
+                 :to-be nil)
+         (expect (subed-subtitle-msecs-stop) :to-equal 90000)
+         (subed-forward-subtitle-time-stop)
+         (expect (subed-subtitle-msecs-start) :to-equal 120000)))
+      (it "adjusts the current subtitle's time if specified."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 3)
+         (expect
+          (subed-trim-overlap-at-stop 'current)
+          :to-equal (- 300000 (- 270000 100)))
+         (expect (subed-subtitle-msecs-stop) :to-equal (- 270000 100))
+         (subed-forward-subtitle-time-stop)
+         (expect (subed-subtitle-msecs-start) :to-equal 270000)))
+      (it "adjusts the other subtitle's time if specified."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 3)
+         (expect
+          (subed-trim-overlap-at-stop 'other)
+          :to-equal (- 300100 270000))
+         (expect (subed-subtitle-msecs-stop) :to-equal 300000)
+         (subed-forward-subtitle-time-start)
+         (expect (subed-subtitle-msecs-start) :to-equal (+ 300000 100))))
+      (it "ignores the overlap if specified."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 3)
+         (subed-trim-overlap-at-stop 'ignore)
+         (expect (buffer-string) :to-equal temp-overlapping-data)))
+      (it "prompts if specified."
+        (with-temp-srt-buffer
+         (spy-on 'read-char-choice :and-return-value ?c)
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 3)
+         (subed-trim-overlap-at-stop 'prompt)
+         (expect 'read-char-choice :to-have-been-called-times 1)
+         (expect (subed-subtitle-msecs-stop) :to-equal (- 270000 100))))
+      (it "returns nil at the last subtitle."
+        (with-temp-srt-buffer
+         (insert temp-overlapping-data)
+         (subed-jump-to-subtitle-id 4)
+         (expect (subed-trim-overlap-at-stop 'current) :to-be nil)))
+      (it "returns nil in an empty buffer"
+        (with-temp-srt-buffer
+         (expect (subed-trim-overlap-at-stop 'current) :to-be nil))))
+    
     (it "runs the appropriate hook."
       (let ((foo (setf (symbol-function 'foo) (lambda (msecs) ()))))
         (spy-on 'foo)
