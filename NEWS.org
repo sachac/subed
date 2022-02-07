@@ -1,4 +1,9 @@
 * subed news
+** Version 1.0.3 - 2022-02-07 - Sacha Chua
+
+subed now tries to avoid sorting already-sorted buffers, which should
+reduce interference with mark rings and other things.
+
 ** Version 1.0.1 - 2022-02-01 - Sacha Chua
 
 Added obsolete function aliases in case people are calling
