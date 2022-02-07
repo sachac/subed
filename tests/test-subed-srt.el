@@ -1410,17 +1410,19 @@ Baz.
        (expect (buffer-string) :to-equal "")))
     (it "runs before saving."
       (with-temp-srt-buffer
-       (insert mock-srt-data)
-       (goto-char (point-min))
-       (re-search-forward " --> ")
-       (replace-match "  --> ")
-       (re-search-forward " --> ")
-       (replace-match " -->  ")
-       (re-search-forward " --> ")
-       (replace-match "-->")
-       (expect (buffer-string) :not :to-equal mock-srt-data)
-       (subed-prepare-to-save)
-       (expect (buffer-string) :to-equal mock-srt-data))))
+        (insert mock-srt-data)
+        (goto-char (point-min))
+        (re-search-forward " --> ")
+        (replace-match "  --> ")
+        (re-search-forward " --> ")
+        (replace-match " -->  ")
+        (re-search-forward " --> ")
+        (replace-match "-->")
+        (spy-on 'subed-sanitize :and-call-through)
+        (expect (buffer-string) :not :to-equal mock-srt-data)
+        (subed-prepare-to-save)
+        (expect 'subed-sanitize :to-have-been-called)
+        (expect (buffer-string) :to-equal mock-srt-data))))
 
   (describe "Renumbering"
     (it "ensures consecutive subtitle IDs."

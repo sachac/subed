@@ -164,6 +164,25 @@ subtitles or negative duration."
   :type 'boolean
   :group 'subed)
 
+(defcustom subed-sanitize-functions
+  '(subed-sanitize-format
+    subed-sort
+    subed-trim-overlap-maybe-sanitize)
+  "Functions to call when sanitizing subtitles."
+  :type '(repeat function)
+  :local t
+  :group 'subed)
+
+(defcustom subed-validate-functions
+  '(subed-validate-format
+    subed-trim-overlap-maybe-check)
+  "Functions to validate this buffer.
+Validation functions should throw an error or prompt the user for
+action."
+  :type '(repeat function)
+  :local t
+  :group 'subed)
+
 (defcustom subed-loop-seconds-before 1
   "Prelude in seconds when looping over subtitle(s)."
   :type 'float

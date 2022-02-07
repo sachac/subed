@@ -285,7 +285,7 @@ Use the format-specific function for MAJOR-MODE."
 ;;; Maintenance
 
 
-(cl-defmethod subed--sanitize (&context (major-mode subed-vtt-mode))
+(cl-defmethod subed--sanitize-format (&context (major-mode subed-vtt-mode))
   "Remove surplus newlines and whitespace.
 Use the format-specific function for MAJOR-MODE."
   (atomic-change-group
@@ -332,7 +332,7 @@ Use the format-specific function for MAJOR-MODE."
            (unless (= (length (match-string 0)) 5)
              (replace-match " --> "))))))))
 
-(cl-defmethod subed--validate (&context (major-mode subed-vtt-mode))
+(cl-defmethod subed--validate-format (&context (major-mode subed-vtt-mode))
   "Move point to the first invalid subtitle and report an error.
 Use the format-specific function for MAJOR-MODE."
   (when (> (buffer-size) 0)
@@ -356,25 +356,6 @@ Use the format-specific function for MAJOR-MODE."
             (unless (looking-at "[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\(\\.[0-9]\\{0,3\\}\\)$")
               (error "Found invalid stop time: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1))))
           (goto-char orig-point))))))
-
-(cl-defmethod subed--sort (&context (major-mode subed-vtt-mode))
-  "Sanitize, then sort subtitles by start time.
-Use the format-specific function for MAJOR-MODE."
-  (atomic-change-group
-    (subed-sanitize)
-    (subed-validate)
-    (subed-save-excursion
-     (goto-char (point-min))
-     (subed-forward-subtitle-id)
-     (sort-subr nil
-                ;; nextrecfun (move to next record/subtitle or to end-of-buffer
-                ;; if there are no more records)
-                (lambda () (unless (subed-forward-subtitle-id)
-                             (goto-char (point-max))))
-                ;; endrecfun (move to end of current record/subtitle)
-                #'subed-jump-to-subtitle-end
-                ;; startkeyfun (return sort value of current record/subtitle)
-                #'subed-subtitle-msecs-start))))
 
 ;;;###autoload
 (define-derived-mode subed-vtt-mode subed-mode "Subed-VTT"

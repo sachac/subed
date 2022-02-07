@@ -339,13 +339,26 @@ If BEG and END are not specified, use the whole buffer."
     (nreverse result)))
 
 (subed-define-generic-function sanitize ()
-  "Remove surplus newlines and whitespace.")
+  "Sanitize this file."
+  (interactive)
+  (run-hooks 'subed-sanitize-functions))
+
+(subed-define-generic-function sanitize-format ()
+  "Remove surplus newlines and whitespace."
+  nil)
 
 (subed-define-generic-function validate ()
-  "Move point to the first invalid subtitle and report an error.")
+  "Move point to the first invalid subtitle and report an error."
+  (interactive)
+  (run-hooks 'subed-validate-functions))
+
+(subed-define-generic-function validate-format ()
+  "Validate format-specific rules."
+  nil)
 
 (subed-define-generic-function regenerate-ids ()
-  "Ensure consecutive, unduplicated subtitle IDs in formats that use them.")
+  "Ensure consecutive, unduplicated subtitle IDs in formats that use them."
+  nil)
 
 (defvar-local subed--regenerate-ids-soon-timer nil)
 (subed-define-generic-function regenerate-ids-soon ()
@@ -1745,42 +1758,51 @@ the stop time isn't smaller than the start time."
 
 ;;; Sorting and sanitizing
 
-(defvar-local subed-sanitize-functions
-  '(subed-sort subed-trim-overlap-maybe-sanitize)
-  "Functions to sanitize this buffer.
-Functions can clean up whitespace, rearrange subtitles, etc.")
-
-(defvar-local subed-validate-functions
-  '(subed-validate subed-trim-overlap-maybe-check)
-  "Functions to validate this buffer.
-Validation functions should throw an error or prompt the user for
-action.")
-
 (defun subed-prepare-to-save ()
   "Sanitize and validate this buffer."
   (interactive)
   (atomic-change-group
-    (run-hooks 'subed-sanitize-functions)
-    (run-hooks 'subed-validate-functions)))
+    (subed-sanitize)
+    (subed-validate)))
+
+(defun subed--sorted-p (&optional list)
+  "Return non-nil if LIST is sorted by start time.
+If LIST is nil, use the subtitles in the current buffer."
+  (let ((subtitles (or list (subed-subtitle-list)))
+        (sorted t))
+    (while (cdr subtitles)
+      (if (and
+           (numberp (elt (car subtitles) 1))
+           (numberp (elt (cadr subtitles) 1))
+           (> (elt (car subtitles) 1)
+              (elt (cadr subtitles) 1))) ; starts later than the next one
+          (setq sorted nil
+                subtitles nil)
+        (setq subtitles (cdr subtitles))))
+    sorted))
 
 (subed-define-generic-function sort ()
   "Sort subtitles."
-  (atomic-change-group
-    (subed-sanitize)
-    (subed-validate)
-    (subed-save-excursion
-     (goto-char (point-min))
-     (unless (subed-subtitle-id)
-       (subed-forward-subtitle-id))
-     (sort-subr nil
-                ;; nextrecfun (move to next record/subtitle or to end-of-buffer
-                ;; if there are no more records)
-                (lambda () (unless (subed-forward-subtitle-id)
-                             (goto-char (point-max))))
-                ;; endrecfun (move to end of current record/subtitle)
-                #'subed-jump-to-subtitle-end
-                ;; startkeyfun (return sort value of current record/subtitle)
-                #'subed-subtitle-msecs-start))))
+  (interactive)
+  (subed-sanitize-format)
+  (subed-validate-format)
+  (unless (subed--sorted-p)
+    (subed-batch-edit
+      (atomic-change-group
+        (subed-save-excursion
+         (goto-char (point-min))
+         (unless (subed-jump-to-subtitle-id)
+           (subed-forward-subtitle-id))
+         (sort-subr nil
+                    ;; nextrecfun (move to next record/subtitle or to end-of-buffer
+                    ;; if there are no more records)
+                    (lambda () (unless (subed-forward-subtitle-id)
+                                 (goto-char (point-max))))
+                    ;; endrecfun (move to end of current record/subtitle)
+                    #'subed-jump-to-subtitle-end
+                    ;; startkeyfun (return sort value of current record/subtitle)
+                    #'subed-subtitle-msecs-start))
+        (subed-regenerate-ids)))))
 
 ;;; Initialization
 

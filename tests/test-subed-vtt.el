@@ -1236,9 +1236,10 @@ Baz.
       (it "when subtitle text is empty."
         (with-temp-vtt-buffer
          (insert "WEBVTT\n\n00:12:01.000 --> 00:01:05.123\n")
-         (goto-char (point-max))
-         (subed-sort)
-         (expect (point) :to-equal (1- (point-max)))))
+         (let ((pos (point)))
+           (subed-sort)
+           (expect (buffer-string) :to-equal "WEBVTT\n\n00:12:01.000 --> 00:01:05.123\n\n")
+           (expect (point) :to-equal pos))))
       )
     )
   (describe "Converting msecs to timestamp"
