@@ -52,23 +52,20 @@
   "Find HH:MM:SS,MS pattern in TIME-STRING and convert it to milliseconds.
 Return nil if TIME-STRING doesn't match the pattern.
 Use the format-specific function for MAJOR-MODE."
-  (save-match-data
-    (when (string-match subed--regexp-timestamp time-string)
-      (let ((hours (string-to-number (match-string 1 time-string)))
-            (mins  (string-to-number (match-string 2 time-string)))
-            (secs  (string-to-number (match-string 3 time-string)))
-            (msecs (string-to-number (subed--right-pad (match-string 4 time-string) 3 ?0))))
-        (+ (* (truncate hours) 3600000)
-           (* (truncate mins) 60000)
-           (* (truncate secs) 1000)
-           (truncate msecs))))))
+  (when (string-match subed--regexp-timestamp time-string)
+    (let ((hours (string-to-number (match-string 1 time-string)))
+          (mins  (string-to-number (match-string 2 time-string)))
+          (secs  (string-to-number (match-string 3 time-string)))
+          (msecs (string-to-number (subed--right-pad (match-string 4 time-string) 3 ?0))))
+      (+ (* (truncate hours) 3600000)
+         (* (truncate mins) 60000)
+         (* (truncate secs) 1000)
+         (truncate msecs)))))
 
 (cl-defmethod subed--msecs-to-timestamp (msecs &context (major-mode subed-srt-mode))
   "Convert MSECS to string in the format HH:MM:SS,MS.
 Use the format-specific function for MAJOR-MODE."
-  ;; We need to wrap format-seconds in save-match-data because it does regexp
-  ;; stuff and we need to preserve our own match-data.
-  (concat (save-match-data (format-seconds "%02h:%02m:%02s" (/ msecs 1000)))
+  (concat (format-seconds "%02h:%02m:%02s" (/ msecs 1000))
           "," (format "%03d" (mod msecs 1000))))
 
 (cl-defmethod subed--subtitle-id (&context (major-mode subed-srt-mode))
@@ -82,26 +79,25 @@ Use the format-specific function for MAJOR-MODE."
   "Return the ID of the subtitle at MSECS milliseconds.
 Return nil if there is no subtitle at MSECS.
 Use the format-specific function for MAJOR-MODE."
-  (save-match-data
-    (save-excursion
-      (goto-char (point-min))
-      (let* ((secs       (/ msecs 1000))
-             (only-hours (truncate (/ secs 3600)))
-             (only-mins  (truncate (/ (- secs (* only-hours 3600)) 60))))
-        ;; Move to first subtitle in the relevant hour
-        (when (re-search-forward (format "\\(%s\\|\\`\\)[0-9]+\n%02d:" subed--regexp-separator only-hours) nil t)
-          (beginning-of-line)
-          ;; Move to first subtitle in the relevant hour and minute
-          (re-search-forward (format "\\(\n\n\\|\\`\\)[0-9]+\n%02d:%02d" only-hours only-mins) nil t)))
-      ;; Move to first subtitle that starts at or after MSECS
-      (catch 'subtitle-id
-        (while (<= (or (subed-subtitle-msecs-start) -1) msecs)
-          ;; If stop time is >= MSECS, we found a match
-          (let ((cur-sub-end (subed-subtitle-msecs-stop)))
-            (when (and cur-sub-end (>= cur-sub-end msecs))
-              (throw 'subtitle-id (subed-subtitle-id))))
-          (unless (subed-forward-subtitle-id)
-            (throw 'subtitle-id nil)))))))
+  (save-excursion
+    (goto-char (point-min))
+    (let* ((secs       (/ msecs 1000))
+           (only-hours (truncate (/ secs 3600)))
+           (only-mins  (truncate (/ (- secs (* only-hours 3600)) 60))))
+      ;; Move to first subtitle in the relevant hour
+      (when (re-search-forward (format "\\(%s\\|\\`\\)[0-9]+\n%02d:" subed--regexp-separator only-hours) nil t)
+        (beginning-of-line)
+        ;; Move to first subtitle in the relevant hour and minute
+        (re-search-forward (format "\\(\n\n\\|\\`\\)[0-9]+\n%02d:%02d" only-hours only-mins) nil t)))
+    ;; Move to first subtitle that starts at or after MSECS
+    (catch 'subtitle-id
+      (while (<= (or (subed-subtitle-msecs-start) -1) msecs)
+        ;; If stop time is >= MSECS, we found a match
+        (let ((cur-sub-end (subed-subtitle-msecs-stop)))
+          (when (and cur-sub-end (>= cur-sub-end msecs))
+            (throw 'subtitle-id (subed-subtitle-id))))
+        (unless (subed-forward-subtitle-id)
+          (throw 'subtitle-id nil))))))
 
 ;;; Traversing
 
@@ -110,51 +106,48 @@ Use the format-specific function for MAJOR-MODE."
 If SUB-ID is not given, focus the current subtitle's ID.
 Return point or nil if no subtitle ID could be found.
 Use the format-specific function for MAJOR-MODE."
-  (save-match-data
-    (if sub-id
-        ;; Look for a line that contains only the ID, preceded by one or more
-        ;; blank lines or the beginning of the buffer.
-        (let* ((orig-point (point))
-               (regex (format "\\(%s\\|\\`\\)\\(%d\\)$" subed--regexp-separator sub-id))
-               (match-found (progn (goto-char (point-min))
-                                   (re-search-forward regex nil t))))
-          (if match-found
-              (goto-char (match-beginning 2))
-            (goto-char orig-point)))
-      ;; Find one or more blank lines.
-      (re-search-forward "\\([[:blank:]]*\n\\)+" nil t)
-      ;; Find two or more blank lines or the beginning of the buffer, followed
-      ;; by line composed of only digits.
-      (let* ((regex (concat "\\(" subed--regexp-separator "\\|\\`\\)\\([0-9]+\\)$"))
-             (match-found (re-search-backward regex nil t)))
-        (when match-found
-          (goto-char (match-beginning 2)))))
-    ;; Make extra sure we're on an ID, return nil if we're not
-    (when (looking-at "^\\([0-9]+\\)$")
-      (point))))
+  (if sub-id
+      ;; Look for a line that contains only the ID, preceded by one or more
+      ;; blank lines or the beginning of the buffer.
+      (let* ((orig-point (point))
+             (regex (format "\\(%s\\|\\`\\)\\(%d\\)$" subed--regexp-separator sub-id))
+             (match-found (progn (goto-char (point-min))
+                                 (re-search-forward regex nil t))))
+        (if match-found
+            (goto-char (match-beginning 2))
+          (goto-char orig-point)))
+    ;; Find one or more blank lines.
+    (re-search-forward "\\([[:blank:]]*\n\\)+" nil t)
+    ;; Find two or more blank lines or the beginning of the buffer, followed
+    ;; by line composed of only digits.
+    (let* ((regex (concat "\\(" subed--regexp-separator "\\|\\`\\)\\([0-9]+\\)$"))
+           (match-found (re-search-backward regex nil t)))
+      (when match-found
+        (goto-char (match-beginning 2)))))
+  ;; Make extra sure we're on an ID, return nil if we're not
+  (when (looking-at "^\\([0-9]+\\)$")
+    (point)))
 
 (cl-defmethod subed--jump-to-subtitle-time-start (&context (major-mode subed-srt-mode) &optional sub-id)
   "Move point to subtitle's start time.
 If SUB-ID is not given, use subtitle on point.
 Return point or nil if no start time could be found.
 Use the format-specific function for MAJOR-MODE."
-  (save-match-data
-    (when (subed-jump-to-subtitle-id sub-id)
-      (forward-line)
-      (when (looking-at subed--regexp-timestamp)
-        (point)))))
+  (when (subed-jump-to-subtitle-id sub-id)
+    (forward-line)
+    (when (looking-at subed--regexp-timestamp)
+      (point))))
 
 (cl-defmethod subed--jump-to-subtitle-time-stop (&context (major-mode subed-srt-mode) &optional sub-id)
   "Move point to subtitle's stop time.
 If SUB-ID is not given, use subtitle on point.
 Return point or nil if no stop time could be found.
 Use the format-specific function for MAJOR-MODE."
-  (save-match-data
-    (when (subed-jump-to-subtitle-id sub-id)
-      (forward-line 1)
-      (re-search-forward " *--> *" (point-at-eol) t)
-      (when (looking-at subed--regexp-timestamp)
-        (point)))))
+  (when (subed-jump-to-subtitle-id sub-id)
+    (forward-line 1)
+    (re-search-forward " *--> *" (point-at-eol) t)
+    (when (looking-at subed--regexp-timestamp)
+      (point))))
 
 (cl-defmethod subed--jump-to-subtitle-text (&context (major-mode subed-srt-mode) &optional sub-id)
   "Move point on the first character of subtitle's text.
@@ -170,26 +163,24 @@ Use the format-specific function for MAJOR-MODE."
 If SUB-ID is not given, use subtitle on point.
 Return point or nil if point did not change or if no subtitle end
 can be found.  Use the format-specific function for MAJOR-MODE."
-  (save-match-data
-    (let ((orig-point (point)))
-      (subed-jump-to-subtitle-text sub-id)
-      ;; Look for next separator or end of buffer.  We can't use
-      ;; `subed-srt--regexp-separator' here because if subtitle text is empty,
-      ;; it may be the only empty line in the separator, i.e. there's only one
-      ;; "\n".
-      (let ((regex (concat "\\([[:blank:]]*\n+[0-9]+\n\\|\\([[:blank:]]*\n*\\)\\'\\)")))
-        (when (re-search-forward regex nil t)
-          (goto-char (match-beginning 0))))
-      (unless (= (point) orig-point)
-        (point)))))
+  (let ((orig-point (point)))
+    (subed-jump-to-subtitle-text sub-id)
+    ;; Look for next separator or end of buffer.  We can't use
+    ;; `subed-srt--regexp-separator' here because if subtitle text is empty,
+    ;; it may be the only empty line in the separator, i.e. there's only one
+    ;; "\n".
+    (let ((regex (concat "\\([[:blank:]]*\n+[0-9]+\n\\|\\([[:blank:]]*\n*\\)\\'\\)")))
+      (when (re-search-forward regex nil t)
+        (goto-char (match-beginning 0))))
+    (unless (= (point) orig-point)
+      (point))))
 
 (cl-defmethod subed--forward-subtitle-id (&context (major-mode subed-srt-mode))
   "Move point to next subtitle's ID.
 Return point or nil if there is no next subtitle.
 Use the format-specific function for MAJOR-MODE."
-  (save-match-data
-    (when (re-search-forward (concat subed--regexp-separator "[0-9]+\n") nil t)
-      (subed-jump-to-subtitle-id))))
+  (when (re-search-forward (concat subed--regexp-separator "[0-9]+\n") nil t)
+    (subed-jump-to-subtitle-id)))
 
 (cl-defmethod subed--backward-subtitle-id (&context (major-mode subed-srt-mode))
   "Move point to previous subtitle's ID.
@@ -234,9 +225,8 @@ Move point to the text of the inserted subtitle.
 Return new point.  Use the format-specific function for MAJOR-MODE."
   (subed-jump-to-subtitle-id)
   (insert (subed-make-subtitle id start stop text))
-  (save-match-data
-    (when (looking-at "\\([[:space:]]*\\|^\\)[0-9]+$")
-      (insert "\n")))
+  (when (looking-at "\\([[:space:]]*\\|^\\)[0-9]+$")
+    (insert "\n"))
   (forward-line -2)
   (subed-jump-to-subtitle-text))
 
@@ -259,9 +249,8 @@ Return new point.  Use the format-specific function for MAJOR-MODE."
     (goto-char (match-end 0)))
   (insert (subed-make-subtitle id start stop text))
   ;; Complete separator with another newline unless we inserted at the end
-  (save-match-data
-    (when (looking-at "\\([[:space:]]*\\|^\\)[0-9]+$")
-      (insert ?\n)))
+  (when (looking-at "\\([[:space:]]*\\|^\\)[0-9]+$")
+    (insert ?\n))
   (forward-line -2)
   (subed-jump-to-subtitle-text))
 
@@ -298,97 +287,94 @@ Use the format-specific function for MAJOR-MODE."
 (cl-defmethod subed--regenerate-ids (&context (major-mode subed-srt-mode))
   "Ensure consecutive, unduplicated subtitle IDs."
   (atomic-change-group
-    (save-match-data
-      (save-excursion
-        (goto-char (point-min))
-        (subed-jump-to-subtitle-id)
-        (when (looking-at "^[[:digit:]]+$")
-          (unless (string= (current-word) "1")
-            (delete-region (point) (progn (forward-word 1) (point)))
-            (insert "1")))
-        (let ((id 2))
-          (while (subed-forward-subtitle-id)
-            (let ((id-str (number-to-string id)))
-              (unless (string= (current-word) id-str)
-                (delete-region (point) (progn (forward-word 1) (point)))
-                (insert id-str)))
-            (setq id (1+ id))))))))
+    (save-excursion
+      (goto-char (point-min))
+      (subed-jump-to-subtitle-id)
+      (when (looking-at "^[[:digit:]]+$")
+        (unless (string= (current-word) "1")
+          (delete-region (point) (progn (forward-word 1) (point)))
+          (insert "1")))
+      (let ((id 2))
+        (while (subed-forward-subtitle-id)
+          (let ((id-str (number-to-string id)))
+            (unless (string= (current-word) id-str)
+              (delete-region (point) (progn (forward-word 1) (point)))
+              (insert id-str)))
+          (setq id (1+ id)))))))
 
 (cl-defmethod subed--sanitize-format (&context (major-mode subed-srt-mode))
   "Remove surplus newlines and whitespace.
 Use the format-specific function for MAJOR-MODE."
   (atomic-change-group
-    (save-match-data
-      (subed-save-excursion
-       ;; Remove trailing whitespace from each line
-       (delete-trailing-whitespace (point-min) (point-max))
+    (subed-save-excursion
+     ;; Remove trailing whitespace from each line
+     (delete-trailing-whitespace (point-min) (point-max))
 
-       ;; Remove leading spaces and tabs from each line
-       (goto-char (point-min))
-       (while (re-search-forward "^[[:blank:]]+" nil t)
-         (replace-match ""))
+     ;; Remove leading spaces and tabs from each line
+     (goto-char (point-min))
+     (while (re-search-forward "^[[:blank:]]+" nil t)
+       (replace-match ""))
 
-       ;; Remove leading newlines
-       (goto-char (point-min))
-       (while (looking-at "\\`\n+")
-         (replace-match ""))
+     ;; Remove leading newlines
+     (goto-char (point-min))
+     (while (looking-at "\\`\n+")
+       (replace-match ""))
 
-       ;; Replace separators between subtitles with double newlines
-       (goto-char (point-min))
-       (while (subed-forward-subtitle-id)
-         (let ((prev-sub-end (save-excursion (when (subed-backward-subtitle-end)
-                                               (point)))))
-           (when (and prev-sub-end
-                      (not (string= (buffer-substring prev-sub-end (point)) "\n\n")))
-             (delete-region prev-sub-end (point))
-             (insert "\n\n"))))
+     ;; Replace separators between subtitles with double newlines
+     (goto-char (point-min))
+     (while (subed-forward-subtitle-id)
+       (let ((prev-sub-end (save-excursion (when (subed-backward-subtitle-end)
+                                             (point)))))
+         (when (and prev-sub-end
+                    (not (string= (buffer-substring prev-sub-end (point)) "\n\n")))
+           (delete-region prev-sub-end (point))
+           (insert "\n\n"))))
 
-       ;; Two trailing newline if last subtitle text is empty, one trailing
-       ;; newline otherwise; do nothing in empty buffer (no graphical
-       ;; characters)
-       (goto-char (point-min))
-       (when (re-search-forward "[[:graph:]]" nil t)
-         (goto-char (point-max))
-         (subed-jump-to-subtitle-end)
-         (unless (looking-at "\n\\'")
-           (delete-region (point) (point-max))
-           (insert "\n")))
+     ;; Two trailing newline if last subtitle text is empty, one trailing
+     ;; newline otherwise; do nothing in empty buffer (no graphical
+     ;; characters)
+     (goto-char (point-min))
+     (when (re-search-forward "[[:graph:]]" nil t)
+       (goto-char (point-max))
+       (subed-jump-to-subtitle-end)
+       (unless (looking-at "\n\\'")
+         (delete-region (point) (point-max))
+         (insert "\n")))
 
-       ;; One space before and after " --> "
-       (goto-char (point-min))
-       (while (re-search-forward (format "^%s" subed--regexp-timestamp) nil t)
-         (when (looking-at "[[:blank:]]*-->[[:blank:]]*")
-           (unless (= (length (match-string 0)) 5)
-             (replace-match " --> "))))))))
+     ;; One space before and after " --> "
+     (goto-char (point-min))
+     (while (re-search-forward (format "^%s" subed--regexp-timestamp) nil t)
+       (when (looking-at "[[:blank:]]*-->[[:blank:]]*")
+         (unless (= (length (match-string 0)) 5)
+           (replace-match " --> ")))))))
 
 (cl-defmethod subed--validate-format (&context (major-mode subed-srt-mode))
   "Move point to the first invalid subtitle and report an error.
 Use the format-specific function for MAJOR-MODE."
   (when (> (buffer-size) 0)
     (atomic-change-group
-      (save-match-data
-        (let ((orig-point (point)))
-          (goto-char (point-min))
-          (while (and (re-search-forward (format "\\(%s\\|\\`\\)" subed--regexp-separator)
-                                         nil t)
-                      (looking-at "[[:alnum:]]"))
-            (unless (looking-at "^[0-9]+$")
-              (error "Found invalid subtitle ID: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
-            (forward-line)
-            ;; This regex is stricter than `subed-srt--regexp-timestamp'
-            (unless (looking-at "^[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\},[0-9]\\{,3\\}")
-              (error "Found invalid start time: %S"  (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
-            (when (re-search-forward "[[:blank:]]" (point-at-eol) t)
-              (goto-char (match-beginning 0)))
-            (unless (looking-at " --> ")
-              (error "Found invalid separator between start and stop time: %S"
-                     (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
-            (condition-case nil
-                (forward-char 5)
-              (error nil))
-            (unless (looking-at "[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\},[0-9]\\{,3\\}$")
-              (error "Found invalid stop time: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1))))
-          (goto-char orig-point))))))
+      (let ((orig-point (point)))
+        (goto-char (point-min))
+        (while (and (re-search-forward (format "\\(%s\\|\\`\\)" subed--regexp-separator)
+                                       nil t)
+                    (looking-at "[[:alnum:]]"))
+          (unless (looking-at "^[0-9]+$")
+            (error "Found invalid subtitle ID: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
+          (forward-line)
+          ;; This regex is stricter than `subed-srt--regexp-timestamp'
+          (unless (looking-at "^[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\},[0-9]\\{,3\\}")
+            (error "Found invalid start time: %S"  (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
+          (when (re-search-forward "[[:blank:]]" (point-at-eol) t)
+            (goto-char (match-beginning 0)))
+          (unless (looking-at " --> ")
+            (error "Found invalid separator between start and stop time: %S"
+                   (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
+          (condition-case nil
+              (forward-char 5)
+            (error nil))
+          (unless (looking-at "[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\},[0-9]\\{,3\\}$")
+            (error "Found invalid stop time: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1))))
+        (goto-char orig-point)))))
 
 (cl-defmethod subed--insert-subtitle :after (&context (major-mode subed-srt-mode) &optional arg)
   "Renumber afterwards. Format-specific for MAJOR-MODE."

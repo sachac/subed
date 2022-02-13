@@ -259,7 +259,8 @@ Return the new subtitle start time in milliseconds."
               (and sub-id (subed-jump-to-subtitle-id sub-id)))
       (when (and (subed-jump-to-subtitle-time-start sub-id)
                  (looking-at subed--regexp-timestamp))
-        (replace-match (subed-msecs-to-timestamp msecs))))))
+        (replace-match
+         (save-match-data (subed-msecs-to-timestamp msecs)))))))
 
 (subed-define-generic-function set-subtitle-time-stop (msecs &optional sub-id)
   "Set subtitle stop time to MSECS milliseconds.
@@ -270,7 +271,8 @@ Return the new subtitle stop time in milliseconds."
   (save-excursion
     (when (and (subed-jump-to-subtitle-time-stop sub-id)
                (looking-at subed--regexp-timestamp))
-      (replace-match (subed-msecs-to-timestamp msecs)))))
+      (replace-match
+       (save-match-data (subed-msecs-to-timestamp msecs))))))
 
 (subed-define-generic-function make-subtitle (&optional id start stop text)
   "Generate new subtitle string.
@@ -453,9 +455,12 @@ Before BODY is run, point is placed on the subtitle's ID."
        (subed-with-subtitle-replay-disabled
          (subed-disable-sync-point-to-player-temporarily)
          (progn ,@body)))
-     (when (subed-show-cps-p)
-       (subed--move-cps-overlay-to-current-subtitle)
-       (subed--update-cps-overlay))))
+     (unless subed--batch-editing
+       ;; I wonder if we should do this here or if we should rely on
+       ;; it being in post-command-hook...
+       (when (subed-show-cps-p)
+         (subed--move-cps-overlay-to-current-subtitle)
+         (subed--update-cps-overlay)))))
 
 (defun subed--right-pad (string length fillchar)
   "Use FILLCHAR to make STRING LENGTH characters long."
@@ -465,23 +470,26 @@ Before BODY is run, point is placed on the subtitle's ID."
 ;;; Hooks for point motion and subtitle motion
 
 (defvar-local subed--current-point -1)
+(defvar-local subed--buffer-chars-modified-tick -1)
 (defvar-local subed--current-subtitle-id -1)
 (defun subed--post-command-handler ()
   "Detect point motion and user entering text and signal hooks."
   ;; Check for point motion first to avoid expensive calls to subed-subtitle-id
   ;; as often as possible.
-  (let ((new-point (point)))
+  (let ((new-point (point))
+        (new-buffer-chars-modified-tick (buffer-chars-modified-tick)))
     (when (and
-           (not subed--batch-editing)
            new-point subed--current-point
-           (not (= new-point subed--current-point)))
+           (or (not (= new-point subed--current-point))
+               (not (= new-buffer-chars-modified-tick subed--buffer-chars-modified-tick))))
 
       ;; If point is synced to playback position, temporarily disable that so
       ;; that manual moves aren't cancelled immediately by automated moves.
       (subed-disable-sync-point-to-player-temporarily)
 
       ;; Store new point and fire signal.
-      (setq subed--current-point new-point)
+      (setq subed--current-point new-point
+            subed--buffer-chars-modified-tick new-buffer-chars-modified-tick)
       (run-hooks 'subed-point-motion-hook)
 
       ;; Check if point moved across subtitle boundaries.
@@ -1260,7 +1268,6 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 (defun subed--sync-point-to-player (msecs)
   "Move point to subtitle at MSECS."
   (when (and (not (use-region-p)) ;; Don't sync with active-mark in transient-mark-mode
-             (not subed--batch-editing)
              (subed-jump-to-subtitle-text-at-msecs msecs))
     (subed-debug "Synchronized point to playback position: %s -> #%s"
                  (subed-msecs-to-timestamp msecs) (subed-subtitle-id))
@@ -1330,16 +1337,15 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 
 (defun subed--sync-player-to-point ()
   "Seek player to currently focused subtitle."
-  (unless subed--batch-editing
-    (subed-debug "Seeking player to subtitle at point %s" (point))
-    (let ((cur-sub-start (subed-subtitle-msecs-start))
-          (cur-sub-stop (subed-subtitle-msecs-stop)))
-      (when (and subed-mpv-playback-position cur-sub-start cur-sub-stop
-                 (or (< subed-mpv-playback-position cur-sub-start)
-                     (> subed-mpv-playback-position cur-sub-stop)))
-        (subed-mpv-jump cur-sub-start)
-        (subed-debug "Synchronized playback position to point: #%s -> %s"
-                     (subed-subtitle-id) cur-sub-start)))))
+  (subed-debug "Seeking player to subtitle at point %s" (point))
+  (let ((cur-sub-start (subed-subtitle-msecs-start))
+        (cur-sub-stop (subed-subtitle-msecs-stop)))
+    (when (and subed-mpv-playback-position cur-sub-start cur-sub-stop
+               (or (< subed-mpv-playback-position cur-sub-start)
+                   (> subed-mpv-playback-position cur-sub-stop)))
+      (subed-mpv-jump cur-sub-start)
+      (subed-debug "Synchronized playback position to point: #%s -> %s"
+                   (subed-subtitle-id) cur-sub-start))))
 
 
 ;;; Loop over single subtitle
@@ -1430,7 +1436,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 
 See `subed-playback-speed-while-typing' and
 `subed-playback-speed-while-not-typing'."
-  (member #'subed--pause-while-typing after-change-functions))
+  (member #'subed--pause-while-typing post-command-hook))
 
 (defun subed-enable-pause-while-typing (&optional quiet)
   "Pause player while the user is editing a subtitle.
@@ -1440,7 +1446,7 @@ resumed automatically unless the player was paused already.
 
 If QUIET is non-nil, do not display a message in the minibuffer."
   (unless (subed-pause-while-typing-p)
-    (add-hook 'after-change-functions #'subed--pause-while-typing :append :local)
+    (add-hook 'post-command-hook #'subed--pause-while-typing :append :local)
     (unless quiet
       (subed-debug "%S" subed-playback-speed-while-typing)
       (if (<= subed-playback-speed-while-typing 0)
@@ -1453,7 +1459,7 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 
 If QUIET is non-nil, do not display a message in the minibuffer."
   (when (subed-pause-while-typing-p)
-    (remove-hook 'after-change-functions #'subed--pause-while-typing :local)
+    (remove-hook 'post-command-hook #'subed--pause-while-typing :local)
     (unless quiet
       (message "Playback speed will not change while subtitle texts are edited"))))
 
@@ -1567,12 +1573,13 @@ attribute(s)."
 
 (defun subed-show-cps-p ()
   "Whether CPS is shown for the current subtitle."
-  (member #'subed--update-cps-overlay after-change-functions))
+  (member #'subed--update-cps-overlay post-command-hook))
 
 (defun subed-enable-show-cps (&optional quiet)
   "Enable showing CPS next to the subtitle heading."
   (interactive "p")
-  (add-hook 'after-change-functions #'subed--update-cps-overlay nil t)
+  ;; FIXME: Consider displaying CPS on all cues (via jit-lock) rather than the current one?
+  (add-hook 'post-command-hook #'subed--update-cps-overlay nil t)
   (add-hook 'subed-subtitle-motion-hook #'subed--move-cps-overlay-to-current-subtitle nil t)
   (add-hook 'after-save-hook #'subed--move-cps-overlay-to-current-subtitle nil t)
   (unless quiet
@@ -1581,7 +1588,7 @@ attribute(s)."
 (defun subed-disable-show-cps (&optional quiet)
   "Disable showing CPS next to the subtitle heading."
   (interactive)
-  (remove-hook 'after-change-functions #'subed--update-cps-overlay t)
+  (remove-hook 'post-command-hook #'subed--update-cps-overlay t)
   (remove-hook 'subed-subtitle-motion-hook #'subed--move-cps-overlay-to-current-subtitle t)
   (remove-hook 'after-save-hook #'subed--move-cps-overlay-to-current-subtitle t)
   (unless quiet
@@ -1608,19 +1615,18 @@ attribute(s)."
 (defun subed-calculate-cps (&optional print-message)
   "Calculate characters per second of the current subtitle."
   (interactive "p")
-  (save-match-data
-    (let* ((msecs-start (ignore-errors (subed-subtitle-msecs-start)))
-	   (msecs-stop (ignore-errors (subed-subtitle-msecs-stop)))
-	   (text (if (fboundp subed-transform-for-cps)
-		     (funcall subed-transform-for-cps (subed-subtitle-text))
-		   (subed-subtitle-text)))
-	   (length (length text))
-	   (cps (when (and (numberp msecs-stop)
-			   (numberp msecs-start))
-		  (/ length 0.001 (- msecs-stop msecs-start)))))
-      (if (and print-message cps)
-	  (message "%.1f characters per second" cps)
-	cps))))
+  (let* ((msecs-start (ignore-errors (subed-subtitle-msecs-start)))
+	       (msecs-stop (ignore-errors (subed-subtitle-msecs-stop)))
+	       (text (if (fboundp subed-transform-for-cps)
+		               (funcall subed-transform-for-cps (subed-subtitle-text))
+		             (subed-subtitle-text)))
+	       (length (length text))
+	       (cps (when (and (numberp msecs-stop)
+			                   (numberp msecs-start))
+		            (/ length 0.001 (- msecs-stop msecs-start)))))
+    (if (and print-message cps)
+	      (message "%.1f characters per second" cps)
+	    cps)))
 
 (defvar-local subed--cps-overlay nil)
 
@@ -1633,19 +1639,16 @@ attribute(s)."
 	         (end (save-excursion
 		              (goto-char begin)
 		              (line-end-position))))
-      (if (overlayp subed--cps-overlay)
+      (if subed--cps-overlay
 	        (move-overlay subed--cps-overlay begin end (current-buffer))
         (setq subed--cps-overlay (make-overlay begin end)))
       (subed--update-cps-overlay))))
 
 (defun subed--update-cps-overlay (&rest _rest)
-  "Update the CPS overlay.
-This accepts and ignores any number of arguments so that it can
-be run in `after-change-functions'."
-  (when (and (not subed--batch-editing)
-             (overlayp subed--cps-overlay))
+  "Update the CPS overlay."
+  (when subed--cps-overlay
     (let ((cps (subed-calculate-cps)))
-      (when (numberp cps)
+      (when cps
         (overlay-put
          subed--cps-overlay
          'after-string

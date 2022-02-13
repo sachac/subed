@@ -52,23 +52,20 @@
   "Find HH:MM:SS.MS pattern in TIME-STRING and convert it to milliseconds.
 Return nil if TIME-STRING doesn't match the pattern.
 Use the format-specific function for MAJOR-MODE."
-  (save-match-data
-    (when (string-match subed--regexp-timestamp time-string)
-      (let ((hours (string-to-number (or (match-string 2 time-string) "0")))
-            (mins  (string-to-number (match-string 3 time-string)))
-            (secs  (string-to-number (match-string 4 time-string)))
-            (msecs (if (match-string 6 time-string) (string-to-number (subed--right-pad (match-string 6 time-string) 3 ?0)) 0)))
-        (+ (* (truncate hours) 3600000)
-           (* (truncate mins) 60000)
-           (* (truncate secs) 1000)
-           (truncate msecs))))))
+  (when (string-match subed--regexp-timestamp time-string)
+    (let ((hours (string-to-number (or (match-string 2 time-string) "0")))
+          (mins  (string-to-number (match-string 3 time-string)))
+          (secs  (string-to-number (match-string 4 time-string)))
+          (msecs (if (match-string 6 time-string) (string-to-number (subed--right-pad (match-string 6 time-string) 3 ?0)) 0)))
+      (+ (* (truncate hours) 3600000)
+         (* (truncate mins) 60000)
+         (* (truncate secs) 1000)
+         (truncate msecs)))))
 
 (cl-defmethod subed--msecs-to-timestamp (msecs &context (major-mode subed-ass-mode))
   "Convert MSECS to string in the format H:MM:SS.CS.
 Use the format-specific function for MAJOR-MODE."
-  ;; We need to wrap format-seconds in save-match-data because it does regexp
-  ;; stuff and we need to preserve our own match-data.
-  (concat (save-match-data (format-seconds "%h:%02m:%02s" (/ msecs 1000)))
+  (concat (format-seconds "%h:%02m:%02s" (/ msecs 1000))
           "." (format "%02d" (/ (mod msecs 1000) 10))))
 
 (cl-defmethod subed--subtitle-id (&context (major-mode subed-ass-mode))
@@ -83,26 +80,25 @@ Use the format-specific function for MAJOR-MODE."
   "Return the ID of the subtitle at MSECS milliseconds.
 Return nil if there is no subtitle at MSECS.
 Use the format-specific function for MAJOR-MODE."
-  (save-match-data
-    (save-excursion
-      (goto-char (point-min))
-      (let* ((secs       (/ msecs 1000))
-             (only-hours (truncate (/ secs 3600)))
-             (only-mins  (truncate (/ (- secs (* only-hours 3600)) 60))))
-        ;; Move to first subtitle in the relevant hour
-        (when (re-search-forward (format "\\(%s\\|\\`\\)%02d:" subed--regexp-separator only-hours) nil t)
-          (beginning-of-line)
-          ;; Move to first subtitle in the relevant hour and minute
-          (re-search-forward (format "\\(\n\n\\|\\`\\)%02d:%02d" only-hours only-mins) nil t)))
-      ;; Move to first subtitle that starts at or after MSECS
-      (catch 'subtitle-id
-        (while (<= (or (subed-subtitle-msecs-start) -1) msecs)
-          ;; If stop time is >= MSECS, we found a match
-          (let ((cur-sub-end (subed-subtitle-msecs-stop)))
-            (when (and cur-sub-end (>= cur-sub-end msecs))
-              (throw 'subtitle-id (subed-subtitle-id))))
-          (unless (subed--forward-subtitle-id)
-            (throw 'subtitle-id nil)))))))
+  (save-excursion
+    (goto-char (point-min))
+    (let* ((secs       (/ msecs 1000))
+           (only-hours (truncate (/ secs 3600)))
+           (only-mins  (truncate (/ (- secs (* only-hours 3600)) 60))))
+      ;; Move to first subtitle in the relevant hour
+      (when (re-search-forward (format "\\(%s\\|\\`\\)%02d:" subed--regexp-separator only-hours) nil t)
+        (beginning-of-line)
+        ;; Move to first subtitle in the relevant hour and minute
+        (re-search-forward (format "\\(\n\n\\|\\`\\)%02d:%02d" only-hours only-mins) nil t)))
+    ;; Move to first subtitle that starts at or after MSECS
+    (catch 'subtitle-id
+      (while (<= (or (subed-subtitle-msecs-start) -1) msecs)
+        ;; If stop time is >= MSECS, we found a match
+        (let ((cur-sub-end (subed-subtitle-msecs-stop)))
+          (when (and cur-sub-end (>= cur-sub-end msecs))
+            (throw 'subtitle-id (subed-subtitle-id))))
+        (unless (subed--forward-subtitle-id)
+          (throw 'subtitle-id nil))))))
 
 ;;; Traversing
 
@@ -112,51 +108,51 @@ If SUB-ID is not given, focus the current subtitle's ID.
 Return point or nil if no subtitle ID could be found.
 ASS doesn't use IDs, so we use the starting timestamp instead.
 Use the format-specific function for MAJOR-MODE."
-  (save-match-data
-    (if (stringp sub-id)
-        (let* ((orig-point (point))
-               (find-ms (subed--timestamp-to-msecs sub-id))
-               (regex (concat "^\\(?:" subed-ass--regexp-start "\\)\\(" subed--regexp-timestamp "\\)"))
-               done)
-          (goto-char (point-min))
-          (while (not done)
-            (if (re-search-forward regex nil t)
-                (when (= (subed-timestamp-to-msecs (match-string 1)) find-ms)
-                  (setq done 'found)
-                  (goto-char (match-beginning 1)))
-              (setq done 'not-found)
-              (goto-char orig-point)))
-          (when (eq done 'found)
-            (beginning-of-line)
-            (point)))
-      (end-of-line)
-      (let* ((regex (concat "^\\(?:" subed-ass--regexp-start "\\)\\(" subed--regexp-timestamp "\\)"))
-             (match-found (re-search-backward regex nil t)))
-        (when (or match-found (re-search-forward regex nil t)) ;; maybe at the beginning?
-          (goto-char (match-beginning 0))
-          (point))))))
+  (if (stringp sub-id)
+      (let* ((orig-point (point))
+             (find-ms (subed--timestamp-to-msecs sub-id))
+             (regex (concat "^\\(?:" subed-ass--regexp-start "\\)\\(" subed--regexp-timestamp "\\)"))
+             done)
+        (goto-char (point-min))
+        (while (not done)
+          (if (re-search-forward regex nil t)
+              (when (= (save-match-data
+                         (subed-timestamp-to-msecs
+                          (match-string 1)))
+                       find-ms)
+                (setq done 'found)
+                (goto-char (match-beginning 1)))
+            (setq done 'not-found)
+            (goto-char orig-point)))
+        (when (eq done 'found)
+          (beginning-of-line)
+          (point)))
+    (end-of-line)
+    (let* ((regex (concat "^\\(?:" subed-ass--regexp-start "\\)\\(" subed--regexp-timestamp "\\)"))
+           (match-found (re-search-backward regex nil t)))
+      (when (or match-found (re-search-forward regex nil t)) ;; maybe at the beginning?
+        (goto-char (match-beginning 0))
+        (point)))))
 
 (cl-defmethod subed--jump-to-subtitle-time-start (&context (major-mode subed-ass-mode) &optional sub-id)
   "Move point to subtitle's start time.
 If SUB-ID is not given, use subtitle on point.
 Return point or nil if no start time could be found.
 Use the format-specific function for MAJOR-MODE."
-  (save-match-data
-    (when (subed-jump-to-subtitle-id sub-id)
-      (when (re-search-forward subed--regexp-timestamp (line-end-position) t)
-        (goto-char (match-beginning 0))
-        (point)))))
+  (when (subed-jump-to-subtitle-id sub-id)
+    (when (re-search-forward subed--regexp-timestamp (line-end-position) t)
+      (goto-char (match-beginning 0))
+      (point))))
 
 (cl-defmethod subed--jump-to-subtitle-time-stop (&context (major-mode subed-ass-mode) &optional sub-id)
   "Move point to subtitle's stop time.
 If SUB-ID is not given, use subtitle on point.  Return point or
 nil if no stop time could be found.  Use the format-specific
 function for MAJOR-MODE."
-  (save-match-data
-    (when (subed-jump-to-subtitle-id sub-id)
-      (re-search-forward (concat "\\(?:" subed--regexp-timestamp "\\),") (point-at-eol) t)
-      (when (looking-at subed--regexp-timestamp)
-        (point)))))
+  (when (subed-jump-to-subtitle-id sub-id)
+    (re-search-forward (concat "\\(?:" subed--regexp-timestamp "\\),") (point-at-eol) t)
+    (when (looking-at subed--regexp-timestamp)
+      (point))))
 
 (cl-defmethod subed--jump-to-subtitle-text (&context (major-mode subed-ass-mode) &optional sub-id)
   "Move point on the first character of subtitle's text.
@@ -174,27 +170,25 @@ format-specific function for MAJOR-MODE."
 If SUB-ID is not given, use subtitle on point.  Return point or
 nil if point did not change or if no subtitle end can be found.
 Use the format-specific function for MAJOR-MODE."
-  (save-match-data
-    (let ((orig-point (point)))
-      (when (subed-jump-to-subtitle-text sub-id)
-        (end-of-line)
-        (unless (= orig-point (point))
-          (point))))))
+  (let ((orig-point (point)))
+    (when (subed-jump-to-subtitle-text sub-id)
+      (end-of-line)
+      (unless (= orig-point (point))
+        (point)))))
 
 (cl-defmethod subed--forward-subtitle-id (&context (major-mode subed-ass-mode))
   "Move point to next subtitle's ID.
 Return point or nil if there is no next subtitle.  Use the
 format-specific function for MAJOR-MODE."
-  (save-match-data
-    (let ((pos (point)))
-      (forward-line 1)
-      (beginning-of-line)
-      (while (not (or (eobp) (looking-at subed-ass--regexp-start)))
-        (forward-line 1))
-      (if (looking-at subed-ass--regexp-start)
-          (point)
-        (goto-char pos)
-        nil))))
+  (let ((pos (point)))
+    (forward-line 1)
+    (beginning-of-line)
+    (while (not (or (eobp) (looking-at subed-ass--regexp-start)))
+      (forward-line 1))
+    (if (looking-at subed-ass--regexp-start)
+        (point)
+      (goto-char pos)
+      nil)))
 
 (cl-defmethod subed--backward-subtitle-id (&context (major-mode subed-ass-mode))
   "Move point to previous subtitle's ID.
