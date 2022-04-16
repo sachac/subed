@@ -4,9 +4,10 @@
 
 clean:
 	find . -name "*.elc" -delete
+	rm subed/subed-autoloads.el
 	rm -f coverage/.*.json
 
-test: test-coverage package-lint checkdoc
+test: autoloads test-coverage package-lint checkdoc
 
 test-coverage:
 	mkdir -p coverage
@@ -52,4 +53,4 @@ test-compile:
 	make clean
 
 test-emacs:
-	emacs -Q -L ./subed --eval "(require 'subed)"
+	emacs -Q -L ./subed --eval "(require 'subed-autoloads)"

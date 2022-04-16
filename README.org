@@ -112,9 +112,25 @@ If that doesn't work, you can install it manually. To install from the main bran
 git clone https://github.com/sachac/subed.git
 #+end_src
 
-This will create a =subed= directory with the code.  Then you can add
+This will create a =subed= directory with the code.
+
+If you have the =make= utility, you can regenerate the autoload definitions with
+
+#+begin_src sh :eval no
+make autoloads
+#+end_src
+
+If you don't have =make= installed, you can generate the autoloads
+with:
+
+#+begin_src sh :eval no
+emacs --quick --batch --eval "(progn (setq generated-autoload-file (expand-file-name \"subed-autoloads.el\" \"subed\") backup-inhibited t) \
+	(update-directory-autoloads \"./subed\"))"
+#+end_src
+
+Then you can add
 the following to your Emacs configuration (typically
-=~/.config/emacs-init.el=, =~/.emacs.d/init.el=, or =~/.emacs=; you
+=~/.config/emacs/init.el=, =~/.emacs.d/init.el=, or =~/.emacs=; you
 can create this file if it doesn't exist yet):
 
 #+begin_src emacs-lisp

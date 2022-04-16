@@ -1,6 +1,6 @@
 ;;; subed.el --- A major mode for editing subtitles  -*- lexical-binding: t; -*-
 
-;; Version: 1.0.3
+;; Version: 1.0.4
 ;; Keywords: convenience, files, hypermedia, multimedia
 ;; URL: https://github.com/rndusr/subed
 ;; Package-Requires: ((emacs "25.1"))
@@ -32,7 +32,6 @@
 
 ;;; Code:
 
-(require 'subed-autoloads)
 (require 'subed-config)
 (require 'subed-debug)
 (require 'subed-common)

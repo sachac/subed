@@ -1,0 +1,4 @@
+*.elc
+/subed-autoloads.el
+/subed-pkg.el
+/subed/subed-autoloads.el
