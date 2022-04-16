@@ -480,8 +480,8 @@ Before BODY is run, point is placed on the subtitle's ID."
         (new-buffer-chars-modified-tick (buffer-chars-modified-tick)))
     (when (and
            new-point subed--current-point
-           (or (not (= new-point subed--current-point))
-               (not (= new-buffer-chars-modified-tick subed--buffer-chars-modified-tick))))
+           (not (and (= new-point subed--current-point)
+                     (= new-buffer-chars-modified-tick subed--buffer-chars-modified-tick))))
 
       ;; If point is synced to playback position, temporarily disable that so
       ;; that manual moves aren't cancelled immediately by automated moves.
