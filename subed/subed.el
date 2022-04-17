@@ -1,8 +1,10 @@
 ;;; subed.el --- A major mode for editing subtitles  -*- lexical-binding: t; -*-
 
-;; Version: 1.0.4
+;; Version: 1.0.5
+;; Maintainer: Sacha Chua <sacha@sachachua.com>
+;; Author: Random User
 ;; Keywords: convenience, files, hypermedia, multimedia
-;; URL: https://github.com/rndusr/subed
+;; URL: https://github.com/sachac/subed
 ;; Package-Requires: ((emacs "25.1"))
 
 ;;; License:
@@ -44,7 +46,7 @@
     map)
   "A keymap for stepping the video by frames.")
 
-(setq subed-mode-map
+(defconst subed-mode-map
   (let ((subed-mode-map (make-keymap)))
     (define-key subed-mode-map (kbd "M-n") #'subed-forward-subtitle-text)
     (define-key subed-mode-map (kbd "M-p") #'subed-backward-subtitle-text)
@@ -81,11 +83,12 @@
     (define-key subed-mode-map (kbd "C-c .") #'subed-toggle-sync-point-to-player)
     (define-key subed-mode-map (kbd "C-c ,") #'subed-toggle-sync-player-to-point)
     (define-key subed-mode-map (kbd "C-c C-t") (let ((html-tag-keymap (make-sparse-keymap)))
-						 (define-key html-tag-keymap (kbd "C-t") #'subed-insert-html-tag)
-						 (define-key html-tag-keymap (kbd "C-i") #'subed-insert-html-tag-italic)
-						 (define-key html-tag-keymap (kbd "C-b") #'subed-insert-html-tag-bold)
-						 html-tag-keymap))
-    subed-mode-map))
+						                                     (define-key html-tag-keymap (kbd "C-t") #'subed-insert-html-tag)
+						                                     (define-key html-tag-keymap (kbd "C-i") #'subed-insert-html-tag-italic)
+						                                     (define-key html-tag-keymap (kbd "C-b") #'subed-insert-html-tag-bold)
+						                                     html-tag-keymap))
+    subed-mode-map)
+  "A keymap for editing subtitles.")
 
 (defun subed-auto-find-video-maybe ()
   "Load video associated with this subtitle file."

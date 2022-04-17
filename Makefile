@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+all: clean autoloads compile
+
 clean:
 	find . -name "*.elc" -delete
 	rm subed/subed-autoloads.el
@@ -33,7 +35,7 @@ autoloads:
 	emacs --quick --batch --eval "(progn (setq generated-autoload-file (expand-file-name \"subed-autoloads.el\" \"subed\") backup-inhibited t) \
 	(update-directory-autoloads \"./subed\"))"
 
-test-compile:
+compile:
 	emacs --quick --batch --eval "(progn (add-to-list 'load-path (expand-file-name \"subed\" default-directory)) \
 	                                     (byte-compile-file \"subed/subed.el\"))"
 	emacs --quick --batch --eval "(progn (add-to-list 'load-path (expand-file-name \"subed\" default-directory)) \
@@ -50,7 +52,8 @@ test-compile:
 	                                     (byte-compile-file \"subed/subed-ass.el\"))"
 	emacs --quick --batch --eval "(progn (add-to-list 'load-path (expand-file-name \"subed\" default-directory)) \
 	                                     (byte-compile-file \"subed/subed-debug.el\"))"
-	make clean
+
+test-compile: compile clean
 
 test-emacs:
 	emacs -Q -L ./subed --eval "(require 'subed-autoloads)"
