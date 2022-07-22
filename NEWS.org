@@ -1,4 +1,9 @@
 * subed news
+** Version 1.0.6 - 2022-07-22 - Sacha Chua
+
+- Allow mm:ss.000 (optional hours) when validating VTT files.
+- Use just the buffer name hash when naming the MPV socket.
+
 ** Version 1.0.3 - 2022-02-07 - Sacha Chua
 
 subed now tries to avoid sorting already-sorted buffers, which should
