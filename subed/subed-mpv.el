@@ -78,11 +78,10 @@ See also `subed-mpv-socket-dir'."
         (make-directory subed-mpv-socket-dir :create-parents)
       (file-error
        (error "%s" (mapconcat #'identity (cdr err) ": ")))))
-  (concat (file-name-as-directory subed-mpv-socket-dir)
-          (format "%s:%s"
-                  (let ((filename (file-name-sans-extension (subed--buffer-file-name))))
-                    (substring (substring filename 0 (min (length filename) 20))))
-                  (buffer-hash))))
+  (expand-file-name
+   (format "subed:%s"
+           (md5 (subed--buffer-file-name)))
+   subed-mpv-socket-dir))
 
 (defun subed-mpv--server-start (&rest args)
   "Run mpv in JSON IPC mode.
