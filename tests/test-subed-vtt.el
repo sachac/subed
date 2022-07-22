@@ -1026,6 +1026,11 @@ Baz.
        (forward-char -2)
        (subed-validate)
        (expect (point) :to-equal 106)))
+    (it "accepts mm:ss timestamps."
+      (with-temp-vtt-buffer
+       (insert "WebVTT\n\n00:00.003 --> 00:05.123\nThis is a test")
+       (subed-validate)
+       (expect (point) :to-equal (point-max))))
     (it "preserves point if there is no error."
       (with-temp-vtt-buffer
        (insert mock-vtt-data)

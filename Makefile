@@ -2,11 +2,12 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-all: clean autoloads compile
+# Putting compile before test results in an invalid-function error about subed-for-each-subtitle
+all: clean autoloads test compile
 
 clean:
 	find . -name "*.elc" -delete
-	rm subed/subed-autoloads.el
+	rm -f subed/subed-autoloads.el
 	rm -f coverage/.*.json
 
 test: autoloads test-coverage package-lint checkdoc

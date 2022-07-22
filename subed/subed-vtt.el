@@ -340,7 +340,7 @@ Use the format-specific function for MAJOR-MODE."
         (while (and (re-search-forward (format "^\\(%s\\)" subed--regexp-timestamp) nil t)
                     (goto-char (match-beginning 1)))
           ;; This regex is stricter than `subed--regexp-timestamp'
-          (unless (looking-at "^[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\(\\.[0-9]\\{0,3\\}\\)")
+          (unless (looking-at "^\\([0-9]\\{2\\}:\\)?[0-9]\\{2\\}:[0-9]\\{2\\}\\(\\.[0-9]\\{0,3\\}\\)")
             (error "Found invalid start time: %S"  (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
           (when (re-search-forward "[[:blank:]]" (point-at-eol) t)
             (goto-char (match-beginning 0)))
@@ -350,7 +350,7 @@ Use the format-specific function for MAJOR-MODE."
           (condition-case nil
               (forward-char 5)
             (error nil))
-          (unless (looking-at "[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\(\\.[0-9]\\{0,3\\}\\)$")
+          (unless (looking-at "\\([0-9]\\{2\\}:\\)?[0-9]\\{2\\}:[0-9]\\{2\\}\\(\\.[0-9]\\{0,3\\}\\)$")
             (error "Found invalid stop time: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1))))
         (goto-char orig-point)))))
 
