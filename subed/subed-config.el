@@ -212,7 +212,7 @@ doing so."
 remembers whether it was originally enabled by the user.")
 
 
-(defcustom subed-mpv-socket-dir (concat (temporary-file-directory) "subed-mpv-socket")
+(defcustom subed-mpv-socket-dir (concat (temporary-file-directory) "subed")
   "Path to Unix IPC socket that is passed to mpv's --input-ipc-server option."
   :type 'file
   :group 'subed)
