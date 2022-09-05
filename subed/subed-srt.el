@@ -393,6 +393,8 @@ Use the format-specific function for MAJOR-MODE."
   (setq-local subed--regexp-timestamp subed-srt--regexp-timestamp)
   (setq-local subed--regexp-separator subed-srt--regexp-separator)
   (setq-local font-lock-defaults '(subed-srt-font-lock-keywords))
+  (setq-local comment-start "{\\")
+  (setq-local comment-end "}")
   ;; Support for fill-paragraph (M-q)
   (let ((timestamps-regexp (concat subed--regexp-timestamp
                                    " *--> *"
