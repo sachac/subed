@@ -395,6 +395,9 @@ Use the format-specific function for MAJOR-MODE."
   (setq-local font-lock-defaults '(subed-srt-font-lock-keywords))
   (setq-local comment-start "{\\")
   (setq-local comment-end "}")
+  (modify-syntax-entry ?\{ ". 1")
+  (modify-syntax-entry ?\\ ". 2")
+  (modify-syntax-entry ?\} ">")
   ;; Support for fill-paragraph (M-q)
   (let ((timestamps-regexp (concat subed--regexp-timestamp
                                    " *--> *"
