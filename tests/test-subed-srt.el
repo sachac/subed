@@ -1525,4 +1525,18 @@ Baz.
        (subed-merge-with-next)
        (expect (subed-subtitle-text) :to-equal "Bar.\nBaz.")
        (expect (subed-subtitle-msecs-start) :to-equal 122234)
-       (expect (subed-subtitle-msecs-stop) :to-equal 195500)))))
+       (expect (subed-subtitle-msecs-stop) :to-equal 195500))))
+
+  (describe "A comment"
+    (it "is validated."
+      (with-temp-srt-buffer
+       (insert mock-srt-data "\n\n4\n00:04:00,000 --> 00:05:00,000\n{\\This is a comment} Hello\n")
+       (subed-validate)
+       (expect (point) :to-equal (point-max))))
+    (it "is highlighted as a comment."
+      (with-temp-srt-buffer
+       (insert mock-srt-data "\n\n4\n00:04:00,000 --> 00:05:00,000\n{\\This is a comment} Hello\n")
+       (re-search-backward "comment")
+       (expect (nth 4 (syntax-ppss)) :to-be t)
+       (re-search-forward "Hello")
+       (expect (nth 4 (syntax-ppss)) :to-be nil)))))

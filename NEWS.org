@@ -1,4 +1,9 @@
 * subed news
+** Version 1.0.8 - 2022-09-08 - Sacha Chua
+
+- Added support for SRT comment syntax thanks to mbork.
+  http://mbork.pl/2022-09-05_Comments_in_srt_files
+
 ** Version 1.0.6 - 2022-07-22 - Sacha Chua
 
 - Allow mm:ss.000 (optional hours) when validating VTT files.
