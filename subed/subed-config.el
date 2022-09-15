@@ -45,33 +45,30 @@
 
 ;; Syntax highlighting
 
-(defface subed-srt-id-face
+(defface subed-id-face
   '((t (:inherit 'font-lock-constant-face)))
   "Each subtitle's consecutive number")
 
-(defface subed-srt-time-face
+(defface subed-time-face
   '((t (:inherit 'font-lock-string-face)))
   "Start and stop times of subtitles")
 
-(defface subed-srt-time-separator-face
+(defface subed-time-separator-face
   '((t (:inherit 'font-lock-comment-face)))
   "Separator between the start and stop time (\" --> \")")
 
-(defface subed-srt-text-face
-  '((t (:inherit 'default)))
-  "Text of the subtitle")
-
-(defface subed-vtt-time-face
-  '((t (:inherit 'font-lock-string-face)))
-  "Start and stop times of subtitles")
-
-(defface subed-vtt-time-separator-face
-  '((t (:inherit 'font-lock-comment-face)))
-  "Separator between the start and stop time (\" --> \")")
-
-(defface subed-vtt-text-face
-  '((t (:inherit 'default)))
-  "Text of the subtitle")
+(define-obsolete-face-alias 'subed-srt-id-face 'subed-id-face "2022-09-14")
+(define-obsolete-face-alias 'subed-srt-time-face 'subed-time-face "2022-09-14")
+(define-obsolete-face-alias 'subed-srt-time-separator-face 'subed-time-separator-face "2022-09-14")
+(defface subed-srt-text-face nil "Obsolete, do not use.")
+(define-obsolete-face-alias 'subed-vtt-id-face 'subed-id-face "2022-09-14")
+(define-obsolete-face-alias 'subed-vtt-time-face 'subed-time-face "2022-09-14")
+(define-obsolete-face-alias 'subed-vtt-time-separator-face 'subed-time-separator-face "2022-09-14")
+(defface subed-vtt-text-face nil "Obsolete, do not use.")
+(define-obsolete-face-alias 'subed-ass-id-face 'subed-id-face "2022-09-14")
+(define-obsolete-face-alias 'subed-ass-time-face 'subed-time-face "2022-09-14")
+(define-obsolete-face-alias 'subed-ass-time-separator-face 'subed-time-separator-face "2022-09-14")
+(defface subed-ass-text-face nil "Obsolete, do not use.")
 
 ;; Variables
 

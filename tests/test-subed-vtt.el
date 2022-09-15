@@ -1287,4 +1287,15 @@ This is another test here.
        (subed-merge-with-next)
        (expect (subed-subtitle-text) :to-equal "Bar.\nBaz.")
        (expect (subed-subtitle-msecs-start) :to-equal 122234)
-       (expect (subed-subtitle-msecs-stop) :to-equal 195500)))))
+       (expect (subed-subtitle-msecs-stop) :to-equal 195500))))
+  (describe "Font-locking"
+    (it "recognizes VTT syntax."
+      (with-temp-vtt-buffer
+       (insert mock-vtt-data)
+       (font-lock-fontify-buffer)
+       (goto-char (point-min))
+       (re-search-forward "00:01:01")
+       (expect (face-at-point) :to-equal 'subed-time-face)
+       (re-search-forward "-->")
+       (backward-char 1)
+       (expect (face-at-point) :to-equal 'subed-time-separator-face)))))

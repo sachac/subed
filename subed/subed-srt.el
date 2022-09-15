@@ -36,10 +36,9 @@
 
 (defconst subed-srt-font-lock-keywords
   (list
-   '("^[0-9]+$" . 'subed-srt-id-face)
-   '("[0-9]+:[0-9]+:[0-9]+,[0-9]+" . 'subed-srt-time-face)
-   '(",[0-9]+ \\(-->\\) [0-9]+:" 1 'subed-srt-time-separator-face t)
-   '("^.*$" . 'subed-srt-text-face))
+   '("^[0-9]+$" . 'subed-id-face)
+   '("[0-9]+:[0-9]+:[0-9]+,[0-9]+" . 'subed-time-face)
+   '(",[0-9]+ +\\(-->\\) +[0-9]+:" 1 'subed-time-separator-face t))
   "Highlighting expressions for `subed-mode'.")
 
 

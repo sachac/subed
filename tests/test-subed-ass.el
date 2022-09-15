@@ -389,4 +389,15 @@ Dialogue: 0,0:00:17.00,0:00:19.80,Default,,0,0,0,,I hope it works.
   (describe "Converting msecs to timestamp"
     (it "uses the right format"
       (with-temp-ass-buffer
-       (expect (subed-msecs-to-timestamp 1410) :to-equal "0:00:01.41")))))
+       (expect (subed-msecs-to-timestamp 1410) :to-equal "0:00:01.41"))))
+  (describe "Font-locking"
+    (it "recognizes ASS syntax."
+      (with-temp-ass-buffer
+       (insert mock-ass-data)
+       (font-lock-fontify-buffer)
+       (goto-char (point-min))
+       (re-search-forward "00:11")
+       (expect (face-at-point) :to-equal 'subed-time-face)
+       (re-search-forward ",")
+       (backward-char 1)
+       (expect (face-at-point) :to-equal 'subed-time-separator-face)))))

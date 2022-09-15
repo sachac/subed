@@ -36,16 +36,15 @@
 
 (defconst subed-ass-font-lock-keywords
   (list
-   '("\\([0-9]+:\\)?[0-9]+:[0-9]+\\.[0-9]+" . 'subed-ass-time-face)
-   '(",[0-9]+ \\(-->\\) [0-9]+:" 1 'subed-ass-time-separator-face t)
-   '("^.*$" . 'subed-ass-text-face))
+   '("\\([0-9]+:\\)?[0-9]+:[0-9]+\\(\\.[0-9]+\\)?" . 'subed-time-face)
+   '("\\(?:[0-9]+:\\)?[0-9]+:[0-9]+\\(?:\\.[0-9]+\\)? *\\(,\\) *\\(?:[0-9]+:\\)?[0-9]+:[0-9]+\\(?:\\.[0-9]+\\)?" 1 'subed-time-separator-face t))
   "Highlighting expressions for `subed-mode'.")
 
 
 ;;; Parsing
 
 (defconst subed-ass--regexp-timestamp "\\(\\([0-9]+\\):\\)?\\([0-9]+\\):\\([0-9]+\\)\\(\\.\\([0-9]+\\)\\)?")
-(defconst subed-ass--regexp-start "\\(?:Dialogue\\|Comment\\|Picture\\|Sound\\|Movie\\|Command\\): [0-9]+,")
+(defconst subed-ass--regexp-start "\\(?:Dialogue\\|Comment\\|Picture\\|Sound\\|Movie\\|Command\\): +[0-9]+,")
 (defconst subed-ass--regexp-separator "\n")
 
 (cl-defmethod subed--timestamp-to-msecs (time-string &context (major-mode subed-ass-mode))

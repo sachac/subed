@@ -1539,4 +1539,18 @@ Baz.
        (re-search-backward "comment")
        (expect (nth 4 (syntax-ppss)) :to-be t)
        (re-search-forward "Hello")
-       (expect (nth 4 (syntax-ppss)) :to-be nil)))))
+       (expect (nth 4 (syntax-ppss)) :to-be nil))))
+  (describe "Font-locking"
+    (it "recognizes SRT syntax."
+      (with-temp-srt-buffer
+       (insert mock-srt-data)
+       (font-lock-fontify-buffer)
+       (goto-char (point-min))
+       (re-search-forward "00:01:01")
+       (expect (face-at-point) :to-equal 'subed-time-face)
+       (re-search-forward "-->")
+       (backward-char 1)
+       (expect (face-at-point) :to-equal 'subed-time-separator-face)
+       (re-search-forward "^2$")       
+       (goto-char (match-beginning 0))       
+       (expect (face-at-point) :to-equal 'subed-id-face)))))

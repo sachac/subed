@@ -1,4 +1,27 @@
 * subed news
+** Version 1.0.9 - 2022-09-14 - Sacha Chua
+
+- Consolidated the different faces to subed-id-face, subed-time-face,
+  and subed-time-separator-face. Added tests for font-locking. Dropped
+  text font-locking for now since we didn't have a good regular
+  expression for it.
+
+  Obsolete:
+  - subed-srt-id-face
+  - subed-srt-time-face
+  - subed-srt-time-separator-face
+  - subed-srt-text-face
+  - subed-vtt-id-face
+  - subed-vtt-time-face
+  - subed-vtt-time-separator-face
+  - subed-vtt-text-face
+  - subed-ass-id-face
+  - subed-ass-time-face
+  - subed-ass-time-separator-face
+  - subed-ass-text-face
+  
+Thanks to Igor for the bug report!
+
 ** Version 1.0.8 - 2022-09-08 - Sacha Chua
 
 - Added support for SRT comment syntax thanks to mbork.
