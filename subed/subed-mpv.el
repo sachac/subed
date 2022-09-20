@@ -79,7 +79,7 @@ See also `subed-mpv-socket-dir'."
       (file-error
        (error "%s" (mapconcat #'identity (cdr err) ": ")))))
   (expand-file-name
-   (format "subed:%s"
+   (format "subed-%s"
            (md5 (subed--buffer-file-name)))
    subed-mpv-socket-dir))
 
