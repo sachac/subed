@@ -1,4 +1,9 @@
 * subed news
+
+** Version 1.0.12 - 2022-10-23 - Sacha Chua
+
+Added new command ~subed-convert~.
+
 ** Version 1.0.11 - 2022-10-23 - Sacha Chua
 
 Added subed-tsv.el for Audacity label exports. Use M-x subed-tsv-mode to load it.

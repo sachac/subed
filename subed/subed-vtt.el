@@ -353,6 +353,11 @@ Use the format-specific function for MAJOR-MODE."
             (error "Found invalid stop time: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1))))
         (goto-char orig-point)))))
 
+(cl-defmethod subed--auto-insert (&context (major-mode subed-vtt-mode))
+  "Set up an empty WebVTT file.
+Use the format-specific function for MAJOR-MODE."
+  (insert "WEBVTT\n"))
+
 ;;;###autoload
 (define-derived-mode subed-vtt-mode subed-mode "Subed-VTT"
   "Major mode for editing WebVTT subtitle files."

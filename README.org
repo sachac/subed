@@ -17,28 +17,6 @@ corresponding video with [[https://mpv.io/][mpv]].  At the moment, the only supp
 
 [[file:https://raw.githubusercontent.com/rndusr/subed/master/screenshot.jpg]]
 
-Using network sockets to control MPV works on Linux and on Mac OS X,
-but not on Microsoft Windows due to the lack of Unix-style sockets. On
-Microsoft Windows, you will not be able to synchronize with MPV.
-
-** Important change in v1.0.0
-
-~subed~ now uses ~subed-srt-mode~, ~subed-vtt-mode~, and
-~subed-ass-mode~ instead of directly using ~subed-mode~. These modes
-should be automatically associated with the ~.vtt~, ~.srt~, and ~.ass~
-extensions. If the generic ~subed-mode~ is loaded instead of the format-specific mode,
-you may get an error such as:
-
-#+begin_example
-Error in post-command-hook (subed--post-command-handler): (cl-no-applicable-method subed--subtitle-id)
-#+end_example
-
-If you set ~auto-mode-alist~ manually in your config, please make sure
-you associate extensions the appropriate format-specific mode instead
-of ~subed-mode~. The specific backend functions (ex:
-~subed-srt--jump-to-subtitle-id~) are also deprecated in favor of
-using generic functions such as ~subed-jump-to-subtitle-id~.
-
 ** Features
    - Quickly jump to next (~M-n~) and previous (~M-p~) subtitle text.
    - Quickly jump to the beginning (~C-M-a~) and end (~C-M-e~) of the current
@@ -81,8 +59,14 @@ using generic functions such as ~subed-jump-to-subtitle-id~.
      starts. Use ~M-x customize-group~ ~subed~ to configure trimming
      to happen automatically when buffers are loaded or saved, which
      time is adjusted, and how much time to leave between subtitles.
-
+   - Convert between formats with ~M-x subed-convert~.
+     
 *** mpv integration (optional)
+
+Using network sockets to control MPV works on Linux and on Mac OS X,
+but not on Microsoft Windows due to the lack of Unix-style sockets. On
+Microsoft Windows, you will not be able to synchronize with MPV.
+
    - Open videos with ~C-c C-v~ or automatically when opening a subtitle file if the
      video file is named like the subtitle file but with a video extension
      (e.g. ~.mkv~ or ~.avi~).
@@ -190,6 +174,24 @@ If =subed-mpv-client= reports =(error "Service name too long")=, this
 is probably because the path to the socket used to communicate with
 MPV is too long for your operating system. You can use =M-x customize=
 to set =subed-mpv-socket-dir= to a shorter path.
+
+** Important change in v1.0.0
+
+~subed~ now uses ~subed-srt-mode~, ~subed-vtt-mode~, and
+~subed-ass-mode~ instead of directly using ~subed-mode~. These modes
+should be automatically associated with the ~.vtt~, ~.srt~, and ~.ass~
+extensions. If the generic ~subed-mode~ is loaded instead of the format-specific mode,
+you may get an error such as:
+
+#+begin_example
+Error in post-command-hook (subed--post-command-handler): (cl-no-applicable-method subed--subtitle-id)
+#+end_example
+
+If you set ~auto-mode-alist~ manually in your config, please make sure
+you associate extensions the appropriate format-specific mode instead
+of ~subed-mode~. The specific backend functions (ex:
+~subed-srt--jump-to-subtitle-id~) are also deprecated in favor of
+using generic functions such as ~subed-jump-to-subtitle-id~.
 
 ** Contributions
    Contributions would be really appreciated! subed conforms to the [[https://reuse.software/spec/][REUSE

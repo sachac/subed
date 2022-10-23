@@ -269,6 +269,21 @@ function for MAJOR-MODE."
             (subed-set-subtitle-time-stop new-end))
         (error "No subtitle to merge into")))))
 
+(cl-defmethod subed--auto-insert (&context (major-mode subed-ass-mode))
+  "Set up an empty SubStation Alpha file.
+Use the format-specific function for MAJOR-MODE."
+  (insert "[Script Info]
+ScriptType: v4.00+
+PlayResX: 384
+PlayResY: 288
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,16,&Hffffff,&Hffffff,&H0,&H0,0,0,0,0,100,100,0,0,1,1,0,2,10,10,10,0
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"))
 
 ;;;###autoload
 (define-derived-mode subed-ass-mode subed-mode "Subed-ASS"

@@ -17,6 +17,7 @@ Bar.
 Baz.
 ")
 
+
 (defmacro with-temp-srt-buffer (&rest body)
   "Call `subed-srt--init' in temporary buffer before running BODY."
   (declare (indent defun))
@@ -3211,3 +3212,25 @@ This is another.
                         (buttercup-fail "%s is not a function" function-name))))
                   '("srt" "vtt" "ass")))
           function-list)))
+
+(describe "Conversion"
+  (describe "from SRT"
+    (describe "to VTT"
+      (it "creates subtitles in the expected format"
+        (with-temp-buffer
+          (insert mock-srt-data)
+          (subed-srt-mode)
+          (with-current-buffer (subed-convert "VTT")
+            (expect major-mode :to-equal 'subed-vtt-mode)
+            (expect (buffer-string) :to-equal "WEBVTT
+
+
+00:01:01.000 --> 00:01:05.123
+Foo.
+
+00:02:02.234 --> 00:02:10.345
+Bar.
+
+00:03:03.450 --> 00:03:15.500
+Baz.
+")))))))
