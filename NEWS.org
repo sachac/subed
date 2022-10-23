@@ -1,4 +1,8 @@
 * subed news
+** Version 1.0.11 - 2022-10-23 - Sacha Chua
+
+Added subed-tsv.el for Audacity label exports. Use M-x subed-tsv-mode to load it.
+
 ** Version 1.0.10 - 2022-09-20 - Sacha Chua
 
 Use - instead of : in mpv socket names to see if that will make it work better on Microsoft Windows.

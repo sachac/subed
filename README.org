@@ -6,10 +6,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 * subed
 subed is an Emacs major mode for editing subtitles while playing the
-corresponding video with [[https://mpv.io/][mpv]].  At the moment, the only supported formats are
-SubRip ( ~.srt~), WebVTT ( ~.vtt~ ), and Advanced SubStation Alpha ( ~.ass~, experimental ).
+corresponding video with [[https://mpv.io/][mpv]].  At the moment, the only supported formats are:
+- SubRip ( ~.srt~)
+- WebVTT ( ~.vtt~ )
+- Advanced SubStation Alpha ( ~.ass~, experimental )
+- Tab-separated values ( ~.tsv~, experimental ) - as exported by
+  Audacity for labels. TSVs are not recognized automatically because
+  it's a common data format, but you can use ~subed-tsv-mode~ to turn
+  it on in a buffer.
 
 [[file:https://raw.githubusercontent.com/rndusr/subed/master/screenshot.jpg]]
+
+Using network sockets to control MPV works on Linux and on Mac OS X,
+but not on Microsoft Windows due to the lack of Unix-style sockets. On
+Microsoft Windows, you will not be able to synchronize with MPV.
+
 ** Important change in v1.0.0
 
 ~subed~ now uses ~subed-srt-mode~, ~subed-vtt-mode~, and
