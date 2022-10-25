@@ -1818,10 +1818,13 @@ If LIST is nil, use the subtitles in the current buffer."
   "Create a buffer with the current subtitles converted to FORMAT.
 You may need to add some extra information to the buffer."
   (interactive (list (completing-read "To format: " '("VTT" "SRT" "ASS" "TSV"))))
-  (let ((subtitles (subed-subtitle-list))
-        (buf (generate-new-buffer
-              (concat (file-name-base (or (buffer-file-name) (buffer-name))) "." (downcase format)))))
-    (with-current-buffer buf
+  (let* ((subtitles (subed-subtitle-list))
+         (new-filename (concat (file-name-base (or (buffer-file-name) (buffer-name))) "." (downcase format)))
+         buf)
+    (when (or (not (file-exists-p new-filename))
+              (yes-or-no-p (format "%s exists. Overwrite? " new-filename)))
+      (find-file new-filename)
+      (erase-buffer)
       (pcase format
         ("VTT" (require 'subed-vtt) (subed-vtt-mode))
         ("SRT" (require 'subed-srt) (subed-srt-mode))
@@ -1830,9 +1833,8 @@ You may need to add some extra information to the buffer."
       (save-excursion
         (subed-auto-insert)
         (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub))) subtitles)
-        (subed-regenerate-ids)))
-    (switch-to-buffer buf)
-    buf))
+        (subed-regenerate-ids))
+      (current-buffer))))
 
 (provide 'subed-common)
 ;;; subed-common.el ends here

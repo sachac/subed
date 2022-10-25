@@ -39,7 +39,7 @@
 
 (defconst subed-tsv-font-lock-keywords
   (list
-   '("^\\([0-9]+\\.[0-9]+\\)\t\\([0-9]+\\.[0-9]+\\)" (0 subed-tsv-time-face)))
+   '("^\\([0-9]+\\.[0-9]+\\)\t\\([0-9]+\\.[0-9]+\\)" (0 'subed-time-face)))
   "Highlighting expressions for `subed-mode'.")
 
 ;;; Parsing
