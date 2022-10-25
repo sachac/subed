@@ -1591,6 +1591,9 @@ attribute(s)."
   (remove-hook 'post-command-hook #'subed--update-cps-overlay t)
   (remove-hook 'subed-subtitle-motion-hook #'subed--move-cps-overlay-to-current-subtitle t)
   (remove-hook 'after-save-hook #'subed--move-cps-overlay-to-current-subtitle t)
+  (when subed--cps-overlay
+	  (remove-overlays (point-min) (point-max) 'subed 'cps)
+    (setq subed--cps-overlay nil))
   (unless quiet
     (message "Disabled showing characters per second")))
 
@@ -1641,7 +1644,8 @@ attribute(s)."
 		              (line-end-position))))
       (if subed--cps-overlay
 	        (move-overlay subed--cps-overlay begin end (current-buffer))
-        (setq subed--cps-overlay (make-overlay begin end)))
+        (setq subed--cps-overlay (make-overlay begin end))
+        (overlay-put subed--cps-overlay 'subed 'cps))
       (subed--update-cps-overlay))))
 
 (defun subed--update-cps-overlay (&rest _rest)
