@@ -68,8 +68,8 @@ Use the format-specific function for MAJOR-MODE."
 (cl-defmethod subed--msecs-to-timestamp (msecs &context (major-mode subed-vtt-mode))
   "Convert MSECS to string in the format HH:MM:SS.MS.
 Use the format-specific function for MAJOR-MODE."
-  (concat (format-seconds "%02h:%02m:%02s" (/ msecs 1000))
-          "." (format "%03d" (mod msecs 1000))))
+  (concat (format-seconds "%02h:%02m:%02s" (/ (floor msecs) 1000))
+          "." (format "%03d" (mod (floor msecs) 1000))))
 
 (cl-defmethod subed--subtitle-id (&context (major-mode subed-vtt-mode))
   "Return the ID of the subtitle at point or nil if there is no ID.

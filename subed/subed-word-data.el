@@ -41,6 +41,12 @@
 (defvar-local subed-word-data--cache nil
   "Word-level timing in the form ((start . ms) (end . ms) (text . ms))")
 
+(defface subed-word-data-face '((((class color) (background light))
+                                 :foreground "darkgreen")
+                                (((class color) (background dark))
+                                 :foreground "lightgreen"))
+  "Face used for words with word data available.")
+
 (defun subed-word-data--extract-words-from-srv2 (data)
   "Extract the timing from DATA in SRV2 format.
 Return a list of ((start . ?), (end . ?) (text . ?))."
@@ -55,7 +61,9 @@ Return a list of ((start . ?), (end . ?) (text . ?))."
     (reverse
      (mapcar #'(lambda (element)
                  (let ((rec (list (cons 'start (string-to-number (alist-get 't (xml-node-attributes element))))
-                                  (cons 'end last-start)
+                                  (cons 'end (min (+ (string-to-number (alist-get 't (xml-node-attributes element)))
+                                                     (string-to-number (alist-get 'd (xml-node-attributes element))))
+                                                  last-start))
                                   (cons 'text
                                          (replace-regexp-in-string "&#39;" "'"
                                                                    (car (xml-node-children element)))
@@ -68,7 +76,8 @@ Return a list of ((start . ?), (end . ?) (text . ?))."
   "Load word-level timing from DATA.
 For now, only SRV2 files are supported."
   (setq-local subed-word-data--cache data)
-  (add-hook 'subed-split-subtitle-timestamp-functions #'subed-word-data-split-at-word-timestamp -5 t))
+  (add-hook 'subed-split-subtitle-timestamp-functions #'subed-word-data-split-at-word-timestamp -5 t)
+  (subed-word-data-refresh-text-properties))
 
 ;;;###autoload
 (defun subed-word-data-load-from-file (file)
@@ -118,8 +127,13 @@ For now, only SRV2 files are supported."
   (string= (subed-word-data-normalize-word word1)
            (subed-word-data-normalize-word word2)))
 
-(defvar subed-word-data-compare 'subed-word-data-compare-normalized-string=
+(defvar subed-word-data-compare-function 'subed-word-data-compare-normalized-string=
   "Function to use to compare.")
+
+(defun subed-word-data-compare (word1 word2)
+  "Use the `subed-word-data-compare' function to compare WORD1 and WORD2.
+Return non-nil if they are the same after normalization."
+  (funcall subed-word-data-compare-function word1 word2))
 
 (defun subed-word-data--look-up-word ()
   "Find the word timing that matches the one at point (approximately)."
@@ -144,9 +158,9 @@ For now, only SRV2 files are supported."
       (while (not done)
         (setq candidate (elt words (+ (1- (length remaining-words)) offset)))
         (cond
-         ((and candidate (funcall subed-word-data-compare
-                                  (car remaining-words)
-                                  (alist-get 'text candidate)))
+         ((and candidate (subed-word-data-compare
+                          (car remaining-words)
+                          (alist-get 'text candidate)))
           (setq done t))
          ((> offset (length words)) (setq done t))
          ((> offset 0) (setq offset (- offset)))
@@ -155,9 +169,136 @@ For now, only SRV2 files are supported."
 
 (defun subed-word-data-split-at-word-timestamp ()
   "Return the starting timestamp if the word is found."
-  (when subed-word-data--cache
+  (cond
+   ((get-text-property (point) 'subed-word-start)
+    (- time subed-subtitle-spacing))
+   (subed-word-data--cache
     (let ((time (assoc-default 'start (subed-word-data--look-up-word))))
-      (when time (- time subed-subtitle-spacing)))))
+      (when time (- time subed-subtitle-spacing))))))
 
+(defun subed-word-data-subtitle-entries ()
+  "Return the entries that start and end within the current subtitle."
+  (let ((start (subed-subtitle-msecs-start))
+        (stop (+ (subed-subtitle-msecs-stop) subed-subtitle-spacing)))
+    (seq-filter
+     (lambda (o)
+       (and (<= (alist-get 'end o) stop)
+            (>= (alist-get 'start o) start)
+            (not (string-match "^\n*$" (alist-get 'text o)))))
+     subed-word-data--cache)))
+
+(defvar subed-word-data-threshold 5
+  "Number of words to consider for matching.")
+(defun subed-word-data-refresh-text-properties-for-subtitle ()
+  "Refresh the text properties for the current subtitle."
+  (interactive)
+  (remove-text-properties (subed-jump-to-subtitle-text) (subed-jump-to-subtitle-end)
+                          '(subed-word-data-start subed-word-data-end font-lock-face))
+  (let* ((text-start (progn (subed-jump-to-subtitle-text) (point)))
+         pos
+         (word-data (reverse (subed-word-data-subtitle-entries)))
+         candidate
+         cand-count)
+    (subed-jump-to-subtitle-end)
+    (while (> (point) text-start)
+      ;; Work our way backwards, matching against remaining words
+      (setq pos (point))
+      (backward-word)
+      (let ((try-list word-data)
+            candidate)
+        (setq candidate (car try-list) cand-count 0)
+        (setq try-list (cdr try-list))
+        (while (and candidate
+                    (< cand-count subed-word-data-threshold)
+                    (not (subed-word-data-compare (buffer-substring (point) pos)
+                                                  (alist-get 'text candidate))))
+          (setq candidate (car try-list) cand-count (1+ cand-count))
+          (when (> cand-count subed-word-data-threshold)
+            (setq candidate nil))
+          (setq try-list (cdr try-list)))
+        (when (and candidate (subed-word-data-compare (buffer-substring (point) pos)
+                                                      (alist-get 'text candidate)))
+          (add-text-properties (point) pos
+                               (list 'subed-word-data-start
+                                      (assoc-default 'start candidate)
+                                      'subed-word-data-end
+                                      (assoc-default 'end candidate)
+                                      'font-lock-face 'subed-word-data-face))
+          (add-face-text-property (point) pos
+                                  'subed-word-data-face)
+          (setq word-data try-list))))))
+
+(defun subed-word-data-refresh-text-properties ()
+  "Add word data properties and face when available."
+  (interactive)
+  (save-excursion
+    (remove-text-properties (point-min) (point-max) '(subed-word-data-start subed-word-data-end font-lock-face))
+    (when subed-word-data--cache
+      (goto-char (point-min))
+      (unless (subed-jump-to-subtitle-id) (subed-forward-subtitle-id))
+      (while (not (eobp))
+        (let* ((text-start (progn (subed-jump-to-subtitle-text) (point)))
+               pos
+               (word-data (reverse (subed-word-data-subtitle-entries)))
+               candidate)
+          (subed-jump-to-subtitle-end)
+          (while (> (point) text-start)
+            ;; Work our way backwards, matching against remaining words
+            (setq pos (point))
+            (backward-word)
+            (let ((try-list word-data)
+                  candidate)
+              (setq candidate (car try-list))
+              (setq try-list (cdr try-list))
+              (while (and candidate
+                          (not (subed-word-data-compare (buffer-substring (point) pos)
+                                                        (alist-get 'text candidate))))
+                (setq candidate (car try-list))
+                (setq try-list (cdr try-list)))
+              (when (and candidate (subed-word-data-compare (buffer-substring (point) pos)
+                                                            (alist-get 'text candidate)))
+                (add-text-properties (point) pos
+                                     (list 'subed-word-data-start
+                                            (assoc-default 'start candidate)
+                                            'subed-word-data-end
+                                            (assoc-default 'end candidate)
+                                            'font-lock-face 'subed-word-data-face))
+                (add-face-text-property (point) pos
+                                        'subed-word-data-face)
+                (setq word-data try-list)))))
+        (or (subed-forward-subtitle-id)
+            (goto-char (point-max)))))))
+
+(defun subed-word-data-pause-msecs ()
+  "Return the number of milliseconds between this word and the previous word.
+Requires the text properties to be set."
+  (let ((current (get-text-property (point) 'subed-word-data-start)))
+    (save-excursion
+     (skip-syntax-backward "w")
+     (backward-word)
+     (when (get-text-property (point) 'subed-word-data-end)
+       (- current (get-text-property (point) 'subed-word-data-end))))))
+
+(defun subed-word-data-jump-to-longest-pause-in-current-subtitle ()
+  "Jump to the word after the longest pause in the current subtitle.
+Requires the text properties to be set."
+  (interactive)
+  (let ((start (or (subed-jump-to-subtitle-text) (point)))
+        (end (or (subed-jump-to-subtitle-end) (point)))
+        pos last-start-time pause (max-pause 0) max-pos)
+    (backward-word)
+    (setq max-pos (point))
+    (while (> (point) start)
+      (setq pos (point) last-start-time (get-text-property (point) 'subed-word-data-start))
+      (backward-word)
+      (if (get-text-property (point) 'subed-word-data-end)
+          (progn
+            (setq pause (and last-start-time (- last-start-time
+                                                (get-text-property (point) 'subed-word-data-end))))
+            (when (and pause (> pause max-pause))
+              (setq max-pos pos
+                    max-pause pause)))
+        (setq last-start-time nil)))
+    (goto-char max-pos)))
 (provide 'subed-word-data)
 ;;; subed-word-data.el ends here
