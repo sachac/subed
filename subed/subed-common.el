@@ -1114,6 +1114,40 @@ following manner:
           (subed-backward-subtitle-text)))))
   (point))
 
+(defvar subed-split-subtitle-timestamp-functions
+  '(subed-split-subtitle-based-on-mpv-playback-position
+    subed-split-subtitle-based-on-point-ratio)
+  "Functions to call to get the timestamp to split at.
+Functions will be called with one argument.
+They should return a timestamp in milliseconds.
+The first non-nil value will be used for the split.
+Functions should preserve the point.")
+
+(defun subed-split-subtitle-based-on-mpv-playback-position ()
+  "Return a timestamp based on the current MPV position.
+Do this only if the position is within the start and end of the
+current subtitle."
+  (when (and
+         subed-mpv-playback-position
+         (>= subed-mpv-playback-position (subed-subtitle-msecs-start))
+         (<= subed-mpv-playback-position (subed-subtitle-msecs-stop)))
+    subed-mpv-playback-position))
+
+(defun subed-split-subtitle-based-on-point-ratio ()
+  "Return a timestamp based on the position and number of characters in the subtitle text."
+  (let* ((pos (point))
+         (text-beg (or (save-excursion (subed-jump-to-subtitle-text)) pos))
+         (text-end (or (save-excursion (subed-jump-to-subtitle-end)) pos)))
+    ;; Ensure point is on subtitle text
+    (when (and (>= pos text-beg)
+               (<= pos text-end))
+      (let* ((orig-start (subed-subtitle-msecs-start))
+             (orig-end (subed-subtitle-msecs-stop))
+             (text-fraction (if (= text-beg text-end) 1
+                              (/ (* 1.0 (- (point) text-beg)) (- text-end text-beg))))
+             (time-fraction (floor (* text-fraction (- orig-end orig-start)))))
+        (+ orig-start time-fraction)))))
+
 (subed-define-generic-function split-subtitle (&optional offset)
   "Split current subtitle at point.
 
@@ -1151,27 +1185,24 @@ position of the point."
     ;; Ensure point is on subtitle text
     (unless (and text-beg (>= (point) text-beg))
       (subed-jump-to-subtitle-text))
-    (let* ((orig-start (subed-subtitle-msecs-start))
-           (orig-end (subed-subtitle-msecs-stop))
-           (text-fraction (if (= text-beg text-end) 1 (/ (* 1.0 (- (point) text-beg)) (- text-end text-beg))))
-           (time-fraction (floor (* text-fraction (- orig-end orig-start))))
+    (let* ((orig-end (subed-subtitle-msecs-stop))
            (split-timestamp
             (cond
-             ((and (numberp offset) (> offset 0)) (+ orig-start offset))
-             ((and (numberp offset) (< offset 0)) (+ orig-end offset))
-             ((or (equal offset t)
-                  (null subed-mpv-playback-position)
-                  (> subed-mpv-playback-position orig-end)
-                  (< subed-mpv-playback-position orig-start))
-              (+ orig-start time-fraction))
-             (subed-mpv-playback-position subed-mpv-playback-position)))
+             ((and (numberp offset) (> offset 0))
+              (+ (subed-subtitle-msecs-start) offset))
+             ((and (numberp offset) (< offset 0))
+              (+ orig-end offset))
+             (t (run-hook-with-args-until-success 'subed-split-subtitle-timestamp-functions))))
            (new-text (string-trim (buffer-substring (point) text-end)))
-           (new-start-timestamp (+ split-timestamp subed-subtitle-spacing)))
-      (subed-set-subtitle-time-stop split-timestamp)
-      (skip-chars-backward "\n")
-      (delete-region (point) (progn (subed-jump-to-subtitle-end) (skip-chars-forward " \t") (point)))
-      (when (looking-at "[ \t]+") (replace-match ""))
-      (subed-append-subtitle nil new-start-timestamp orig-end (string-trim new-text)))
+           (new-start-timestamp (and split-timestamp (+ split-timestamp subed-subtitle-spacing))))
+      (if split-timestamp
+          (progn
+            (subed-set-subtitle-time-stop split-timestamp)
+            (skip-chars-backward "\r\n")
+            (delete-region (point) (progn (subed-jump-to-subtitle-end) (skip-chars-forward " \t") (point)))
+            (when (looking-at "[ \t]+") (replace-match ""))
+            (subed-append-subtitle nil new-start-timestamp orig-end (string-trim new-text)))
+        (error "Could not determine timestamp for splitting.")))
     (point)))
 
 ;;; Merging

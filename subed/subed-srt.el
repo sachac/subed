@@ -241,6 +241,8 @@ Return new point.  Use the format-specific function for MAJOR-MODE."
   (unless (subed-forward-subtitle-id)
     ;; Point is on last subtitle or buffer is empty
     (subed-jump-to-subtitle-end)
+    (when (looking-at "[[:space:]]+")
+      (replace-match ""))
     ;; Moved point to end of last subtitle; ensure separator exists
     (while (not (looking-at "\\(\\`\\|[[:blank:]]*\n[[:blank:]]*\n\\)"))
       (save-excursion (insert ?\n)))

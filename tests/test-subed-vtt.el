@@ -55,6 +55,7 @@ Baz.
          (insert mock-vtt-data)
          (let ((msecs (- (save-excursion
                            (goto-char (point-min))
+                           (subed-forward-subtitle-id)
                            (subed-subtitle-msecs-start))
                          1)))
            (expect (subed-subtitle-id-at-msecs msecs) :to-equal nil))))
@@ -237,6 +238,7 @@ Baz.
         (with-temp-vtt-buffer
          (insert mock-vtt-data)
          (goto-char (point-min))
+         (subed-forward-subtitle-id)
          (expect (subed-jump-to-subtitle-time-start) :to-equal 9)
          (expect (looking-at subed--regexp-timestamp) :to-be t)
          (expect (match-string 0) :to-equal "00:01:01.000")
@@ -257,6 +259,7 @@ Baz.
         (with-temp-vtt-buffer
          (insert mock-vtt-data)
          (goto-char (point-min))
+         (subed-forward-subtitle-id)
          (expect (subed-jump-to-subtitle-time-stop) :to-equal 26)
          (expect (looking-at subed--regexp-timestamp) :to-be t)
          (expect (match-string 0) :to-equal "00:01:05.123")
@@ -277,6 +280,7 @@ Baz.
         (with-temp-vtt-buffer
          (insert mock-vtt-data)
          (goto-char (point-min))
+         (subed-forward-subtitle-id)
          (expect (subed-jump-to-subtitle-text) :to-equal 39)
          (expect (point) :to-equal (save-excursion (goto-char (point-max)) (search-backward "Foo.")))
          (re-search-forward "\n\n")
@@ -294,6 +298,7 @@ Baz.
         (with-temp-vtt-buffer
          (insert mock-vtt-data)
          (goto-char (point-min))
+         (subed-forward-subtitle-id)
          (expect (subed-jump-to-subtitle-end) :to-be 43)
          (expect (looking-back "^Foo.$") :to-be t)
          (forward-char 2)
@@ -313,6 +318,7 @@ Baz.
          (re-search-forward "Foo\\.\n")
          (replace-match "Foo.\n ")
          (goto-char (point-min))
+         (subed-forward-subtitle-id)
          (expect (subed-jump-to-subtitle-end) :to-be 43)
          (expect (looking-back "^Foo.$") :to-be t)))
       (it "returns nil if subtitle end cannot be found."
@@ -350,6 +356,7 @@ Baz.
          (expect (subed-jump-to-subtitle-end) :to-be nil)
          (expect (looking-at "^$") :to-be t)
          (goto-char (point-min))
+         (subed-forward-subtitle-id)
          (expect (subed-jump-to-subtitle-end) :to-be 39)
          (expect (looking-at "^$") :to-be t)
          (subed-jump-to-subtitle-text "00:02:02.234")
@@ -622,11 +629,12 @@ Baz.
        (subed-jump-to-subtitle-id "00:03:03.45")
        (subed-set-subtitle-time-start (+ (* 1 60 60 1000) (* 2 60 1000) (* 3 1000) 4) 3)
        (expect (save-excursion (subed-jump-to-subtitle-time-start)
-                               (thing-at-point 'line)) :to-equal "01:02:03.004 --> 00:03:15.5\n")
+                               (thing-at-point 'line))
+               :to-equal "01:02:03.004 --> 00:03:15.5\n")
        (subed-set-subtitle-time-stop (+ (* 2 60 60 1000) (* 3 60 1000) (* 4 1000) 60) 3)
        (expect (save-excursion (subed-jump-to-subtitle-time-start)
-                               (thing-at-point 'line)) :to-equal "01:02:03.004 --> 02:03:04.060\n")))
-    )
+                               (thing-at-point 'line))
+               :to-equal "01:02:03.004 --> 02:03:04.060\n"))))
 
   (describe "Inserting a subtitle"
     (describe "in an empty buffer"

@@ -1,4 +1,16 @@
 * subed news
+** Version 1.0.15 - 2022-10-26 - Sacha Chua
+
+Added support for SRV2 files in subed-word-data.el. You can use
+subed-word-data-load-from-file to load word-level timing data from
+SRV2 files or add subed-word-data-load-maybe to the subed-mode-hook.
+
+VTT no longer assumes that the start of the file is part of
+the first subtitle.
+
+VTT and SRT are now less confused by spaces at the end of a subtitle
+when splitting.
+
 ** Version 1.0.14 - 2022-10-25 - Sacha Chua
 
 Delete the CPS overlay when disabling it

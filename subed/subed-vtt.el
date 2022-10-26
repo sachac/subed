@@ -111,29 +111,33 @@ If SUB-ID is not given, focus the current subtitle's ID.
 Return point or nil if no subtitle ID could be found.
 WebVTT doesn't use IDs, so we use the starting timestamp instead.
 Use the format-specific function for MAJOR-MODE."
-  (if (stringp sub-id)
-      ;; Look for a line that contains the timestamp, preceded by one or more
-      ;; blank lines or the beginning of the buffer.
-      (let* ((orig-point (point))
-             (regex (concat "\\(" subed--regexp-separator "\\|\\`\\)\\(" (regexp-quote sub-id) "\\)"))
-             (match-found (progn (goto-char (point-min))
-                                 (re-search-forward regex nil t))))
-        (if match-found
-            (goto-char (match-beginning 2))
-          (goto-char orig-point)))
-    ;; Find one or more blank lines.
-    (re-search-forward "\\([[:blank:]]*\n\\)+" nil t)
-    ;; Find two or more blank lines or the beginning of the buffer, followed
-    ;; by line starting with a timestamp.
-    (let* ((regex (concat  "\\(" subed--regexp-separator "\\|\\`\\)"
-                           "\\(?:" subed-vtt--regexp-identifier "\\)?"
-                           "\\(" subed--regexp-timestamp "\\)"))
-           (match-found (re-search-backward regex nil t)))
-      (when match-found
-        (goto-char (match-beginning 2)))))
-  ;; Make extra sure we're on a timestamp, return nil if we're not
-  (when (looking-at "^\\(\\([0-9]+:\\)?[0-9]+:[0-9]+\\.[0-9]+\\)")
-    (point)))
+  (let ((orig-point (point)) found)
+    (if (stringp sub-id)
+        ;; Look for a line that contains the timestamp, preceded by one or more
+        ;; blank lines or the beginning of the buffer.
+        (let* ((regex (concat "\\(" subed--regexp-separator "\\|\\`\\)\\("
+                              (regexp-quote sub-id) "\\)")))
+          (goto-char (point-min))
+          (setq found (re-search-forward regex nil t))
+          (if found
+              (goto-char (match-beginning 2))
+            (goto-char orig-point)))
+      ;; Find one or more blank lines.
+      (or (re-search-forward "\\(^[[:blank:]]*\n\\)+" nil t)
+          (goto-char (point-max)))
+      ;; Find two or more blank lines or the beginning of the buffer, followed
+      ;; by line starting with a timestamp.
+      (let* ((regex (concat  "\\(" subed--regexp-separator "\\|\\`\\)"
+                             "\\(?:" subed-vtt--regexp-identifier "\\)?"
+                             "\\(" subed--regexp-timestamp "\\)")))
+        (setq found (re-search-backward regex nil t))
+        (when found
+          (goto-char (match-beginning 2)))))
+    ;; Make extra sure we're on a timestamp, return nil if we're not
+    (if (and found (looking-at "^\\(\\([0-9]+:\\)?[0-9]+:[0-9]+\\.[0-9]+\\)"))
+        (point)
+      (goto-char orig-point)
+      nil)))
 
 (cl-defmethod subed--jump-to-subtitle-time-start (&context (major-mode subed-vtt-mode) &optional sub-id)
   "Move point to subtitle's start time.
@@ -251,6 +255,8 @@ point.  Use the format-specific function for MAJOR-MODE."
   (unless (subed-forward-subtitle-id)
     ;; Point is on last subtitle or buffer is empty
     (subed-jump-to-subtitle-end)
+    (when (looking-at "[[:space:]]+")
+      (replace-match ""))
     ;; Moved point to end of last subtitle; ensure separator exists
     (while (not (looking-at "\\(\\`\\|[[:blank:]]*\n[[:blank:]]*\n\\)"))
       (save-excursion (insert ?\n)))
