@@ -70,6 +70,7 @@ For now, only SRV2 files are supported."
   (setq-local subed-word-data--cache data)
   (add-hook 'subed-split-subtitle-timestamp-functions #'subed-word-data-split-at-word-timestamp -5 t))
 
+;;;###autoload
 (defun subed-word-data-load-from-file (file)
   "Load word-level timing from FILE.
 For now, only SRV2 files are supported."
@@ -83,6 +84,7 @@ For now, only SRV2 files are supported."
 
 (defvar subed-word-data-extensions '(".en.srv2" ".srv2") "Extensions to search for word data.")
 
+;;;###autoload
 (defun subed-word-data-load-maybe ()
   "Load word data if available. Suitable for adding to `subed-mode-hook'."
   (when (buffer-file-name)
