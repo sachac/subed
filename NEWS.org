@@ -1,4 +1,10 @@
 * subed news
+** Version 1.0.16 - 2022-10-26 - Sacha Chua
+
+When you load word data, subtitle words that were successfully matched
+with the word-level timestamps will now be highlighted so that it's
+easier to split at them.
+
 ** Version 1.0.15 - 2022-10-26 - Sacha Chua
 
 Added support for SRV2 files in subed-word-data.el. You can use
