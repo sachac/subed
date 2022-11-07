@@ -320,7 +320,25 @@ Return new point."
               end (save-excursion (goto-char (point-max)))))
     (delete-region beg end)))
 
-(subed-define-generic-function subtitle-list (&optional beg end)
+(defun subed-parse-file (filename &optional mode-func)
+  "Return the subtitles from FILENAME in a list.
+If MODE-FUNC is non-nil, use that function to initialize the mode.
+Otherwise, initialize the mode based on the filename."
+  (when (file-exists-p filename)
+    (with-temp-buffer
+      (insert-file-contents filename)
+      (if mode-func
+          (funcall mode-func)
+        (let ((mode-entry
+               (seq-find (lambda (mode-alist)
+                           (string-match (car mode-alist) filename))
+                         auto-mode-alist)))
+          (if mode-entry
+              (funcall (cdr mode-entry))
+            (subed-tsv-mode))))
+      (subed-subtitle-list))))
+
+(defun subed-subtitle-list (&optional beg end)
   "Return the subtitles from BEG to END as a list.
 The list will contain entries of the form (id start stop text).
 If BEG and END are not specified, use the whole buffer."

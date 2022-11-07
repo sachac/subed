@@ -1,4 +1,8 @@
 * subed news
+** Version 1.0.18 - 2022-11-08 - Sacha Chua
+
+New function subed-parse-file.
+
 ** Version 1.0.17 - 2022-11-07 - Sacha Chua
 
 New command subed-align in the subed-align.el file lets you use aeneas
