@@ -75,9 +75,8 @@ Use the format-specific function for MAJOR-MODE."
   "Return the ID of the subtitle at point or nil if there is no ID.
 Use the format-specific function for MAJOR-MODE."
   (save-excursion
-    (when (and (subed-jump-to-subtitle-time-start)
-               (looking-at subed--regexp-timestamp))
-      (match-string 0))))
+    (when (subed-jump-to-subtitle-id)
+      (match-string 1))))
 
 (cl-defmethod subed--subtitle-id-at-msecs (msecs &context (major-mode subed-vtt-mode))
   "Return the ID of the subtitle at MSECS milliseconds.
@@ -109,7 +108,7 @@ format-specific function for MAJOR-MODE."
   "Move to the ID of a subtitle and return point.
 If SUB-ID is not given, focus the current subtitle's ID.
 Return point or nil if no subtitle ID could be found.
-WebVTT doesn't use IDs, so we use the starting timestamp instead.
+WebVTT IDs are optional.  If an ID is not specified, use the timestamp instead.
 Use the format-specific function for MAJOR-MODE."
   (let ((orig-point (point)) found)
     (if (stringp sub-id)
@@ -121,23 +120,23 @@ Use the format-specific function for MAJOR-MODE."
           (setq found (re-search-forward regex nil t))
           (if found
               (goto-char (match-beginning 2))
-            (goto-char orig-point)))
-      ;; Find one or more blank lines.
-      (or (re-search-forward "\\(^[[:blank:]]*\n\\)+" nil t)
-          (goto-char (point-max)))
+            (goto-char orig-point)
+            nil))
+
       ;; Find two or more blank lines or the beginning of the buffer, followed
-      ;; by line starting with a timestamp.
-      (let* ((regex (concat  "\\(" subed--regexp-separator "\\|\\`\\)"
-                             "\\(?:" subed-vtt--regexp-identifier "\\)?"
-                             "\\(" subed--regexp-timestamp "\\)")))
-        (setq found (re-search-backward regex nil t))
-        (when found
-          (goto-char (match-beginning 2)))))
-    ;; Make extra sure we're on a timestamp, return nil if we're not
-    (if (and found (looking-at "^\\(\\([0-9]+:\\)?[0-9]+:[0-9]+\\.[0-9]+\\)"))
-        (point)
-      (goto-char orig-point)
-      nil)))
+      ;; by an optional line and a timestamp.
+      (or (and (re-search-backward subed--regexp-separator nil t)
+               (goto-char (match-end 0)))
+          (goto-char (point-min)))
+      (cond
+       ((looking-at (concat "\\(" subed-vtt--regexp-timestamp "\\) *--> *" subed-vtt--regexp-timestamp " *\n"))
+        ;; no ID, use the timestamp
+        (point))
+       ((looking-at (concat "\\(.*\\)\n" subed-vtt--regexp-timestamp " *--> *" subed-vtt--regexp-timestamp " *\n"))
+        (point))
+       (t
+        (goto-char orig-point)
+        nil)))))
 
 (cl-defmethod subed--jump-to-subtitle-time-start (&context (major-mode subed-vtt-mode) &optional sub-id)
   "Move point to subtitle's start time.
@@ -145,15 +144,18 @@ If SUB-ID is not given, use subtitle on point.
 Return point or nil if no start time could be found.
 Use the format-specific function for MAJOR-MODE."
   (when (subed-jump-to-subtitle-id sub-id)
-    (when (looking-at subed--regexp-timestamp)
-      (point))))
+    (if (looking-at subed--regexp-timestamp)
+        (point)
+      (when (re-search-forward subed--regexp-timestamp nil t)
+        (goto-char (match-beginning 0))
+        (point)))))
 
 (cl-defmethod subed--jump-to-subtitle-time-stop (&context (major-mode subed-vtt-mode) &optional sub-id)
   "Move point to subtitle's stop time.
 If SUB-ID is not given, use subtitle on point.
 Return point or nil if no stop time could be found.
 Use the format-specific function for MAJOR-MODE."
-  (when (subed-jump-to-subtitle-id sub-id)
+  (when (subed-jump-to-subtitle-time-start sub-id)
     (re-search-forward " *--> *" (point-at-eol) t)
     (when (looking-at subed--regexp-timestamp)
       (point))))
@@ -163,7 +165,7 @@ Use the format-specific function for MAJOR-MODE."
 If SUB-ID is not given, use subtitle on point.
 Return point or nil if a the subtitle's text can't be found.
 Use the format-specific function for MAJOR-MODE."
-  (when (subed-jump-to-subtitle-id sub-id)
+  (when (subed-jump-to-subtitle-time-start sub-id)
     (forward-line 1)
     (point)))
 
@@ -178,23 +180,33 @@ can be found.  Use the format-specific function for MAJOR-MODE."
     ;; `subed-vtt--regexp-separator' here because if subtitle text is empty,
     ;; it may be the only empty line in the separator, i.e. there's only one
     ;; "\n".
-    (let ((regex (concat "\\([[:blank:]]*\n\\)+"
-                         "\\(?:NOTE[ \n]\\(?:.+?\n\\)+\n\\)*"
-                         "\\(" subed--regexp-timestamp "\\)\\|\\([[:blank:]]*\n*\\)\\'")))
-      (when (re-search-forward regex nil t)
-        (goto-char (match-beginning 0))))
-    (unless (= (point) orig-point)
-      (point))))
+    (let ((regex subed-vtt--regexp-separator))
+      (if (eolp)
+          (unless (= (point) orig-point)
+            (point))
+        (if (re-search-forward regex nil t)
+            (goto-char (match-beginning 0))
+          (goto-char (point-max))
+          (skip-syntax-backward " "))
+        (unless (= (point) orig-point)
+          (point))))))
 
 (cl-defmethod subed--forward-subtitle-id (&context (major-mode subed-vtt-mode))
   "Move point to next subtitle's ID.
 Return point or nil if there is no next subtitle.  Use the
 format-specific function for MAJOR-MODE."
-  (when (re-search-forward (concat subed--regexp-separator
-                                   "\\(?:" subed-vtt--regexp-identifier "\\)?"
-                                   subed--regexp-timestamp)
-                           nil t)
-    (subed-jump-to-subtitle-id)))
+  (let ((orig-point (point)))
+    (if (and
+         (re-search-forward subed--regexp-separator nil t)
+         (re-search-forward (concat "^" subed--regexp-timestamp
+                                    " *--> *" subed--regexp-timestamp)
+                            nil t))
+        (or (subed-jump-to-subtitle-id)
+            (progn
+              (goto-char orig-point)
+              nil))
+      (goto-char orig-point)
+      nil)))
 
 (cl-defmethod subed--backward-subtitle-id (&context (major-mode subed-vtt-mode))
   "Move point to previous subtitle's ID.
@@ -202,12 +214,12 @@ Return point or nil if there is no previous subtitle.  Use the
 format-specific function for MAJOR-MODE."
   (let ((orig-point (point)))
     (when (subed-jump-to-subtitle-id)
-      (if (re-search-backward (concat "\\(" subed--regexp-separator "\\|\\`[[:space:]]*\\)\\(" subed--regexp-timestamp "\\)") nil t)
-          (progn
-            (goto-char (match-beginning 2))
-            (point))
-        (goto-char orig-point)
-        nil))))
+      (or
+       (catch 'found
+         (while (re-search-backward subed--regexp-separator nil t)
+           (when (subed-jump-to-subtitle-id)
+             (throw 'found (point)))))
+       (progn (goto-char orig-point) nil)))))
 
 ;;; Manipulation
 
@@ -323,6 +335,7 @@ Use the format-specific function for MAJOR-MODE."
      (goto-char (point-min))
      (when (re-search-forward "[[:graph:]]" nil t)
        (goto-char (point-max))
+       (skip-chars-backward " \t\n")
        (subed-jump-to-subtitle-end)
        (unless (looking-at "\n\\'")
          (delete-region (point) (point-max))

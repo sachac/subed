@@ -384,6 +384,7 @@ scheduled call is canceled and another call is scheduled in
   "Restore relative point within current subtitle after executing BODY.
 This also works if the buffer changes (e.g. when sorting
 subtitles) as long the subtitle IDs don't change."
+  (declare (debug t))
   (save-excursion
     `(let ((sub-id (subed-subtitle-id))
            (sub-pos (subed-subtitle-relative-point)))
@@ -1852,7 +1853,7 @@ If LIST is nil, use the subtitles in the current buffer."
 (defun subed-convert (format)
   "Create a buffer with the current subtitles converted to FORMAT.
 You may need to add some extra information to the buffer."
-  (interactive (list (completing-read "To format: " '("VTT" "SRT" "ASS" "TSV"))))
+  (interactive (list (completing-read "To format: " '("VTT" "SRT" "ASS" "TSV" "TXT"))))
   (let* ((subtitles (subed-subtitle-list))
          (new-filename (concat (file-name-base (or (buffer-file-name) (buffer-name))) "." (downcase format)))
          buf)
@@ -1860,15 +1861,17 @@ You may need to add some extra information to the buffer."
               (yes-or-no-p (format "%s exists. Overwrite? " new-filename)))
       (find-file new-filename)
       (erase-buffer)
-      (pcase format
-        ("VTT" (require 'subed-vtt) (subed-vtt-mode))
-        ("SRT" (require 'subed-srt) (subed-srt-mode))
-        ("ASS" (require 'subed-ass) (subed-ass-mode))
-        ("TSV" (require 'subed-tsv) (subed-tsv-mode)))
       (save-excursion
-        (subed-auto-insert)
-        (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub))) subtitles)
-        (subed-regenerate-ids))
+        (if (string= format "TXT")
+            (insert (mapconcat (lambda (o) (elt o 3)) subtitles "\n"))
+          (pcase format
+            ("VTT" (require 'subed-vtt) (subed-vtt-mode))
+            ("SRT" (require 'subed-srt) (subed-srt-mode))
+            ("ASS" (require 'subed-ass) (subed-ass-mode))
+            ("TSV" (require 'subed-tsv) (subed-tsv-mode)))
+          (subed-auto-insert)
+          (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub))) subtitles)
+          (subed-regenerate-ids)))
       (current-buffer))))
 
 (provide 'subed-common)

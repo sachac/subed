@@ -1,4 +1,13 @@
 * subed news
+** Version 1.0.17 - 2022-11-07 - Sacha Chua
+
+New command subed-align in the subed-align.el file lets you use aeneas
+for forced alignment. This can assign timestamps to each line of text.
+
+VTT files can now have optional cue identifiers. A cue identifier is a
+line of text before the timestamps that can identify the cue. It
+should not contain "-->".
+
 ** Version 1.0.16 - 2022-10-26 - Sacha Chua
 
 When you load word data, subtitle words that were successfully matched

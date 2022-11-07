@@ -3,6 +3,7 @@
 (load-file "./tests/undercover-init.el")
 (require 'subed)
 (require 'subed-vtt)
+(require 'subed-common)
 
 (defvar mock-vtt-data
   "WEBVTT
@@ -311,16 +312,6 @@ Baz.
          (backward-char 2)
          (expect (subed-jump-to-subtitle-end) :to-be 112)
          (expect (looking-back "^Baz.$") :to-be t)))
-      (it "handles spaces in between subtitles."
-        (with-temp-vtt-buffer
-         (insert mock-vtt-data)
-         (goto-char (point-min))
-         (re-search-forward "Foo\\.\n")
-         (replace-match "Foo.\n ")
-         (goto-char (point-min))
-         (subed-forward-subtitle-id)
-         (expect (subed-jump-to-subtitle-end) :to-be 43)
-         (expect (looking-back "^Foo.$") :to-be t)))
       (it "returns nil if subtitle end cannot be found."
         (with-temp-vtt-buffer
          (expect (subed-jump-to-subtitle-end) :to-be nil)))
@@ -386,10 +377,11 @@ Baz.
          (expect (looking-at (regexp-quote "00:02:02.234")) :to-be t)
          (expect (subed-forward-subtitle-id) :to-be 81)
          (expect (looking-at (regexp-quote "00:03:03.45")) :to-be t)))
-      (it "returns nil and doesn't move when there is no next subtitle."
+      (it "returns nil in an empty buffer."
         (with-temp-vtt-buffer
          (expect (thing-at-point 'word) :to-equal nil)
-         (expect (subed-forward-subtitle-id) :to-be nil))
+         (expect (subed-forward-subtitle-id) :to-be nil)))
+      (it "moves forward in a buffer."
         (with-temp-vtt-buffer
          (insert mock-vtt-data)
          (subed-jump-to-subtitle-text "00:01:01.000")
@@ -399,20 +391,21 @@ Baz.
          (subed-jump-to-subtitle-time-stop "00:02:02.234")
          (expect (looking-at (regexp-quote "00:02:10.345")) :to-be t)
          (expect (subed-forward-subtitle-id) :to-be 81)
-         (expect (looking-at (regexp-quote "00:03:03.45")) :to-be t))
+         (expect (looking-at (regexp-quote "00:03:03.45")) :to-be t)))
+      (it "doesn't move when at the last subtitle."
         (with-temp-vtt-buffer
          (insert mock-vtt-data)
          (subed-jump-to-subtitle-text "00:03:03.45")
          (expect (thing-at-point 'word) :to-equal "Baz")
          (expect (subed-forward-subtitle-id) :to-be nil)
-         (expect (thing-at-point 'word) :to-equal "Baz"))
+         (expect (thing-at-point 'word) :to-equal "Baz")))
+      (it "doesn't move when at the last subtitle's time stop."
         (with-temp-vtt-buffer
          (insert (concat mock-vtt-data "\n\n"))
          (subed-jump-to-subtitle-time-stop "00:03:03.45")
          (expect (thing-at-point 'word) :to-equal "00")
          (expect (subed-forward-subtitle-id) :to-be nil)
-         (expect (thing-at-point 'word) :to-equal "00")))
-      )
+         (expect (thing-at-point 'word) :to-equal "00"))))
     (describe "to previous subtitle ID"
       (it "returns point when there is a previous subtitle."
         (with-temp-vtt-buffer
@@ -910,6 +903,7 @@ Baz.
         (with-temp-vtt-buffer
          (insert (concat "00:00:01.000 --> 00:00:02.000\n"
                          "\n"))
+         (forward-char -1)
          (subed-jump-to-subtitle-text)
          (expect (subed-append-subtitle) :to-equal 63)
          (expect (buffer-string) :to-equal (concat "00:00:01.000 --> 00:00:02.000\n"
@@ -1117,7 +1111,7 @@ Baz.
       (with-temp-vtt-buffer
        (insert mock-vtt-data)
        (goto-char (point-max))
-       (insert " \n\t\n\n")
+       (insert " \n\n\n")
        (expect (buffer-string) :not :to-equal mock-vtt-data)
        (subed-sanitize)
        (expect (buffer-string) :to-equal mock-vtt-data)))
@@ -1306,4 +1300,24 @@ This is another test here.
        (expect (face-at-point) :to-equal 'subed-time-face)
        (re-search-forward "-->")
        (backward-char 1)
-       (expect (face-at-point) :to-equal 'subed-time-separator-face)))))
+       (expect (face-at-point) :to-equal 'subed-time-separator-face))))
+  (describe "with cues"
+    (it "parses properly."
+      (with-temp-vtt-buffer
+       (insert "WEBVTT - This file has cues.
+
+14
+00:01:14.815 --> 00:01:18.114
+- What?
+- Where are we now?
+
+15
+00:01:18.171 --> 00:01:20.991
+- This is big bat country.
+
+16
+00:01:21.058 --> 00:01:23.868
+- [ Bats Screeching ]
+- They won't get in your hair. They're after the bugs.")
+       (expect (elt (car (subed-subtitle-list)) 3)
+               :to-equal "- What?\n- Where are we now?")))))
