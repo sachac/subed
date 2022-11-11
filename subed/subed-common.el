@@ -240,6 +240,15 @@ If SUB-ID is not given, use subtitle on point."
           (when (and beg end)
             (buffer-substring beg end)))) ""))
 
+(subed-define-generic-function set-subtitle-text (text &optional sub-id)
+  "Set subtitle text to TEXT.
+
+If SUB-ID is not given, set the text of the current subtitle."
+  (interactive "MNew text: ")
+  (subed-jump-to-subtitle-text sub-id)
+  (delete-region (point) (or (subed-jump-to-subtitle-end) (point)))
+  (insert text))
+
 (subed-define-generic-function subtitle-relative-point ()
   "Point relative to subtitle's ID or nil if ID can't be found."
   (let ((start-point (save-excursion
@@ -390,7 +399,7 @@ scheduled call is canceled and another call is scheduled in
 100ms."
   (interactive)
   (when subed--regenerate-ids-soon-timer
-    (cancel-timer subed-srt--regenerate-ids-soon-timer))
+    (cancel-timer subed--regenerate-ids-soon-timer))
   (setq subed--regenerate-ids-soon-timer
         (run-at-time 0.1 nil (lambda ()
                                (setq subed--regenerate-ids-soon-timer nil)
@@ -1226,6 +1235,15 @@ position of the point."
 
 ;;; Merging
 
+(defun subed-merge-dwim ()
+  "Merge the subtitles in the region if the region is active.
+If the region is not active, merge the current subtitle with the next one."
+  (interactive)
+  (if (region-active-p)
+      (subed-merge-region (min (point) (mark))
+                          (max (point) (mark)))
+    (subed-merge-with-next)))
+
 (subed-define-generic-function merge-with-next ()
   "Merge the current subtitle with the next subtitle.
 Update the end timestamp accordingly."
@@ -1238,6 +1256,27 @@ Update the end timestamp accordingly."
   (if (subed-backward-subtitle-id)
       (subed-merge-with-next)
     (error "No previous subtitle to merge into")))
+
+(subed-define-generic-function merge-region (beg end)
+  "Merge the subtitles in the region defined by BEG and END."
+  (interactive "r")
+  (save-restriction
+    (narrow-to-region (progn (goto-char beg) (or (subed-jump-to-subtitle-id) (point)))
+                      (progn (goto-char end) (or (subed-jump-to-subtitle-end) (point))))
+    (goto-char beg)
+    (while (save-excursion (subed-forward-subtitle-id))
+      (subed-merge-with-next))))
+
+(subed-define-generic-function merge-region-and-set-text (beg end text)
+  "Merge the subtitles in the region defined by BEG and END.
+Replace the subtitle text with TEXT.  If the region is not
+specified, set the current subtitle's text."
+  (interactive (list (when (region-active-p) (min (point) (mark)))
+                     (when (region-active-p) (max (point) (mark)))
+                     (read-string "Text: ")))
+  (when (and beg end)
+    (subed-merge-region beg end))
+  (subed-set-subtitle-text text))
 
 ;;; Replay time-adjusted subtitle
 

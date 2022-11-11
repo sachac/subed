@@ -275,8 +275,8 @@ point.  Use the format-specific function for MAJOR-MODE."
     ;; Move to end of separator
     (goto-char (match-end 0)))
   (insert (subed-make-subtitle id start stop text))
-  ;; Complete separator with another newline unless we inserted at the end
-  (when (looking-at (concat "\\([[:space:]]*\\|^\\)" subed--regexp-timestamp))
+  (unless (eolp)
+    ;; Complete separator with another newline unless we inserted at the end
     (insert ?\n))
   (forward-line -2)
   (subed-jump-to-subtitle-text))

@@ -3213,6 +3213,126 @@ This is another.
                   '("srt" "vtt" "ass")))
           function-list)))
 
+(describe "Setting subtitle"
+  (describe "text"
+    (it "replaces the text."
+      (with-temp-srt-buffer
+       (insert mock-srt-data)
+       (re-search-backward "Foo")
+       (subed-set-subtitle-text "Hello world")
+       (expect (subed-subtitle-text) :to-equal "Hello world")))
+    (it "replaces the text of a specified subtitle."
+      (with-temp-srt-buffer
+       (insert mock-srt-data)
+       (subed-set-subtitle-text "Hello world" 1)
+       (expect (subed-subtitle-text) :to-equal "Hello world")
+       (expect (subed-subtitle-id) :to-equal 1)))
+    (it "blanks out subtitles."
+      (with-temp-srt-buffer
+       (insert mock-srt-data)
+       (subed-set-subtitle-text "" 1)
+       (expect (subed-subtitle-text) :to-equal "")
+       (expect (subed-subtitle-id) :to-equal 1)
+       (expect (buffer-string) :to-equal
+               "1
+00:01:01,000 --> 00:01:05,123
+
+
+2
+00:02:02,234 --> 00:02:10,345
+Bar.
+
+3
+00:03:03,45 --> 00:03:15,5
+Baz.
+")))))
+
+(describe "Merging a region"
+  (it "handles empty buffers."
+    (with-temp-srt-buffer
+     (subed-merge-region (point-min) (point-max))
+     (expect (buffer-string) :to-equal "")))
+  (it "merges all the subtitles if requested."
+    (with-temp-srt-buffer
+     (insert mock-srt-data)
+     (expect (boundp 'subed--regenerate-ids-soon-timer) :to-be t)
+     (subed-merge-region (point-min) (point-max))
+     (expect (buffer-string) :to-equal "1
+00:01:01,000 --> 00:03:15,500
+Foo.
+Bar.
+Baz.
+")))
+  (it "merges some subtitles."
+    (with-temp-srt-buffer
+     (insert mock-srt-data)
+     (re-search-backward "Bar")
+     (subed-merge-region (point-min) (point))
+     (expect (buffer-string) :to-equal "1
+00:01:01,000 --> 00:02:10,345
+Foo.
+Bar.
+
+3
+00:03:03,45 --> 00:03:15,5
+Baz.
+")))
+  (it "merges some subtitles, including the last one."
+    (with-temp-srt-buffer
+     (insert mock-srt-data)
+     (re-search-backward "Bar")
+     (subed-merge-region (point) (point-max))
+     (expect (buffer-string) :to-equal "1
+00:01:01,000 --> 00:01:05,123
+Foo.
+
+2
+00:02:02,234 --> 00:03:15,500
+Bar.
+Baz.
+"))))
+
+(describe "Merging a region and setting the text"
+  (it "handles empty buffers."
+    (with-temp-srt-buffer
+     (subed-merge-region-and-set-text (point-min) (point-max) "")
+     (expect (buffer-string) :to-equal "")))
+  (it "merges all the subtitles if requested."
+    (with-temp-srt-buffer
+     (insert mock-srt-data)
+     (expect (boundp 'subed--regenerate-ids-soon-timer) :to-be t)
+     (subed-merge-region-and-set-text (point-min) (point-max) "Hello world")
+     (expect (buffer-string) :to-equal "1
+00:01:01,000 --> 00:03:15,500
+Hello world
+")))
+  (it "merges some subtitles."
+    (with-temp-srt-buffer
+     (insert mock-srt-data)
+     (re-search-backward "Bar")
+     (subed-merge-region-and-set-text (point-min) (point) "Hello world")
+     (expect (buffer-string) :to-equal "1
+00:01:01,000 --> 00:02:10,345
+Hello world
+
+3
+00:03:03,45 --> 00:03:15,5
+Baz.
+")))
+  (it "merges some subtitles, including the last one."
+    (with-temp-srt-buffer
+     (insert mock-srt-data)
+     (re-search-backward "Bar")
+     (subed-merge-region-and-set-text (point) (point-max) "Hello world")
+     (expect (buffer-string) :to-equal "1
+00:01:01,000 --> 00:01:05,123
+Foo.
+
+2
+00:02:02,234 --> 00:03:15,500
+Hello world
+"))))
+
 (describe "Conversion"
   (describe "from SRT"
     (describe "to VTT"

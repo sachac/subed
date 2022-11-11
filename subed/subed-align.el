@@ -71,7 +71,7 @@ Return a buffer with FORMAT."
                                  "subtitles"
                                "plain"))
                      new-file)))
-      (delete-file temp-file)
+      (when temp-file (delete-file temp-file))
       (find-file new-file)
       (when (string= format "VTT")
         (goto-char (point-min))

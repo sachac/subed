@@ -1,6 +1,16 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.0.19 - 2022-11-11 - Sacha Chua
+
+New commands subed-merge-dwim, subed-merge-region,
+subed-merge-region-and-set-text, and set-subtitle-text can help with
+making chapter files.
+
+Added more details to the README.org.
+
+This version also includes bugfixes for subed-align and subed-vtt.
+
 ** Version 1.0.18 - 2022-11-08 - Sacha Chua
 
 New function subed-parse-file.

@@ -1,6 +1,6 @@
 ;;; subed.el --- A major mode for editing subtitles  -*- lexical-binding: t; -*-
 
-;; Version: 1.0.18
+;; Version: 1.0.19
 ;; Maintainer: Sacha Chua <sacha@sachachua.com>
 ;; Author: Random User
 ;; Keywords: convenience, files, hypermedia, multimedia
@@ -65,7 +65,7 @@
     (define-key subed-mode-map (kbd "M-i") #'subed-insert-subtitle)
     (define-key subed-mode-map (kbd "C-M-i") #'subed-insert-subtitle-adjacent)
     (define-key subed-mode-map (kbd "M-k") #'subed-kill-subtitle)
-    (define-key subed-mode-map (kbd "M-m") #'subed-merge-with-next)
+    (define-key subed-mode-map (kbd "M-m") #'subed-merge-dwim)
     (define-key subed-mode-map (kbd "M-M") #'subed-merge-with-previous)
     (define-key subed-mode-map (kbd "M-.") #'subed-split-subtitle)
     (define-key subed-mode-map (kbd "M-s") #'subed-sort)
