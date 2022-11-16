@@ -85,16 +85,21 @@
   :type 'hook
   :group 'subed)
 
-(defcustom subed-video-extensions '("mkv" "mp4" "webm" "avi" "ts" "ogv" "wav" "ogg" "mp3")
+(defcustom subed-video-extensions '("mkv" "mp4" "webm" "avi" "ts" "ogv")
   "Video file name extensions."
   :type 'list
   :group 'subed)
 
-(defcustom subed-auto-find-video t
-  "Whether to open the video automatically when opening a subtitle file."
-  :type 'boolean
+(defcustom subed-audio-extensions '("wav" "ogg" "mp3" "opus")
+  "Audio file name extensions."
+  :type 'list
   :group 'subed)
 
+(define-obsolete-variable-alias 'subed-auto-find-video 'subed-auto-play-media "1.20")
+(defcustom subed-auto-play-media t
+  "Whether to open the video or audio automatically when opening a subtitle file."
+  :type 'boolean
+  :group 'subed)
 
 (defcustom subed-milliseconds-adjust 100
   "Milliseconds to add or subtract from start/stop time.
@@ -125,13 +130,13 @@ Return new `subed-milliseconds-adjust' value."
 
 
 (defcustom subed-playback-speed-while-typing 0
-  "Video playback speed while the user is editing the buffer.
+  "Playback speed while the user is editing the buffer.
 If set to zero or smaller, playback is paused."
   :type 'float
   :group 'subed)
 
 (defcustom subed-playback-speed-while-not-typing 1.0
-  "Video playback speed while the user is not editing the buffer."
+  "Playback speed while the user is not editing the buffer."
   :type 'float
   :group 'subed)
 

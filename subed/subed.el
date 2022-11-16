@@ -1,6 +1,6 @@
 ;;; subed.el --- A major mode for editing subtitles  -*- lexical-binding: t; -*-
 
-;; Version: 1.0.19
+;; Version: 1.0.20
 ;; Maintainer: Sacha Chua <sacha@sachachua.com>
 ;; Author: Random User
 ;; Keywords: convenience, files, hypermedia, multimedia
@@ -44,7 +44,7 @@
     (define-key map "." #'subed-mpv-frame-step)
     (define-key map "," #'subed-mpv-frame-back-step)
     map)
-  "A keymap for stepping the video by frames.")
+  "A keymap for stepping through the media file by frames.")
 
 (defconst subed-mode-map
   (let ((subed-mode-map (make-keymap)))
@@ -72,8 +72,8 @@
     (define-key subed-mode-map (kbd "M-SPC") #'subed-mpv-toggle-pause)
     (define-key subed-mode-map (kbd "M-j") #'subed-mpv-jump-to-current-subtitle)
     (define-key subed-mode-map (kbd "C-c C-d") #'subed-toggle-debugging)
-    (define-key subed-mode-map (kbd "C-c C-v") #'subed-mpv-find-video)
-    (define-key subed-mode-map (kbd "C-c C-u") #'subed-mpv-play-video-from-url)
+    (define-key subed-mode-map (kbd "C-c C-v") #'subed-mpv-play-from-file)
+    (define-key subed-mode-map (kbd "C-c C-u") #'subed-mpv-play-from-url)
     (define-key subed-mode-map (kbd "C-c C-f") subed-mpv-frame-step-map)
     (define-key subed-mode-map (kbd "C-c C-p") #'subed-toggle-pause-while-typing)
     (define-key subed-mode-map (kbd "C-c C-l") #'subed-toggle-loop-over-current-subtitle)
@@ -90,15 +90,16 @@
     subed-mode-map)
   "A keymap for editing subtitles.")
 
-(defun subed-auto-find-video-maybe ()
-  "Load video associated with this subtitle file."
-  (let ((video-file (subed-guess-video-file)))
-    (when video-file
-      (subed-debug "Auto-discovered video file: %s" video-file)
+(defun subed-auto-play-media-maybe ()
+  "Load media file associated with this subtitle file."
+  (let ((file (subed-guess-media-file)))
+    (when file
+      (subed-debug "Auto-discovered media file: %s" file)
       (condition-case err
-          (subed-mpv-find-video video-file)
-        (error (message "%s -- Set subed-auto-find-video to nil to avoid this error."
+          (subed-mpv-play-from-file file)
+        (error (message "%s -- Set subed-auto-find-media to nil to avoid this error."
                         (car (cdr err))))))))
+(define-obsolete-function-alias 'subed-auto-find-video-maybe 'subed-auto-play-media-maybe "1.20")
 
 ;; TODO: Make these more configurable.
 (defun subed-set-up-defaults ()
@@ -135,8 +136,8 @@ Key bindings:
   (when subed-trim-overlap-check-on-load
     (add-hook 'subed-mode-hook #'subed-trim-overlap-check :append :local))
   (add-hook 'subed-mode-hook #'subed-set-up-defaults :append :local)
-  (when subed-auto-find-video
-    (add-hook 'subed-mode-hook #'subed-auto-find-video-maybe :append :local)))
+  (when subed-auto-play-media
+    (add-hook 'subed-mode-hook #'subed-auto-play-media-maybe :append :local)))
 
 (defun subed-guess-format ()
   "Set this buffer's format to a more specific subed mode format.

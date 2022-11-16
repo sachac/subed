@@ -2326,7 +2326,7 @@ This is another.
            (expect (subed-subtitle-text 1) :to-equal "This is a subtitle\nthat has two lines.")
            (subed-regenerate-ids)
            (expect (subed-subtitle-text 2) :to-equal "")))))
-    (describe "when playing the video in MPV"
+    (describe "when playing the media in MPV"
       (it "splits at point in the middle of the subtitle."
         (with-temp-srt-buffer
          (insert mock-srt-data)

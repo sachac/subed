@@ -34,7 +34,7 @@
   "Whether mpv is currently playing or paused.")
 
 (defvar-local subed-mpv-playback-speed nil
-  "How fast mpv is playing the video.
+  "How fast mpv is playing the media file.
 1.0 is normal speed, 0.5 is half speed, etc.")
 
 (defvar-local subed-mpv-playback-position nil
@@ -47,7 +47,7 @@
                                            subed-mpv-jump-to-current-subtitle)
   "Functions to call when mpv has loaded a file and starts playing.")
 
-(defvar-local subed-mpv-video-file nil "Current file or URL.")
+(defvar-local subed-mpv-media-file nil "Current file or URL.")
 
 (defvar-local subed-mpv--server-proc nil
   "Running mpv process.")
@@ -301,7 +301,7 @@ See \"List of events\" in mpv(1)."
   (if subed-mpv-is-playing (subed-mpv-pause) (subed-mpv-unpause)))
 
 (defun subed-mpv-playback-speed (factor)
-  "Play video slower (FACTOR < 1) or faster (FACTOR > 1)."
+  "Play slower (FACTOR < 1) or faster (FACTOR > 1)."
   (interactive "NFactor: ")
   (unless (eq subed-mpv-playback-speed factor)
     (when (subed-mpv--client-send `(set_property speed ,factor))
@@ -347,21 +347,24 @@ by frames until any other key is pressed."
   "Reload subtitle file from disk."
   (subed-mpv--client-send '(sub-reload)))
 
-(defun subed-mpv--is-video-file-p (filename)
-  "Return whether FILENAME is a video file or directory."
+(define-obsolete-function-alias 'subed-mpv--is-video-file-p 'subed-mpv--is-media-file-p "1.20")
+(defun subed-mpv--is-media-file-p (filename)
+  "Return non-nil if FILENAME is a media file.
+Files should match `subed-video-extensions' or `subed-audio-extensions'."
   (and (not (or (string= filename ".") (string= filename "..")))
        (let ((filepath (expand-file-name filename)))
          (or (file-directory-p filepath)
-             (member (file-name-extension filename) subed-video-extensions)))))
+             (member (file-name-extension filename) subed-video-extensions)
+             (member (file-name-extension filename) subed-audio-extensions)))))
 
-(defun subed-mpv--play (video)
-  "Open VIDEO and play it in mpv."
+(defun subed-mpv--play (file)
+  "Open FILE and play it in mpv."
   (when (subed-mpv--server-started-p)
     (subed-mpv-kill))
   (when (apply #'subed-mpv--server-start subed-mpv-arguments)
-      (subed-debug "Opening video: %s" video)
+      (subed-debug "Opening file: %s" file)
       (subed-mpv--client-connect subed-mpv--retry-delays)
-      (subed-mpv--client-send `(loadfile ,video replace))
+      (subed-mpv--client-send `(loadfile ,file replace))
       ;; mpv won't add the subtitles if the file doesn't exist yet, so we add it
       ;; via after-save-hook.
       (if (file-exists-p (buffer-file-name))
@@ -370,23 +373,25 @@ by frames until any other key is pressed."
       (subed-mpv--client-send `(observe_property 1 time-pos))
       (subed-mpv-playback-speed subed-playback-speed-while-not-typing)))
 
-(defun subed-mpv-play-video-from-url (url)
-  "Open video file from URL in mpv.
+(define-obsolete-function-alias 'subed-mpv-play-video-from-url 'subed-mpv-play-from-url "1.20")
+(defun subed-mpv-play-from-url (url)
+  "Open file from URL in mpv.
 See the mpv manual for a list of supported URL types.  If you
-have youtube-dl installed, mpv can open videos from a variety of
+have youtube-dl or yt-dlp installed, mpv can open videos from a variety of
 hosting providers."
   (interactive "MURL: ")
-  (setq subed-mpv-video-file url)
+  (setq subed-mpv-media-file url)
   (subed-mpv--play url))
 
-(defun subed-mpv-find-video (file)
-  "Open video file FILE in mpv.
+(defun subed-mpv-play-from-file (file)
+  "Open FILE in mpv.
 
-Video files are expected to have any of the extensions listed in
-`subed-video-extensions'."
-  (interactive (list (read-file-name "Find video: " nil nil t nil #'subed-mpv--is-video-file-p)))
-  (setq subed-mpv-video-file (expand-file-name file))
+Files are expected to have any of the extensions listed in
+`subed-video-extensions' or `subed-audio-extensions'."
+  (interactive (list (read-file-name "Find media: " nil nil t nil #'subed-mpv--is-media-file-p)))
+  (setq subed-mpv-media-file (expand-file-name file))
   (subed-mpv--play (expand-file-name file)))
+(define-obsolete-function-alias 'subed-mpv-find-video 'subed-mpv-play-from-file "1.20")
 
 (defun subed-mpv--add-subtitle-after-first-save ()
   "Tell mpv to load subtitles from function `buffer-file-name'.

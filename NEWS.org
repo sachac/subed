@@ -1,6 +1,22 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.0.20 - 2022-11-16 - Sacha Chua
+
+subed now talks about media files instead of video files, since audio
+files are fine too. Updating the function names and documentations to
+refer to media instead of video files can help people think of using
+subed for audio files as well. Distinguishing between video and audio
+extensions can be useful for tools like aeneas, which expect audio
+files.
+
+I defined obsolete function and variable aliases for most things, but
+subed-mpv-media-file (used to be subed-mpv-video-file) uses
+defvar-local, so it didn't work well with
+define-obsolete-variable-alias. If you have any code that uses
+subed-mpv-video-file, please rewrite it to refer to
+subed-mpv-media-file instead.
+
 ** Version 1.0.19 - 2022-11-11 - Sacha Chua
 
 New commands subed-merge-dwim, subed-merge-region,

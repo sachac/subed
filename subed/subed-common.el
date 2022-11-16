@@ -1195,7 +1195,7 @@ argument (e.g. \\[universal-argument] \\[subed-split-subtitle])
 prompts for the offset in milliseconds.  Calling it with two
 prefix arguments (e.g. \\[universal-argument]
 \\[universal-argument] \\[subed-split-subtitle]) uses the
-relative position of the point even if the video is playing in
+relative position of the point even if the media is playing in
 MPV.
 
 The newly inserted subtitle starts `subed-subtitle-spacing'
@@ -1588,13 +1588,14 @@ and therefore gets ARGS, which is ignored."
                              (setq subed--player-is-auto-paused nil)
                              (subed-mpv-playback-speed subed-playback-speed-while-not-typing))))))))
 
+(defun subed-guess-media-file (&optional extensions)
+  "Find media file with same base name as the opened file in the buffer.
 
-(defun subed-guess-video-file ()
-  "Find video file with same base name as the opened file in the buffer.
-
-The file extension of the return value of the function
-`buffer-file-name' is replaced with each item in
-`subed-video-extensions' and the first existing file is returned.
+The optional EXTENSIONS argument can be a list of extensions to
+look for. If not, check against the extensions in
+`subed-video-extensions' and `subed-audio-extensions'.  The file
+extension of the `buffer-file-name' is replaced with each item in
+the extension list and the first existing file is returned.
 
 Language codes are also handled; e.g. \"foo.en.srt\" or
 \"foo.estonian.srt\" -> \"foo.{mkv,mp4,...}\" (this actually
@@ -1603,16 +1604,18 @@ name).
 
 Return nil if function `buffer-file-name' returns nil."
   (when (buffer-file-name)
-    (catch 'found-videofile
+    (catch 'found-file
       (let* ((file-base (file-name-sans-extension (buffer-file-name)))
-	         (file-stem (file-name-sans-extension file-base)))
-	    (dolist (extension subed-video-extensions)
-	      (let ((file-base-video (format "%s.%s" file-base extension))
-		        (file-stem-video (format "%s.%s" file-stem extension)))
-	        (when (file-exists-p file-base-video)
-	          (throw 'found-videofile file-base-video))
-	        (when (file-exists-p file-stem-video)
-	          (throw 'found-videofile file-stem-video))))))))
+	           (file-stem (file-name-sans-extension file-base)))
+	      (dolist (extension
+                 (or extensions (append subed-video-extensions subed-audio-extensions)))
+	        (let ((file-base-media (format "%s.%s" file-base extension))
+		            (file-stem-media (format "%s.%s" file-stem extension)))
+	          (when (file-exists-p file-base-media)
+	            (throw 'found-file file-base-media))
+	          (when (file-exists-p file-stem-media)
+	            (throw 'found-file file-stem-media))))))))
+(define-obsolete-function-alias 'subed-guess-video-file 'subed-guess-media-file "1.0.20")
 
 ;;; Inserting HTML-like tags
 

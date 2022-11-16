@@ -40,9 +40,17 @@
 Return a buffer with FORMAT."
   (interactive
    (list
-    (or subed-mpv-video-file (read-file-name "Audio file: "))
+    (or
+     (when (and subed-mpv-media-file
+                (member (file-name-extension subed-mpv-media-file)
+                        subed-audio-extensions))
+       subed-mpv-media-file)
+     (subed-guess-media-file subed-audio-extensions)
+     (read-file-name "Audio file: "))
     (buffer-file-name)
-    (completing-read "Format: " '("AUD" "CSV" "EAF" "JSON" "SMIL" "SRT" "SSV" "SUB" "TEXTGRID" "TSV" "TTML" "TXT" "VTT" "XML"))))
+    (completing-read "Format: "
+                     '("AUD" "CSV" "EAF" "JSON" "SMIL" "SRT"
+                       "SSV" "SUB" "TEXTGRID" "TSV" "TTML" "TXT" "VTT" "XML"))))
   (let ((new-file
          (and (buffer-file-name)
               (expand-file-name
