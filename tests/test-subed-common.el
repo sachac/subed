@@ -2325,7 +2325,16 @@ This is another.
            (subed-split-subtitle 100)
            (expect (subed-subtitle-text 1) :to-equal "This is a subtitle\nthat has two lines.")
            (subed-regenerate-ids)
-           (expect (subed-subtitle-text 2) :to-equal "")))))
+           (expect (subed-subtitle-text 2) :to-equal "")))
+        (it "accepts a timestamp."
+          (with-temp-srt-buffer
+           (insert text)
+           (re-search-backward "subtitle")
+           (end-of-line)
+           (subed-split-subtitle "00:01:03,100")
+           (expect (subed-subtitle-msecs-start) :to-equal 63100)
+           (subed-backward-subtitle-time-start)
+           (expect (subed-subtitle-msecs-stop) :to-equal (- 63100 subed-subtitle-spacing))))))
     (describe "when playing the media in MPV"
       (it "splits at point in the middle of the subtitle."
         (with-temp-srt-buffer

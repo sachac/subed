@@ -1,6 +1,16 @@
 #+OPTIONS: toc:nil
 
 * subed news
+
+** Version 1.0.21 - 2022-11-16 - Sacha Chua
+
+- subed-align-options is a new variable that will be passed to aeneas
+  during execution.
+- Calling subed-split-subtitle with the C-u prefix will now allow you
+  to specify either an offset or a timestamp. If a timestamp is
+  specified, it will be used as the starting timestamp of the second
+  subtitle.
+
 ** Version 1.0.20 - 2022-11-16 - Sacha Chua
 
 subed now talks about media files instead of video files, since audio

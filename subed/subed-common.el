@@ -1184,7 +1184,8 @@ inserted after the current subtitle.
 
 If OFFSET is a number, it is used as the offset in milliseconds
 from the starting timestamp if positive or from the ending
-timestamp if negative.  Otherwise, if
+timestamp if negative.  If OFFSET is a timestamp, it is used
+as the starting timestamp of the second subtitle.  Otherwise, if
 `subed-mpv-playback-position' is within the current subtitle, it
 is used as the new stop time of the current subtitle.  Otherwise,
 the timestamp proportional to the point's position between start
@@ -1206,7 +1207,7 @@ position of the point."
   (interactive (list
                 (cond
                  ((equal current-prefix-arg '(4))
-                  (read-number "Offset (ms): "))
+                  (read-string "Offset (ms or timestamp): "))
                  ((equal current-prefix-arg '(16)) t))))
   (let ((text-beg (save-excursion (subed-jump-to-subtitle-text)))
         (text-end (save-excursion (or (subed-jump-to-subtitle-end) (point)))))
@@ -1214,12 +1215,21 @@ position of the point."
     (unless (and text-beg (>= (point) text-beg))
       (subed-jump-to-subtitle-text))
     (let* ((orig-end (subed-subtitle-msecs-stop))
+           (offset-ms
+            (cond
+             ((null offset) nil)
+             ((numberp offset) offset)
+             ((and (stringp offset) (string-match "^-?[0-9]*\\.[0-9]*" offset))
+              (string-to-number offset))))
            (split-timestamp
             (cond
-             ((and (numberp offset) (> offset 0))
-              (+ (subed-subtitle-msecs-start) offset))
-             ((and (numberp offset) (< offset 0))
-              (+ orig-end offset))
+             (offset-ms
+              (if (> offset-ms 0)
+                  (+ (subed-subtitle-msecs-start) offset-ms)
+                (+ orig-end offset-ms)))
+             ((stringp offset)
+              (- (subed-timestamp-to-msecs offset)
+                 subed-subtitle-spacing))
              (t (run-hook-with-args-until-success 'subed-split-subtitle-timestamp-functions))))
            (new-text (string-trim (buffer-substring (point) text-end)))
            (new-start-timestamp (and split-timestamp (+ split-timestamp subed-subtitle-spacing))))
