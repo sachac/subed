@@ -28,11 +28,17 @@
 ;;
 ;;; Code:
 
+(require 'subed-common)
+
 (defvar subed-align-command '("python3" "-m" "aeneas.tools.execute_task")
   "Command to run aeneas.")
 
 (defvar subed-align-language "eng"
   "Language code.")
+
+(defvar subed-align-options nil
+  "Other options to include in the aeneas invocation.
+Ex: task_adjust_boundary_nonspeech_min=0.500|task_adjust_boundary_nonspeech_string=REMOVE")
 
 ;;;###autoload
 (defun subed-align (audio-file text-file format)
@@ -72,17 +78,19 @@ Return a buffer with FORMAT."
        (append (cdr subed-align-command)
                (list (expand-file-name audio-file)
                      (or temp-file (expand-file-name text-file))
-                     (format "task_language=%s|os_task_file_format=%s|is_text_type=%s"
+                     (format "task_language=%s|os_task_file_format=%s|is_text_type=%s%s"
                              subed-align-language
                              (downcase format)
                              (if temp-file
                                  "subtitles"
-                               "plain"))
+                               "plain")
+                             (if subed-align-options (concat "|" subed-align-options) ""))
                      new-file)))
       (when temp-file (delete-file temp-file))
       (find-file new-file)
-      (when (string= format "VTT")
-        (goto-char (point-min))
+      (when (derived-mode-p 'subed-mode)
+        (subed-trim-overlaps))
+      (when (derived-mode-p 'subed-vtt-mode)
         (flush-lines "^[0-9]+$")))))
 
 (provide 'subed-align)
