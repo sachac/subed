@@ -2,6 +2,22 @@
 
 * subed news
 
+** Version 1.0.22 - 2022-11-17 - Sacha Chua
+
+VTT comments are now parsed and returned as part of ~subed-subtitle~
+and ~subed-subtitle-list~. This makes it easier to build workflows
+that use the comment information, such as adding NOTE lines for
+chapters and then creating a new file based on those lines and the
+subtitles following them.
+
+A new function ~subed-create-file~ helps create a file with a list of
+subtitles.
+
+Sanitizing VTT files with ~subed-sanitize~ should retain comments now.
+
+~subed-convert~ should now create a buffer instead of a file if the
+source is a buffer that isn't a file.
+
 ** Version 1.0.21 - 2022-11-16 - Sacha Chua
 
 - subed-align-options is a new variable that will be passed to aeneas
@@ -142,4 +158,5 @@ I implemented the format-specific functions with =cl-defmethod=, so if
 you have any code that refers to functions like
 =subed-vtt--timestamp-to-msecs=, you will need to change your code to
 use generic functions such as =subed-timestamp-to-msecs=.
+
 

@@ -348,12 +348,13 @@ Use the format-specific function for MAJOR-MODE."
       (when (looking-at subed-tsv--regexp-timestamp)
         (replace-match (subed-msecs-to-timestamp msecs))))))
 
-(cl-defmethod subed--make-subtitle (&context (major-mode subed-tsv-mode) &optional id start stop text)
+(cl-defmethod subed--make-subtitle (&context (major-mode subed-tsv-mode) &optional id start stop text comment)
   "Generate new subtitle string.
 
 ID, START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
+COMMENT is ignored.
 
 A newline is appended to TEXT, meaning you'll get two trailing
 newlines if TEXT is nil or empty.
@@ -361,30 +362,32 @@ Use the format-specific function for MAJOR-MODE."
   (format "%s\t%s\t%s\n"
           (subed-msecs-to-timestamp (or start 0))
           (subed-msecs-to-timestamp (or stop (+ (or start 0)
-                                                     subed-default-subtitle-length)))
+                                                subed-default-subtitle-length)))
           (replace-regexp-in-string "\n" " " (or text ""))))
 
-(cl-defmethod subed--prepend-subtitle (&context (major-mode subed-tsv-mode) &optional id start stop text)
+(cl-defmethod subed--prepend-subtitle (&context (major-mode subed-tsv-mode) &optional id start stop text comment)
   "Insert new subtitle before the subtitle at point.
 
 ID and START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
+COMMENT is ignored.
 
 Move point to the text of the inserted subtitle.
 Return new point.
 Use the format-specific function for MAJOR-MODE."
   (subed-jump-to-subtitle-id)
-  (insert (subed-make-subtitle id start stop text))
+  (insert (subed-make-subtitle id start stop text comment))
   (forward-line -1)
   (subed-jump-to-subtitle-text))
 
-(cl-defmethod subed--append-subtitle (&context (major-mode subed-tsv-mode) &optional id start stop text)
+(cl-defmethod subed--append-subtitle (&context (major-mode subed-tsv-mode) &optional id start stop text comment)
   "Insert new subtitle after the subtitle at point.
 
 ID, START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
+COMMENT is ignored.
 
 Move point to the text of the inserted subtitle.
 Return new point.
@@ -393,7 +396,7 @@ Use the format-specific function for MAJOR-MODE."
     ;; Point is on last subtitle or buffer is empty
     (subed-jump-to-subtitle-end)
     (unless (bolp) (insert "\n")))
-  (insert (subed-make-subtitle id start stop text))
+  (insert (subed-make-subtitle id start stop text comment))
   (forward-line -1)
   (subed-jump-to-subtitle-text))
 

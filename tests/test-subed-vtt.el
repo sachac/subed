@@ -1083,10 +1083,23 @@ Baz.
        (goto-char (point-min))
        (forward-line 2)
        (while (re-search-forward "\n\n" nil t)
-         (replace-match "\n \n  \t  \t\t  \n\n  \t\n"))
+         (replace-match "\n\n\n\n\n\n"))
        (expect (buffer-string) :not :to-equal mock-vtt-data)
        (subed-sanitize)
        (expect (buffer-string) :to-equal mock-vtt-data)))
+    (it "retains comments"
+      (with-temp-vtt-buffer
+       (insert (concat "WEBVTT\n\n"
+                       "00:01:01.000 --> 00:01:05.123\n"
+                       "Foo.\n\nNOTE This is a test\n\n"
+                       "00:02:02.234 --> 00:02:10.345\n"
+                       "Bar.\n\n"
+                       "NOTE\nAnother comment\n\n"
+                       "00:03:03.45 --> 00:03:15.5\n"
+                       "Baz.\n"))
+       (subed-sanitize)
+       (expect (buffer-string) :to-match "NOTE This is a test")
+       (expect (buffer-string) :to-match "Another comment")))
     (it "ensures double newline between subtitles if text of previous subtitle is empty."
       (with-temp-vtt-buffer
        (insert mock-vtt-data)

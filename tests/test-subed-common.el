@@ -3131,9 +3131,9 @@ This is another.
       (with-temp-srt-buffer
        (insert mock-srt-data)
        (expect (subed-subtitle-list) :to-equal
-               '((1 61000 65123 "Foo.")
-                 (2 122234 130345 "Bar.")
-                 (3 183450 195500 "Baz.")))))
+               '((1 61000 65123 "Foo." nil)
+                 (2 122234 130345 "Bar." nil)
+                 (3 183450 195500 "Baz." nil)))))
     (it "returns a subset when bounds are specified."
       (with-temp-srt-buffer
        (insert mock-srt-data)
@@ -3141,9 +3141,8 @@ This is another.
        (backward-char 1)
        (expect (subed-subtitle-list (point-min) (point))
                :to-equal
-               '((1 61000 65123 "Foo.")
-                 (2 122234 130345 "Bar.")))))
-    )
+               '((1 61000 65123 "Foo." nil)
+                 (2 122234 130345 "Bar." nil))))))
   (describe "Sorting"
     (it "detects sorted lists."
       (expect (subed--sorted-p '((1 1000 2000 "Test")

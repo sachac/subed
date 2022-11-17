@@ -102,6 +102,18 @@ format-specific function for MAJOR-MODE."
         (unless (subed-forward-subtitle-id)
           (throw 'subtitle-id nil))))))
 
+(cl-defmethod subed--subtitle-comment (&context (major-mode subed-vtt-mode) &optional sub-id)
+  "Return the comment or comments before the current subtitle.
+If SUB-ID is specified, jump to that subtitle first.
+Use the format-specific function for MAJOR-MODE."
+  (save-excursion
+    (subed-jump-to-subtitle-id sub-id)
+    (let ((sub-start-point (point))
+          (prev-end (or (subed-backward-subtitle-end)
+                        (goto-char (point-min)))))
+      (when (re-search-forward "^\\(NOTE\\(.*\n\\)+\n+\\)" sub-start-point t)
+        (match-string 0)))))
+
 ;;; Traversing
 
 (cl-defmethod subed--jump-to-subtitle-id (&context (major-mode subed-vtt-mode) &optional sub-id)
@@ -223,7 +235,19 @@ format-specific function for MAJOR-MODE."
 
 ;;; Manipulation
 
-(cl-defmethod subed--make-subtitle (&context (major-mode subed-vtt-mode) &optional id start stop text)
+(defun subed-vtt--format-comment (comment)
+  "Return COMMENT formatted for insertion.
+If COMMENT starts with NOTE, keep it as is.  If not, add a NOTE header to it.
+Make sure COMMENT ends with a blank line."
+  (cond ((null comment) "")
+        ((string-match "\\`NOTE"
+                       (concat comment
+                               (if (string-match "\n\n\\'" comment)
+                                   "" "\n\n"))))
+        ((string-match "\n" comment) (concat "NOTE\n" comment "\n\n"))
+        (t (concat "NOTE " comment))))
+
+(cl-defmethod subed--make-subtitle (&context (major-mode subed-vtt-mode) &optional id start stop text comment)
   "Generate new subtitle string.
 
 ID, START default to 0.
@@ -233,13 +257,14 @@ TEXT defaults to an empty string.
 A newline is appended to TEXT, meaning you'll get two trailing
 newlines if TEXT is nil or empty.  Use the format-specific
 function for MAJOR-MODE."
-  (format "%s --> %s\n%s\n"
+  (format "%s%s --> %s\n%s\n"
+          (subed-vtt--format-comment comment)
           (subed-msecs-to-timestamp (or start 0))
           (subed-msecs-to-timestamp (or stop (+ (or start 0)
                                                 subed-default-subtitle-length)))
           (or text "")))
 
-(cl-defmethod subed--prepend-subtitle (&context (major-mode subed-vtt-mode) &optional id start stop text)
+(cl-defmethod subed--prepend-subtitle (&context (major-mode subed-vtt-mode) &optional id start stop text comment)
   "Insert new subtitle before the subtitle at point.
 
 ID and START default to 0.
@@ -249,13 +274,13 @@ TEXT defaults to an empty string.
 Move point to the text of the inserted subtitle.  Return new
 point.  Use the format-specific function for MAJOR-MODE."
   (subed-jump-to-subtitle-id)
-  (insert (subed-make-subtitle id start stop text))
+  (insert (subed-make-subtitle id start stop text comment))
   (when (looking-at (concat "\\([[:space:]]*\\|^\\)" subed--regexp-timestamp))
     (insert "\n"))
   (forward-line -2)
   (subed-jump-to-subtitle-text))
 
-(cl-defmethod subed--append-subtitle (&context (major-mode subed-vtt-mode) &optional id start stop text)
+(cl-defmethod subed--append-subtitle (&context (major-mode subed-vtt-mode) &optional id start stop text comment)
   "Insert new subtitle after the subtitle at point.
 
 ID, START default to 0.
@@ -274,7 +299,7 @@ point.  Use the format-specific function for MAJOR-MODE."
       (save-excursion (insert ?\n)))
     ;; Move to end of separator
     (goto-char (match-end 0)))
-  (insert (subed-make-subtitle id start stop text))
+  (insert (subed-make-subtitle id start stop text comment))
   (unless (eolp)
     ;; Complete separator with another newline unless we inserted at the end
     (insert ?\n))
@@ -319,13 +344,14 @@ Use the format-specific function for MAJOR-MODE."
      (while (looking-at "\\`\n+")
        (replace-match ""))
 
-     ;; Replace separators between subtitles with double newlines
+     ;; Replace blank separators between subtitles with double newlines
      (goto-char (point-min))
      (while (subed-forward-subtitle-id)
        (let ((prev-sub-end (save-excursion (when (subed-backward-subtitle-end)
                                              (point)))))
          (when (and prev-sub-end
-                    (not (string= (buffer-substring prev-sub-end (point)) "\n\n")))
+                    (not (string= (buffer-substring prev-sub-end (point)) "\n\n"))
+                    (string-match "\\`\n+\\'" (buffer-substring prev-sub-end (point))))
            (delete-region prev-sub-end (point))
            (insert "\n\n"))))
 

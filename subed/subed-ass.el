@@ -205,12 +205,13 @@ format-specific function for MAJOR-MODE."
 
 ;;; Manipulation
 
-(cl-defmethod subed--make-subtitle (&context (major-mode subed-ass-mode) &optional id start stop text)
+(cl-defmethod subed--make-subtitle (&context (major-mode subed-ass-mode) &optional id start stop text comment)
   "Generate new subtitle string.
 
 ID, START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
+COMMENT is ignored.
 
 A newline is appended to TEXT, meaning you'll get two trailing
 newlines if TEXT is nil or empty.  Use the format-specific
@@ -218,15 +219,16 @@ function for MAJOR-MODE."
   (format "Dialogue: 0,%s,%s,Default,,0,0,0,,%s\n"
           (subed-msecs-to-timestamp (or start 0))
           (subed-msecs-to-timestamp (or stop (+ (or start 0)
-                                                     subed-default-subtitle-length)))
+                                                subed-default-subtitle-length)))
           (replace-regexp-in-string "\n" "\\n" (or text ""))))
 
-(cl-defmethod subed--prepend-subtitle (&context (major-mode subed-ass-mode) &optional id start stop text)
+(cl-defmethod subed--prepend-subtitle (&context (major-mode subed-ass-mode) &optional id start stop text comment)
   "Insert new subtitle before the subtitle at point.
 
 ID and START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
+COMMENT is ignored.
 
 Move point to the text of the inserted subtitle.  Return new
 point.  Use the format-specific function for MAJOR-MODE."
@@ -235,12 +237,13 @@ point.  Use the format-specific function for MAJOR-MODE."
   (forward-line -1)
   (subed-jump-to-subtitle-text))
 
-(cl-defmethod subed--append-subtitle (&context (major-mode subed-ass-mode) &optional id start stop text)
+(cl-defmethod subed--append-subtitle (&context (major-mode subed-ass-mode) &optional id start stop text comment)
   "Insert new subtitle after the subtitle at point.
 
 ID, START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
+COMMENT is ignored.
 
 Move point to the text of the inserted subtitle.  Return new
 point.  Use the format-specific function for MAJOR-MODE."

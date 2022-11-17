@@ -257,6 +257,10 @@ If SUB-ID is not given, set the text of the current subtitle."
     (when start-point
       (- (point) start-point))))
 
+(subed-define-generic-function subtitle-comment (&optional sub-id)
+  "Return the comment preceding this subtitle."
+  nil)
+
 (subed-define-generic-function set-subtitle-time-start (msecs &optional sub-id)
   "Set subtitle start time to MSECS milliseconds.
 
@@ -283,31 +287,34 @@ Return the new subtitle stop time in milliseconds."
       (replace-match
        (save-match-data (subed-msecs-to-timestamp msecs))))))
 
-(subed-define-generic-function make-subtitle (&optional id start stop text)
+(subed-define-generic-function make-subtitle (&optional id start stop text comment)
   "Generate new subtitle string.
 
 ID, START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
-TEXT defaults to an empty string."
+TEXT defaults to an empty string.
+COMMENT defaults to nil."
   (interactive "P"))
 
-(subed-define-generic-function prepend-subtitle (&optional id start stop text)
+(subed-define-generic-function prepend-subtitle (&optional id start stop text comment)
   "Insert new subtitle before the subtitle at point.
 
 ID and START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
+COMMENT defaults to nil.
 
 Move point to the text of the inserted subtitle.
 Return new point."
   (interactive "P"))
 
-(subed-define-generic-function append-subtitle (&optional id start stop text)
+(subed-define-generic-function append-subtitle (&optional id start stop text comment)
   "Insert new subtitle after the subtitle at point.
 
 ID, START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
+COMMENT defaults to nil.
 
 Move point to the text of the inserted subtitle.
 Return new point."
@@ -347,9 +354,19 @@ Otherwise, initialize the mode based on the filename."
             (subed-tsv-mode))))
       (subed-subtitle-list))))
 
+(defun subed-subtitle ()
+  "Return the subtitle at point as a list.
+The list is of the form (id start stop text comment)."
+  (list
+   (subed-subtitle-id)
+   (subed-subtitle-msecs-start)
+   (subed-subtitle-msecs-stop)
+   (subed-subtitle-text)
+   (subed-subtitle-comment)))
+
 (defun subed-subtitle-list (&optional beg end)
   "Return the subtitles from BEG to END as a list.
-The list will contain entries of the form (id start stop text).
+The list will contain entries of the form (id start stop text comment).
 If BEG and END are not specified, use the whole buffer."
   (let (result)
     (subed-for-each-subtitle
@@ -357,14 +374,7 @@ If BEG and END are not specified, use the whole buffer."
       (or end (point-max))
       nil
       (when (subed-subtitle-msecs-start)
-        (setq result
-              (cons
-               (list
-                (subed-subtitle-id)
-                (subed-subtitle-msecs-start)
-                (subed-subtitle-msecs-stop)
-                (subed-subtitle-text))
-               result))))
+        (setq result (cons (subed-subtitle) result))))
     (nreverse result)))
 
 (subed-define-generic-function sanitize ()
@@ -1920,28 +1930,47 @@ If LIST is nil, use the subtitles in the current buffer."
   (interactive)
   nil)
 
+(defun subed-create-file (filename subtitles &optional ok-if-exists mode)
+  "Create FILENAME, set it to MODE, and prepopulate it with SUBTITLES.
+Overwrites existing files."
+  (when (and (file-exists-p filename) (not ok-if-exists))
+    (error "File %s already exists." filename))
+  (let ((subed-auto-play-media nil))
+    (find-file filename)
+    (erase-buffer)
+    (if mode (funcall mode))
+    (subed-auto-insert)
+    (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub))) subtitles)))
+
 (defun subed-convert (format)
   "Create a buffer with the current subtitles converted to FORMAT.
 You may need to add some extra information to the buffer."
   (interactive (list (completing-read "To format: " '("VTT" "SRT" "ASS" "TSV" "TXT"))))
   (let* ((subtitles (subed-subtitle-list))
-         (new-filename (concat (file-name-base (or (buffer-file-name) (buffer-name))) "." (downcase format)))
-         buf)
-    (when (or (not (file-exists-p new-filename))
-              (yes-or-no-p (format "%s exists. Overwrite? " new-filename)))
-      (find-file new-filename)
+         (new-filename (concat (file-name-base (or (buffer-file-name) (buffer-name))) "."
+                               (downcase format)))
+         (mode-func (pcase format
+                      ("VTT" (require 'subed-vtt) 'subed-vtt-mode)
+                      ("SRT" (require 'subed-srt) 'subed-srt-mode)
+                      ("ASS" (require 'subed-ass) 'subed-ass-mode)
+                      ("TSV" (require 'subed-tsv) 'subed-tsv-mode))))
+    (if (buffer-file-name)
+        ;; Create a new file
+        (when (or (not (file-exists-p new-filename))
+                  (yes-or-no-p (format "%s exists. Overwrite? " new-filename)))
+          (if (string= format "TXT")
+              (progn
+                (with-temp-file new-filename
+                  (insert (mapconcat (lambda (o) (elt o 3)) subtitles "\n")))
+                (find-file new-filename))
+            (subed-create-file new-filename subtitles t mode-func))
+          (current-buffer))
+      ;; Create a temporary buffer
+      (switch-to-buffer (get-buffer-create new-filename))
       (erase-buffer)
-      (save-excursion
-        (if (string= format "TXT")
-            (insert (mapconcat (lambda (o) (elt o 3)) subtitles "\n"))
-          (pcase format
-            ("VTT" (require 'subed-vtt) (subed-vtt-mode))
-            ("SRT" (require 'subed-srt) (subed-srt-mode))
-            ("ASS" (require 'subed-ass) (subed-ass-mode))
-            ("TSV" (require 'subed-tsv) (subed-tsv-mode)))
-          (subed-auto-insert)
-          (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub))) subtitles)
-          (subed-regenerate-ids)))
+      (funcall mode-func)
+      (subed-auto-insert)
+      (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub))) subtitles)
       (current-buffer))))
 
 (provide 'subed-common)

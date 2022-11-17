@@ -196,7 +196,7 @@ Use the format-specific function for MAJOR-MODE."
 
 ;;; Manipulation
 
-(cl-defmethod subed--make-subtitle (&context (major-mode subed-srt-mode) &optional id start stop text)
+(cl-defmethod subed--make-subtitle (&context (major-mode subed-srt-mode) &optional id start stop text comment)
   "Generate new subtitle string.
 
 ID, START default to 0.
@@ -213,7 +213,7 @@ function for MAJOR-MODE."
                                                 subed-default-subtitle-length)))
           (or text "")))
 
-(cl-defmethod subed--prepend-subtitle (&context (major-mode subed-srt-mode) &optional id start stop text)
+(cl-defmethod subed--prepend-subtitle (&context (major-mode subed-srt-mode) &optional id start stop text comment)
   "Insert new subtitle before the subtitle at point.
 
 ID and START default to 0.
@@ -229,7 +229,7 @@ Return new point.  Use the format-specific function for MAJOR-MODE."
   (forward-line -2)
   (subed-jump-to-subtitle-text))
 
-(cl-defmethod subed--append-subtitle (&context (major-mode subed-srt-mode) &optional id start stop text)
+(cl-defmethod subed--append-subtitle (&context (major-mode subed-srt-mode) &optional id start stop text comment)
   "Insert new subtitle after the subtitle at point.
 
 ID, START default to 0.
