@@ -108,9 +108,9 @@ If SUB-ID is specified, jump to that subtitle first.
 Use the format-specific function for MAJOR-MODE."
   (save-excursion
     (subed-jump-to-subtitle-id sub-id)
-    (let ((sub-start-point (point))
-          (prev-end (or (subed-backward-subtitle-end)
-                        (goto-char (point-min)))))
+    (let ((sub-start-point (point)))
+      (or (subed-backward-subtitle-end)
+          (goto-char (point-min)))
       (when (re-search-forward "^\\(NOTE\\(.*\n\\)+\n+\\)" sub-start-point t)
         (match-string 0)))))
 
@@ -168,7 +168,7 @@ If SUB-ID is not given, use subtitle on point.
 Return point or nil if no stop time could be found.
 Use the format-specific function for MAJOR-MODE."
   (when (subed-jump-to-subtitle-time-start sub-id)
-    (re-search-forward " *--> *" (point-at-eol) t)
+    (re-search-forward " *--> *" (line-end-position) t)
     (when (looking-at subed--regexp-timestamp)
       (point))))
 
@@ -247,12 +247,14 @@ Make sure COMMENT ends with a blank line."
         ((string-match "\n" comment) (concat "NOTE\n" comment "\n\n"))
         (t (concat "NOTE " comment))))
 
-(cl-defmethod subed--make-subtitle (&context (major-mode subed-vtt-mode) &optional id start stop text comment)
+(cl-defmethod subed--make-subtitle (&context (major-mode subed-vtt-mode)
+                                             &optional _ start stop text comment)
   "Generate new subtitle string.
 
-ID, START default to 0.
+START defaults to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
+ID is ignored.
 
 A newline is appended to TEXT, meaning you'll get two trailing
 newlines if TEXT is nil or empty.  Use the format-specific
@@ -386,7 +388,7 @@ Use the format-specific function for MAJOR-MODE."
           ;; This regex is stricter than `subed--regexp-timestamp'
           (unless (looking-at "^\\([0-9]\\{2\\}:\\)?[0-9]\\{2\\}:[0-9]\\{2\\}\\(\\.[0-9]\\{0,3\\}\\)")
             (error "Found invalid start time: %S"  (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
-          (when (re-search-forward "[[:blank:]]" (point-at-eol) t)
+          (when (re-search-forward "[[:blank:]]" (line-end-position) t)
             (goto-char (match-beginning 0)))
           (unless (looking-at " --> ")
             (error "Found invalid separator between start and stop time: %S"

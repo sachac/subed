@@ -54,14 +54,16 @@
     (remove-hook 'kill-buffer-hook #'subed-disable-debugging :local)))
 
 (defun subed-toggle-debugging ()
-  "Display or hide debugging messages in separate window and set `debug-on-error' to t or nil."
+  "Display or hide debugging messages in separate window.
+Set `debug-on-error' to t or nil."
   (interactive)
   (if subed-debugging-enabled-p
       (subed-disable-debugging)
     (subed-enable-debugging)))
 
 (defun subed-debug (msg &rest args)
-  "Pass MSG and ARGS to `format' and show the result in debugging buffer if it exists."
+  "Pass MSG and ARGS to `format'.
+Show the result in debugging buffer if it exists."
   (when (get-buffer subed-debug-buffer)
     (with-current-buffer (get-buffer-create subed-debug-buffer)
       (setq-local buffer-read-only nil)

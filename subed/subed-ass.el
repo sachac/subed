@@ -149,7 +149,8 @@ If SUB-ID is not given, use subtitle on point.  Return point or
 nil if no stop time could be found.  Use the format-specific
 function for MAJOR-MODE."
   (when (subed-jump-to-subtitle-id sub-id)
-    (re-search-forward (concat "\\(?:" subed--regexp-timestamp "\\),") (point-at-eol) t)
+    (re-search-forward (concat "\\(?:" subed--regexp-timestamp "\\),")
+                       (line-end-position) t)
     (when (looking-at subed--regexp-timestamp)
       (point))))
 
@@ -205,13 +206,14 @@ format-specific function for MAJOR-MODE."
 
 ;;; Manipulation
 
-(cl-defmethod subed--make-subtitle (&context (major-mode subed-ass-mode) &optional id start stop text comment)
+(cl-defmethod subed--make-subtitle (&context (major-mode subed-ass-mode)
+                                             &optional _ start stop text _)
   "Generate new subtitle string.
 
-ID, START default to 0.
+START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
-COMMENT is ignored.
+The ID and comment are ignored.
 
 A newline is appended to TEXT, meaning you'll get two trailing
 newlines if TEXT is nil or empty.  Use the format-specific
@@ -222,7 +224,8 @@ function for MAJOR-MODE."
                                                 subed-default-subtitle-length)))
           (replace-regexp-in-string "\n" "\\n" (or text ""))))
 
-(cl-defmethod subed--prepend-subtitle (&context (major-mode subed-ass-mode) &optional id start stop text comment)
+(cl-defmethod subed--prepend-subtitle (&context (major-mode subed-ass-mode)
+                                                &optional id start stop text comment)
   "Insert new subtitle before the subtitle at point.
 
 ID and START default to 0.
@@ -233,11 +236,12 @@ COMMENT is ignored.
 Move point to the text of the inserted subtitle.  Return new
 point.  Use the format-specific function for MAJOR-MODE."
   (subed-jump-to-subtitle-id)
-  (insert (subed-make-subtitle id start stop text))
+  (insert (subed-make-subtitle id start stop text comment))
   (forward-line -1)
   (subed-jump-to-subtitle-text))
 
-(cl-defmethod subed--append-subtitle (&context (major-mode subed-ass-mode) &optional id start stop text comment)
+(cl-defmethod subed--append-subtitle (&context (major-mode subed-ass-mode)
+                                               &optional id start stop text comment)
   "Insert new subtitle after the subtitle at point.
 
 ID, START default to 0.
@@ -251,7 +255,7 @@ point.  Use the format-specific function for MAJOR-MODE."
     ;; Point is on last subtitle or buffer is empty
     (subed-jump-to-subtitle-end)
     (unless (bolp) (insert "\n")))
-  (insert (subed-make-subtitle id start stop text))
+  (insert (subed-make-subtitle id start stop text comment))
   (forward-line -1)
   (subed-jump-to-subtitle-text))
 

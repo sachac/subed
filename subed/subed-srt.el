@@ -144,7 +144,7 @@ Return point or nil if no stop time could be found.
 Use the format-specific function for MAJOR-MODE."
   (when (subed-jump-to-subtitle-id sub-id)
     (forward-line 1)
-    (re-search-forward " *--> *" (point-at-eol) t)
+    (re-search-forward " *--> *" (line-end-position) t)
     (when (looking-at subed--regexp-timestamp)
       (point))))
 
@@ -196,12 +196,13 @@ Use the format-specific function for MAJOR-MODE."
 
 ;;; Manipulation
 
-(cl-defmethod subed--make-subtitle (&context (major-mode subed-srt-mode) &optional id start stop text comment)
+(cl-defmethod subed--make-subtitle (&context (major-mode subed-srt-mode) &optional id start stop text _)
   "Generate new subtitle string.
 
 ID, START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
+COMMENT is ignored.
 
 A newline is appended to TEXT, meaning you'll get two trailing
 newlines if TEXT is nil or empty.  Use the format-specific
@@ -219,11 +220,12 @@ function for MAJOR-MODE."
 ID and START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
+COMMENT is ignored.
 
 Move point to the text of the inserted subtitle.
 Return new point.  Use the format-specific function for MAJOR-MODE."
   (subed-jump-to-subtitle-id)
-  (insert (subed-make-subtitle id start stop text))
+  (insert (subed-make-subtitle id start stop text comment))
   (when (looking-at "\\([[:space:]]*\\|^\\)[0-9]+$")
     (insert "\n"))
   (forward-line -2)
@@ -235,6 +237,7 @@ Return new point.  Use the format-specific function for MAJOR-MODE."
 ID, START default to 0.
 STOP defaults to (+ START `subed-subtitle-spacing')
 TEXT defaults to an empty string.
+COMMENT is ignored.
 
 Move point to the text of the inserted subtitle.
 Return new point.  Use the format-specific function for MAJOR-MODE."
@@ -248,7 +251,7 @@ Return new point.  Use the format-specific function for MAJOR-MODE."
       (save-excursion (insert ?\n)))
     ;; Move to end of separator
     (goto-char (match-end 0)))
-  (insert (subed-make-subtitle id start stop text))
+  (insert (subed-make-subtitle id start stop text comment))
   ;; Complete separator with another newline unless we inserted at the end
   (when (looking-at "\\([[:space:]]*\\|^\\)[0-9]+$")
     (insert ?\n))
@@ -260,7 +263,7 @@ Return new point.  Use the format-specific function for MAJOR-MODE."
 Use the format-specific function for MAJOR-MODE."
   (subed-regenerate-ids-soon))
 
-(cl-defmethod subed--split-subtitle :after (&context (major-mode subed-srt-mode) &optional offset)
+(cl-defmethod subed--split-subtitle :after (&context (major-mode subed-srt-mode) &optional _)
   "Split current subtitle at point.
 Use the format-specific function for MAJOR-MODE."
   (subed-regenerate-ids-soon))
@@ -286,7 +289,8 @@ Use the format-specific function for MAJOR-MODE."
 ;;; Maintenance
 
 (cl-defmethod subed--regenerate-ids (&context (major-mode subed-srt-mode))
-  "Ensure consecutive, unduplicated subtitle IDs."
+  "Ensure consecutive, unduplicated subtitle IDs.
+Format-specific for MAJOR-MODE."
   (atomic-change-group
     (save-excursion
       (goto-char (point-min))
@@ -365,7 +369,7 @@ Use the format-specific function for MAJOR-MODE."
           ;; This regex is stricter than `subed-srt--regexp-timestamp'
           (unless (looking-at "^[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\},[0-9]\\{,3\\}")
             (error "Found invalid start time: %S"  (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
-          (when (re-search-forward "[[:blank:]]" (point-at-eol) t)
+          (when (re-search-forward "[[:blank:]]" (line-end-position) t)
             (goto-char (match-beginning 0)))
           (unless (looking-at " --> ")
             (error "Found invalid separator between start and stop time: %S"
@@ -377,13 +381,13 @@ Use the format-specific function for MAJOR-MODE."
             (error "Found invalid stop time: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1))))
         (goto-char orig-point)))))
 
-(cl-defmethod subed--insert-subtitle :after (&context (major-mode subed-srt-mode) &optional arg)
-  "Renumber afterwards. Format-specific for MAJOR-MODE."
+(cl-defmethod subed--insert-subtitle :after (&context (major-mode subed-srt-mode) &optional _)
+  "Renumber afterwards.  Format-specific for MAJOR-MODE."
   (subed-regenerate-ids-soon)
   (point))
 
-(cl-defmethod subed--insert-subtitle-adjacent :after (&context (major-mode subed-srt-mode) &optional arg)
-  "Renumber afterwards. Format-specific for MAJOR-MODE."
+(cl-defmethod subed--insert-subtitle-adjacent :after (&context (major-mode subed-srt-mode) &optional _)
+  "Renumber afterwards.  Format-specific for MAJOR-MODE."
   (subed-regenerate-ids-soon)
   (point))
 

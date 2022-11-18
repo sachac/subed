@@ -30,6 +30,10 @@
 (require 'subed-debug)
 (require 'json)
 
+(declare-function subed-subtitle-id "subed-common" ())
+(declare-function subed-subtitle-msecs-start "subed-common" (&optional id))
+(defvar subed-mpv-frame-step-map)
+
 (defvar-local subed-mpv-is-playing nil
   "Whether mpv is currently playing or paused.")
 

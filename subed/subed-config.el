@@ -47,15 +47,15 @@
 
 (defface subed-id-face
   '((t (:inherit 'font-lock-constant-face)))
-  "Each subtitle's consecutive number")
+  "Each subtitle's consecutive number.")
 
 (defface subed-time-face
   '((t (:inherit 'font-lock-string-face)))
-  "Start and stop times of subtitles")
+  "Start and stop times of subtitles.")
 
 (defface subed-time-separator-face
   '((t (:inherit 'font-lock-comment-face)))
-  "Separator between the start and stop time (\" --> \")")
+  "Separator between the start and stop time (\" --> \").")
 
 (define-obsolete-face-alias 'subed-srt-id-face 'subed-id-face "2022-09-14")
 (define-obsolete-face-alias 'subed-srt-time-face 'subed-time-face "2022-09-14")
@@ -210,9 +210,8 @@ doing so."
   :group 'subed)
 
 (defvar-local subed--point-was-synced nil
-  "When temporarily disabling point-to-player sync, this variable
-remembers whether it was originally enabled by the user.")
-
+  "Remembers whether point-to-player was originally enabled by the user.
+Used when temporarily disabling point-to-player sync.")
 
 (defcustom subed-mpv-socket-dir (concat (temporary-file-directory) "subed")
   "Path to Unix IPC socket that is passed to mpv's --input-ipc-server option."
@@ -275,6 +274,8 @@ Otherwise, adjust the stop time of the current subtitle."
 (defvar-local subed-subtitle-time-adjusted-hook ()
   "Functions to call when a subtitle's start or stop time has changed.
 The functions are called with the subtitle's start time.")
+
+(declare-function subed-subtitle-msecs-start "subed-common" (&optional id))
 
 (defun subed--run-subtitle-time-adjusted-hook ()
   "Run `subed-subtitle-time-adjusted-hook' functions.

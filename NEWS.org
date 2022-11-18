@@ -2,6 +2,10 @@
 
 * subed news
 
+** Version 1.0.24 - 2022-11-18 - Sacha Chua
+
+subed should compile without checkdoc warnings or obsolete functions now.
+
 ** Version 1.0.23 - 2022-11-18 - Sacha Chua
 
 You can now use ~subed-copy-region-text~ to copy the text from

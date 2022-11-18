@@ -32,6 +32,7 @@
 (require 'subed-debug)
 (require 'subed-mpv)
 
+(declare-function subed-tsv-mode "subed-tsv" ())
 
 ;;; Generic functions
 
@@ -71,7 +72,7 @@ interactive form."
                  '("srt" "vtt" "ass"))
        ,(if is-interactive
             `(defun ,(intern (concat "subed-" (symbol-name name))) ,args
-               ,(concat doc "\n\nThis function calls the generic function `"
+               ,(concat doc "\n\nThis function calls the generic function\n`"
                         (concat "subed--" (symbol-name name)) "' for the actual implementation.")
                ,(car body)
                (,(intern (concat "subed--" (symbol-name name)))
@@ -341,7 +342,7 @@ If SUB-ID is not given, set the text of the current subtitle."
     (when start-point
       (- (point) start-point))))
 
-(subed-define-generic-function subtitle-comment (&optional sub-id)
+(subed-define-generic-function subtitle-comment (&optional _)
   "Return the comment preceding this subtitle."
   nil)
 
@@ -771,8 +772,9 @@ but we move the start time first."
         (move-subtitle msecs)))))
 
 (defun subed--scale-subtitles-in-region (msecs beg end)
-  "Scale subtitles in region specified by BEG and END after moving END MSECS milliseconds."
-  (let* ((beg-point (save-excursion ; normalized to fixed location over BEG
+  "Scale subtitles between BEG and END after moving END milliseconds.
+BEG and END specify a region."
+  (let* ((beg-point (save-excursion     ; normalized to fixed location over BEG
                       (goto-char beg)
                       (subed-jump-to-subtitle-end)
                       (point)))
@@ -780,7 +782,7 @@ but we move the start time first."
                            (goto-char beg-point)
                            (subed-forward-subtitle-end)
                            (point)))
-         (end-point (save-excursion ; normalized to fixed location over END
+         (end-point (save-excursion     ; normalized to fixed location over END
                       (goto-char end)
                       (subed-jump-to-subtitle-end)
                       (point)))
@@ -916,12 +918,25 @@ prefix argument is given but not numerical,
 `subed-milliseconds-adjust' is reset to its default value.
 
 Example usage:
-  \\[universal-argument] 1000 \\[subed-scale-subtitles-forward] Extend region 1000ms forward in time and scale subtitles in region
-           \\[subed-scale-subtitles-forward] Extend region another 1000ms forward in time and scale subtitles again
-   \\[universal-argument] 500 \\[subed-scale-subtitles-forward] Extend region 500ms forward in time and scale subtitles in region
-           \\[subed-scale-subtitles-forward] Extend region another 500ms forward in time and scale subtitles again
-       \\[universal-argument] \\[subed-scale-subtitles-forward] Extend region 100ms (the default) forward in time and scale subtitles in region
-           \\[subed-scale-subtitles-forward] Extend region another 100ms (the default) forward in time and scale subtitles again"
+
+\\[universal-argument] 1000 \\[subed-scale-subtitles-forward]
+Extend region 1000ms forward in time and scale subtitles in region.
+
+\\[subed-scale-subtitles-forward]
+Extend region another 1000ms forward in time and scale subtitles again.
+
+\\[universal-argument] 500 \\[subed-scale-subtitles-forward]
+Extend region 500ms forward in time and scale subtitles in region.
+
+\\[subed-scale-subtitles-forward]
+Extend region another 500ms forward in time and scale subtitles again.
+
+\\[universal-argument] \\[subed-scale-subtitles-forward]
+Extend region 100ms (the default) forward in time and scale subtitles in region.
+
+\\[subed-scale-subtitles-forward]
+Extend region another 100ms (the default) forward in time
+and scale subtitles again."
   (interactive "P")
   (let ((deactivate-mark nil)
         (msecs (subed-get-milliseconds-adjust arg))
@@ -1205,7 +1220,7 @@ current subtitle."
     subed-mpv-playback-position))
 
 (defun subed-split-subtitle-based-on-point-ratio ()
-  "Return a timestamp based on the position and number of characters in the subtitle text."
+  "Return a timestamp based on the relative position in the subtitle text."
   (let* ((pos (point))
          (text-beg (or (save-excursion (subed-jump-to-subtitle-text)) pos))
          (text-end (or (save-excursion (subed-jump-to-subtitle-end)) pos)))
@@ -1283,7 +1298,7 @@ position of the point."
             (delete-region (point) (progn (subed-jump-to-subtitle-end) (skip-chars-forward " \t") (point)))
             (when (looking-at "[ \t]+") (replace-match ""))
             (subed-append-subtitle nil new-start-timestamp orig-end (string-trim new-text)))
-        (error "Could not determine timestamp for splitting.")))
+        (error "Could not determine timestamp for splitting")))
     (point)))
 
 ;;; Merging
@@ -1647,7 +1662,7 @@ and therefore gets ARGS, which is ignored."
 The optional EXTENSIONS argument can be a list of extensions to
 look for. If not, check against the extensions in
 `subed-video-extensions' and `subed-audio-extensions'.  The file
-extension of the `buffer-file-name' is replaced with each item in
+extension of the function `buffer-file-name' is replaced with each item in
 the extension list and the first existing file is returned.
 
 Language codes are also handled; e.g. \"foo.en.srt\" or
@@ -1678,17 +1693,18 @@ Return nil if function `buffer-file-name' returns nil."
   "History of HTML-like attributes in subtitles.")
 
 (defun subed-insert-html-tag (begin end tag &optional attributes)
-  "Insert a pair of HTML-like tags around the region.
+  "Insert a pair of HTML-like tags around the region using TAG.
+BEGIN and END specify the start of the region.
 If region is not active, insert a pair of tags and put the point
 between them.  If called with a prefix argument, also ask for
-attribute(s)."
+ATTRIBUTE(s)."
   (interactive (let* ((region-p (use-region-p))
-		      (begin (if region-p (region-beginning) (point)))
-		      (end (if region-p (region-end) (point)))
-		      (tag (read-string "Tag: " nil 'subed--html-tag-history))
-		      (attributes (when current-prefix-arg
-				    (read-string "Attribute(s): " nil 'subed--html-attr-history))))
-		 (list begin end tag attributes)))
+		                  (begin (if region-p (region-beginning) (point)))
+		                  (end (if region-p (region-end) (point)))
+		                  (tag (read-string "Tag: " nil 'subed--html-tag-history))
+		                  (attributes (when current-prefix-arg
+				                            (read-string "Attribute(s): " nil 'subed--html-attr-history))))
+		             (list begin end tag attributes)))
   (save-excursion
     (push (point) buffer-undo-list)
     (goto-char end)
@@ -1699,29 +1715,34 @@ attribute(s)."
     (insert-before-markers ">")))
 
 (defun subed-insert-html-tag-italic (begin end)
-  "Insert a pair of <i> tags at point or around the region."
+  "Insert a pair of <i> tags at point or around the region.
+The region is defined by BEGIN and END."
   (interactive (let* ((region-p (use-region-p))
-		      (begin (if region-p (region-beginning) (point)))
-		      (end (if region-p (region-end) (point))))
-		 (list begin end)))
+		                  (begin (if region-p (region-beginning) (point)))
+		                  (end (if region-p (region-end) (point))))
+		             (list begin end)))
   (subed-insert-html-tag begin end "i"))
 
 (defun subed-insert-html-tag-bold (begin end)
-  "Insert a pair of <b> tags at point or around the region."
+  "Insert a pair of <b> tags at point or around the region.
+The region is defined by BEGIN and END."
   (interactive (let* ((region-p (use-region-p))
-		      (begin (if region-p (region-beginning) (point)))
-		      (end (if region-p (region-end) (point))))
-		 (list begin end)))
+		                  (begin (if region-p (region-beginning) (point)))
+		                  (end (if region-p (region-end) (point))))
+		             (list begin end)))
   (subed-insert-html-tag begin end "b"))
 
 ;;; Characters per second computation
+
+(defvar-local subed--cps-overlay nil)
 
 (defun subed-show-cps-p ()
   "Whether CPS is shown for the current subtitle."
   (member #'subed--update-cps-overlay post-command-hook))
 
 (defun subed-enable-show-cps (&optional quiet)
-  "Enable showing CPS next to the subtitle heading."
+  "Enable showing CPS next to the subtitle heading.
+If QUIET is nil, show a message."
   (interactive "p")
   ;; FIXME: Consider displaying CPS on all cues (via jit-lock) rather than the current one?
   (add-hook 'post-command-hook #'subed--update-cps-overlay nil t)
@@ -1731,7 +1752,8 @@ attribute(s)."
     (message "Enabled showing characters per second")))
 
 (defun subed-disable-show-cps (&optional quiet)
-  "Disable showing CPS next to the subtitle heading."
+  "Disable showing CPS next to the subtitle heading.
+If QUIET is nil, show a message."
   (interactive)
   (remove-hook 'post-command-hook #'subed--update-cps-overlay t)
   (remove-hook 'subed-subtitle-motion-hook #'subed--move-cps-overlay-to-current-subtitle t)
@@ -1761,7 +1783,8 @@ attribute(s)."
     (buffer-string)))
 
 (defun subed-calculate-cps (&optional print-message)
-  "Calculate characters per second of the current subtitle."
+  "Calculate characters per second of the current subtitle.
+if PRINT-MESSAGE is non-nil, display a message."
   (interactive "p")
   (let* ((msecs-start (ignore-errors (subed-subtitle-msecs-start)))
 	       (msecs-stop (ignore-errors (subed-subtitle-msecs-stop)))
@@ -1775,8 +1798,6 @@ attribute(s)."
     (if (and print-message cps)
 	      (message "%.1f characters per second" cps)
 	    cps)))
-
-(defvar-local subed--cps-overlay nil)
 
 (defun subed--move-cps-overlay-to-current-subtitle ()
   "Move the CPS overlay to the current subtitle."
@@ -1884,7 +1905,7 @@ the stop time isn't smaller than the start time."
        t))))
 
 (defun subed-trim-overlap-next-start (&optional msecs ignore-negative-duration)
-  "Trim the next subtitle so that it starts after the current one.
+  "Trim the next subtitle to start after the current one.
 
 Trim the start time of the next subtitle to MSECS or
 `subed-subtitle-spacing' greater than the end time of the current
@@ -1963,15 +1984,16 @@ If LIST is nil, use the subtitles in the current buffer."
   (interactive)
   nil)
 
-(defun subed-create-file (filename subtitles &optional ok-if-exists mode)
+(defun subed-create-file (filename subtitles &optional ok-if-exists init-func)
   "Create FILENAME, set it to MODE, and prepopulate it with SUBTITLES.
-Overwrites existing files."
+If OK-IF-EXISTS is non-nil, overwrite existing files.
+If INIT-FUNC is non-nil, call that function to initialize."
   (when (and (file-exists-p filename) (not ok-if-exists))
-    (error "File %s already exists." filename))
+    (error "File %s already exists" filename))
   (let ((subed-auto-play-media nil))
     (find-file filename)
     (erase-buffer)
-    (if mode (funcall mode))
+    (if init-func (funcall init-func))
     (subed-auto-insert)
     (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub))) subtitles)))
 

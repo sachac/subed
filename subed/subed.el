@@ -1,6 +1,6 @@
 ;;; subed.el --- A major mode for editing subtitles  -*- lexical-binding: t; -*-
 
-;; Version: 1.0.23
+;; Version: 1.0.24
 ;; Maintainer: Sacha Chua <sacha@sachachua.com>
 ;; Author: Random User
 ;; Keywords: convenience, files, hypermedia, multimedia
@@ -139,11 +139,15 @@ Key bindings:
   (when subed-auto-play-media
     (add-hook 'subed-mode-hook #'subed-auto-play-media-maybe :append :local)))
 
+(declare-function subed-ass-mode "subed-ass" (&optional arg))
+(declare-function subed-vtt-mode "subed-vtt" (&optional arg))
+(declare-function subed-srt-mode "subed-srt" (&optional arg))
+
 (defun subed-guess-format ()
   "Set this buffer's format to a more specific subed mode format.
 This is a workaround for the transition to using format-specific
 modes such as `subed-srt-mode' while `auto-mode-alist' might
-still refer to `subed-mode'. It will also switch to the
+still refer to `subed-mode'.  It will also switch to the
 format-specific mode if `subed-mode' is called directly."
   (when (and (eq major-mode 'subed-mode)
              (buffer-file-name))
