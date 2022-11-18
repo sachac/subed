@@ -1333,4 +1333,26 @@ This is another test here.
 - [ Bats Screeching ]
 - They won't get in your hair. They're after the bugs.")
        (expect (elt (car (subed-subtitle-list)) 3)
-               :to-equal "- What?\n- Where are we now?")))))
+               :to-equal "- What?\n- Where are we now?"))))
+  (describe "conversion"
+    (it "creates TXT."
+      (with-temp-vtt-buffer
+       (insert mock-vtt-data)
+       (with-current-buffer (subed-convert "TXT")
+         (expect (buffer-string) :to-equal "Foo.\nBar.\nBaz.\n"))))
+    (it "includes comments in TXT if requested."
+      (with-temp-vtt-buffer
+       (insert "WEBVTT
+
+00:01:14.815 --> 00:01:18.114
+Hello
+
+NOTE Comment
+
+00:01:18.171 --> 00:01:20.991
+World
+
+00:01:21.058 --> 00:01:23.868
+Again")
+       (with-current-buffer (subed-convert "TXT" t)
+         (expect (buffer-string) :to-equal "Hello\n\nNOTE Comment\n\nWorld\nAgain\n"))))))

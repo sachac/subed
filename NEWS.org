@@ -2,6 +2,15 @@
 
 * subed news
 
+** Version 1.0.23 - 2022-11-18 - Sacha Chua
+
+You can now use ~subed-copy-region-text~ to copy the text from
+subtitles in a region. Call it with a prefix argument (~C-u M-x
+subed-copy-region-text~) to include comments.
+
+Calling ~C-u M-x subed-convert~ will retain comments in the TXT
+output.
+
 ** Version 1.0.22 - 2022-11-17 - Sacha Chua
 
 VTT comments are now parsed and returned as part of ~subed-subtitle~

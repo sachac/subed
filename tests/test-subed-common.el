@@ -3143,6 +3143,40 @@ This is another.
                :to-equal
                '((1 61000 65123 "Foo." nil)
                  (2 122234 130345 "Bar." nil))))))
+  (describe "Getting the text of a list"
+    (it "returns a blank string when given nothing."
+      (expect (subed-subtitle-list-text nil) :to-equal ""))
+    (it "returns the text of a list of subtitles."
+      (expect
+       (subed-subtitle-list-text
+        '((nil 0 99 "Hello")
+          (nil 100 199 "world" "Comment")))
+       :to-equal "Hello\nworld\n"))
+    (it "includes comments."
+      (expect
+       (subed-subtitle-list-text
+        '((nil 0 99 "Hello")
+          (nil 100 199 "world" "NOTE Comment\n"))
+        t)
+       :to-equal "Hello\n\nNOTE Comment\nworld\n"))
+    (it "includes comments transformed by a function."
+      (let ((val
+             (subed-subtitle-list-text
+              '((nil 0 99 "Hello")
+                (nil 100 199 "world" "NOTE Comment\n"))
+              #'upcase)))
+        (expect val :to-equal "Hello\n\nNOTE COMMENT\nworld\n"))))
+  (describe "Copying region text"
+    (it "works on the whole buffer"
+      (with-temp-srt-buffer
+       (insert mock-srt-data)
+       (subed-copy-region-text)
+       (expect (current-kill 0) :to-equal "Foo.\nBar.\nBaz.\n")))
+    (it "works on a specified region."
+      (with-temp-srt-buffer
+       (insert mock-srt-data)
+       (subed-copy-region-text (re-search-backward "Foo.") (re-search-forward "Bar."))
+       (expect (current-kill 0) :to-equal "Foo.\nBar.\n"))))
   (describe "Sorting"
     (it "detects sorted lists."
       (expect (subed--sorted-p '((1 1000 2000 "Test")
@@ -3361,4 +3395,5 @@ Bar.
 
 00:03:03.450 --> 00:03:15.500
 Baz.
-")))))))
+")))))
+    ))

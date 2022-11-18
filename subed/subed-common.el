@@ -35,9 +35,10 @@
 
 ;;; Generic functions
 
-
 (defvar-local subed--regexp-separator nil "Regexp separating subtitles.")
 (defvar-local subed--regexp-timestamp nil "Regexp matching timestamps.")
+
+;;; Macros
 
 (defmacro subed-define-generic-function (name args &rest body)
   "Declare an object method and provide the old way of calling it.
@@ -81,6 +82,89 @@ interactive form."
           `(defalias ',(intern (concat "subed-" (symbol-name name)))
              #',(intern (concat "subed--" (symbol-name name)))
              ,doc)))))
+
+(defmacro subed-save-excursion (&rest body)
+  "Restore relative point within current subtitle after executing BODY.
+This also works if the buffer changes (e.g. when sorting
+subtitles) as long the subtitle IDs don't change."
+  (declare (debug t))
+  (save-excursion
+    `(let ((sub-id (subed-subtitle-id))
+           (sub-pos (subed-subtitle-relative-point)))
+       (progn ,@body)
+       (subed-jump-to-subtitle-id sub-id)
+       ;; Subtitle text may have changed and we may not be able to move to the
+       ;; exact original position
+       (condition-case nil
+           (forward-char sub-pos)
+         ('beginning-of-buffer nil)
+         ('end-of-buffer nil)))))
+
+(defmacro subed-for-each-subtitle (beg end reverse &rest body)
+  "Run BODY for each subtitle between the region specified by BEG and END.
+If END is nil, it defaults to `point-max'.
+If BEG and END are both nil, run BODY only on the subtitle at point.
+If REVERSE is non-nil, start on the subtitle at END and move backwards.
+Before BODY is run, point is placed on the subtitle's ID."
+  (declare (indent defun))
+  `(atomic-change-group
+     (if (not ,beg)
+         ;; Run body on subtitle at point
+         (save-excursion (subed-jump-to-subtitle-id)
+                         ,@body)
+       (let ((begm (make-marker))
+             (endm (make-marker)))
+         (set-marker begm ,beg)
+         (set-marker endm (or ,end (point-max)))
+         ;; Run body on multiple subtitles
+         (if ,reverse
+             ;; Iterate backwards
+             (save-excursion (goto-char endm)
+                             (subed-jump-to-subtitle-id)
+                             (catch 'first-subtitle-reached
+                               (while t
+                                 ;; The subtitle includes every character up to the next subtitle's ID (or eob)
+                                 (let ((sub-end (save-excursion (subed-jump-to-subtitle-end))))
+                                   (when (< sub-end begm)
+                                     (throw 'first-subtitle-reached t)))
+                                 (progn ,@body)
+                                 (unless (subed-backward-subtitle-id)
+                                   (throw 'first-subtitle-reached t)))))
+           ;; Iterate forwards
+           (save-excursion (goto-char begm)
+                           (subed-jump-to-subtitle-id)
+                           (catch 'last-subtitle-reached
+                             (while t
+                               (when (> (point) endm)
+                                 (throw 'last-subtitle-reached t))
+                               (progn ,@body)
+                               (unless (subed-forward-subtitle-id)
+                                 (throw 'last-subtitle-reached t))))))))))
+
+(defmacro subed-with-subtitle-replay-disabled (&rest body)
+  "Run BODY while automatic subtitle replay is disabled."
+  (declare (indent defun))
+  `(let ((replay-was-enabled-p (subed-replay-adjusted-subtitle-p)))
+     (subed-disable-replay-adjusted-subtitle :quiet)
+     (progn ,@body)
+     (when replay-was-enabled-p
+       (subed-enable-replay-adjusted-subtitle :quiet))))
+
+(defvar-local subed--batch-editing nil "Non-nil means suppress hooks and commands meant for interactive use.")
+(defmacro subed-batch-edit (&rest body)
+  "Run BODY as a batch edit.  Suppress hooks and replays."
+  (declare (indent defun))
+  `(progn
+     (let ((subed--batch-editing t))
+       (subed-with-subtitle-replay-disabled
+         (subed-disable-sync-point-to-player-temporarily)
+         (progn ,@body)))
+     (unless subed--batch-editing
+       ;; I wonder if we should do this here or if we should rely on
+       ;; it being in post-command-hook...
+       (when (subed-show-cps-p)
+         (subed--move-cps-overlay-to-current-subtitle)
+         (subed--update-cps-overlay)))))
 
 (subed-define-generic-function timestamp-to-msecs (time-string)
   "Find timestamp pattern in TIME-STRING and convert it to milliseconds.
@@ -377,6 +461,38 @@ If BEG and END are not specified, use the whole buffer."
         (setq result (cons (subed-subtitle) result))))
     (nreverse result)))
 
+(defun subed-subtitle-list-text (subtitles &optional include-comments)
+  "Return the text in SUBTITLES.
+If INCLUDE-COMMENTS is non-nil, include the comments.
+If INCLUDE-COMMENTS is a function, call the function on comments
+before including them."
+  (mapconcat
+   (lambda (sub)
+     (if (and include-comments (elt sub 4))
+         (concat "\n"
+                 (if (functionp include-comments)
+                     (funcall include-comments (elt sub 4))
+                   (elt sub 4))
+                 (elt sub 3) "\n")
+       (concat (elt sub 3) "\n")))
+   subtitles
+   ""))
+
+(defun subed-copy-region-text (&optional beg end include-comments)
+  "Copy the text from BEG to END to the kill ring.
+If BEG and END are not specified, use the whole buffer.
+If INCLUDE-COMMENTS is non-nil, include the comments.
+If INCLUDE-COMMENTS is a function, call the function on comments
+before including them."
+  (interactive (list (and (use-region-p) (min (point) (mark)))
+                     (and (use-region-p) (max (point) (mark)))
+                     current-prefix-arg))
+  (kill-new (subed-subtitle-list-text
+             (subed-subtitle-list
+              beg
+              end)
+             include-comments)))
+
 (subed-define-generic-function sanitize ()
   "Sanitize this file."
   (interactive)
@@ -416,89 +532,6 @@ scheduled call is canceled and another call is scheduled in
                                (subed-regenerate-ids)))))
 
 ;;; Utilities
-
-(defmacro subed-save-excursion (&rest body)
-  "Restore relative point within current subtitle after executing BODY.
-This also works if the buffer changes (e.g. when sorting
-subtitles) as long the subtitle IDs don't change."
-  (declare (debug t))
-  (save-excursion
-    `(let ((sub-id (subed-subtitle-id))
-           (sub-pos (subed-subtitle-relative-point)))
-       (progn ,@body)
-       (subed-jump-to-subtitle-id sub-id)
-       ;; Subtitle text may have changed and we may not be able to move to the
-       ;; exact original position
-       (condition-case nil
-           (forward-char sub-pos)
-         ('beginning-of-buffer nil)
-         ('end-of-buffer nil)))))
-
-(defmacro subed-for-each-subtitle (beg end reverse &rest body)
-  "Run BODY for each subtitle between the region specified by BEG and END.
-If END is nil, it defaults to `point-max'.
-If BEG and END are both nil, run BODY only on the subtitle at point.
-If REVERSE is non-nil, start on the subtitle at END and move backwards.
-Before BODY is run, point is placed on the subtitle's ID."
-  (declare (indent defun))
-  `(atomic-change-group
-     (if (not ,beg)
-         ;; Run body on subtitle at point
-         (save-excursion (subed-jump-to-subtitle-id)
-                         ,@body)
-       (let ((begm (make-marker))
-             (endm (make-marker)))
-         (set-marker begm ,beg)
-         (set-marker endm (or ,end (point-max)))
-         ;; Run body on multiple subtitles
-         (if ,reverse
-             ;; Iterate backwards
-             (save-excursion (goto-char endm)
-                             (subed-jump-to-subtitle-id)
-                             (catch 'first-subtitle-reached
-                               (while t
-                                 ;; The subtitle includes every character up to the next subtitle's ID (or eob)
-                                 (let ((sub-end (save-excursion (subed-jump-to-subtitle-end))))
-                                   (when (< sub-end begm)
-                                     (throw 'first-subtitle-reached t)))
-                                 (progn ,@body)
-                                 (unless (subed-backward-subtitle-id)
-                                   (throw 'first-subtitle-reached t)))))
-           ;; Iterate forwards
-           (save-excursion (goto-char begm)
-                           (subed-jump-to-subtitle-id)
-                           (catch 'last-subtitle-reached
-                             (while t
-                               (when (> (point) endm)
-                                 (throw 'last-subtitle-reached t))
-                               (progn ,@body)
-                               (unless (subed-forward-subtitle-id)
-                                 (throw 'last-subtitle-reached t))))))))))
-
-(defmacro subed-with-subtitle-replay-disabled (&rest body)
-  "Run BODY while automatic subtitle replay is disabled."
-  (declare (indent defun))
-  `(let ((replay-was-enabled-p (subed-replay-adjusted-subtitle-p)))
-     (subed-disable-replay-adjusted-subtitle :quiet)
-     (progn ,@body)
-     (when replay-was-enabled-p
-       (subed-enable-replay-adjusted-subtitle :quiet))))
-
-(defvar-local subed--batch-editing nil "Non-nil means suppress hooks and commands meant for interactive use.")
-(defmacro subed-batch-edit (&rest body)
-  "Run BODY as a batch edit.  Suppress hooks and replays."
-  (declare (indent defun))
-  `(progn
-     (let ((subed--batch-editing t))
-       (subed-with-subtitle-replay-disabled
-         (subed-disable-sync-point-to-player-temporarily)
-         (progn ,@body)))
-     (unless subed--batch-editing
-       ;; I wonder if we should do this here or if we should rely on
-       ;; it being in post-command-hook...
-       (when (subed-show-cps-p)
-         (subed--move-cps-overlay-to-current-subtitle)
-         (subed--update-cps-overlay)))))
 
 (defun subed--right-pad (string length fillchar)
   "Use FILLCHAR to make STRING LENGTH characters long."
@@ -1942,10 +1975,13 @@ Overwrites existing files."
     (subed-auto-insert)
     (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub))) subtitles)))
 
-(defun subed-convert (format)
+(defun subed-convert (format &optional include-comments)
   "Create a buffer with the current subtitles converted to FORMAT.
-You may need to add some extra information to the buffer."
-  (interactive (list (completing-read "To format: " '("VTT" "SRT" "ASS" "TSV" "TXT"))))
+You may need to add some extra information to the buffer.  If
+INCLUDE-COMMENTS is non-nil or `subed-convert' is called with a
+prefix argument, include comments in TXT output."
+  (interactive (list (completing-read "To format: " '("VTT" "SRT" "ASS" "TSV" "TXT"))
+                     current-prefix-arg))
   (let* ((subtitles (subed-subtitle-list))
          (new-filename (concat (file-name-base (or (buffer-file-name) (buffer-name))) "."
                                (downcase format)))
@@ -1961,16 +1997,17 @@ You may need to add some extra information to the buffer."
           (if (string= format "TXT")
               (progn
                 (with-temp-file new-filename
-                  (insert (mapconcat (lambda (o) (elt o 3)) subtitles "\n")))
+                  (insert (subed-subtitle-list-text subtitles include-comments)))
                 (find-file new-filename))
             (subed-create-file new-filename subtitles t mode-func))
           (current-buffer))
       ;; Create a temporary buffer
       (switch-to-buffer (get-buffer-create new-filename))
       (erase-buffer)
-      (funcall mode-func)
-      (subed-auto-insert)
-      (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub))) subtitles)
+      (when (functionp mode-func) (funcall mode-func) (subed-auto-insert))
+      (if (string= format "TXT")
+          (insert (subed-subtitle-list-text subtitles include-comments))
+        (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub))) subtitles))
       (current-buffer))))
 
 (provide 'subed-common)
