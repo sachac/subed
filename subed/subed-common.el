@@ -224,7 +224,7 @@ Return point or nil if point is still on the same subtitle.
 See also `subed-subtitle-id-at-msecs'."
   (let ((current-sub-id (subed-subtitle-id))
         (target-sub-id (subed-subtitle-id-at-msecs msecs)))
-    (when (and target-sub-id current-sub-id (not (equal target-sub-id current-sub-id)))
+    (when (and target-sub-id (not (equal target-sub-id current-sub-id)))
       (subed-jump-to-subtitle-id target-sub-id))))
 
 (subed-define-generic-function jump-to-subtitle-text-at-msecs (msecs)

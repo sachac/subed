@@ -84,14 +84,6 @@ Return nil if there is no subtitle at MSECS.  Use the
 format-specific function for MAJOR-MODE."
   (save-excursion
     (goto-char (point-min))
-    (let* ((secs       (/ msecs 1000))
-           (only-hours (truncate (/ secs 3600)))
-           (only-mins  (truncate (/ (- secs (* only-hours 3600)) 60))))
-      ;; Move to first subtitle in the relevant hour
-      (when (re-search-forward (format "\\(%s\\|\\`\\)%02d:" subed--regexp-separator only-hours) nil t)
-        (beginning-of-line)
-        ;; Move to first subtitle in the relevant hour and minute
-        (re-search-forward (format "\\(\n\n\\|\\`\\)%02d:%02d" only-hours only-mins) nil t)))
     ;; Move to first subtitle that starts at or after MSECS
     (catch 'subtitle-id
       (while (<= (or (subed-subtitle-msecs-start) -1) msecs)

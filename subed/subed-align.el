@@ -38,7 +38,8 @@
 
 (defvar subed-align-options nil
   "Other options to include in the aeneas invocation.
-Ex: task_adjust_boundary_nonspeech_min=0.500|task_adjust_boundary_nonspeech_string=REMOVE")
+Ex: task_adjust_boundary_nonspeech_min=0.500|task_adjust_boundary_nonspeech_string=REMOVE
+will remove silence and other non-speech spans.")
 
 ;;;###autoload
 (defun subed-align (audio-file text-file format)
@@ -91,7 +92,23 @@ Return a buffer with FORMAT."
       (when (derived-mode-p 'subed-mode)
         (subed-trim-overlaps))
       (when (derived-mode-p 'subed-vtt-mode)
-        (flush-lines "^[0-9]+$")))))
+        (goto-char (point-min))
+        (flush-lines "^[0-9]+$")
+        ;; reinsert comments
+				(subed-align-reinsert-comments subtitles)))))
+
+(defun subed-align-reinsert-comments (subtitles)
+  "Reinsert the comments from SUBTITLES."
+  (goto-char (point-min))
+  (mapc
+   (lambda (sub)
+     (when (elt sub 4)
+       ;; find the first subtitle that matches the sub, although the times may have changed.
+       ;; Probably the midpoint of the subtitle will still be within the sub
+			 ;; TODO: Accommodate comments in other formats
+       (when (subed-jump-to-subtitle-id-at-msecs (/ (+ (elt sub 2) (elt sub 1)) 2))
+         (insert (elt sub 4)))))
+   subtitles))
 
 (provide 'subed-align)
 ;;; subed-align.el ends here

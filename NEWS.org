@@ -1,6 +1,12 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.0.26 - 2022-11-30 - Sacha Chua
+
+subed-align now keeps VTT comments. It also doesn't remove silences by
+default now, since aeneas turned out to be a little too aggressive
+about silence detection.
+
 ** Version 1.0.25 - 2022-11-30 - Sacha Chua
 
 subed-move-subtitles and subed-scale-subtitles are now interactive
