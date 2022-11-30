@@ -773,8 +773,10 @@ but we move the start time first."
 
 (defun subed--scale-subtitles-in-region (msecs beg end)
   "Scale subtitles between BEG and END after moving END milliseconds.
-BEG and END specify a region."
-  (let* ((beg-point (save-excursion     ; normalized to fixed location over BEG
+BEG and END specify a region.  This stretches the subtitles so
+that they cover the new timespan.  If you want to shift all the
+subtitles by the same offset, use `subed-move-subtitles' instead."
+  (let* ((beg-point (save-excursion	; normalized to fixed location over BEG
                       (goto-char beg)
                       (subed-jump-to-subtitle-end)
                       (point)))
@@ -893,8 +895,16 @@ BEG and END specify a region."
   "Scale subtitles between BEG and END after moving END MSECS.
 Use a negative MSECS value to move END backward.
 If END is nil, END will be the last subtitle in the buffer.
-If BEG is nil, BEG will be the first subtitle in the buffer."
-  (let ((beg (or beg (point-min)))
+If BEG is nil, BEG will be the first subtitle in the buffer.
+
+If you want to shift all the subtitles by the same offset, use
+`subed-move-subtitles' instead."
+	(interactive (list (if current-prefix-arg
+												 (prefix-numeric-value current-prefix-arg)
+											 (read-number "Milliseconds: "))
+										 (when (region-active-p) (point))
+										 (when (region-active-p) (mark))))
+	(let ((beg (or beg (point-min)))
         (end (or end (point-max))))
     (subed--scale-subtitles-in-region msecs beg end)
     (when (subed-replay-adjusted-subtitle-p)
@@ -936,7 +946,10 @@ Extend region 100ms (the default) forward in time and scale subtitles in region.
 
 \\[subed-scale-subtitles-forward]
 Extend region another 100ms (the default) forward in time
-and scale subtitles again."
+and scale subtitles again.
+
+If you want to shift all the subtitles by the same offset, use
+`subed-move-subtitles' instead."
   (interactive "P")
   (let ((deactivate-mark nil)
         (msecs (subed-get-milliseconds-adjust arg))
@@ -947,7 +960,10 @@ and scale subtitles again."
 (defun subed-scale-subtitles-backward (&optional arg)
   "Scale subtitles after region is shortened `subed-milliseconds-adjust'.
 
-See `subed-scale-subtitles-forward' about ARG."
+See `subed-scale-subtitles-forward' about ARG.
+
+If you want to shift all the subtitles by the same offset, use
+`subed-move-subtitles' instead."
   (interactive "P")
   (let ((deactivate-mark nil)
         (msecs (* -1 (subed-get-milliseconds-adjust arg)))
@@ -962,6 +978,11 @@ If END is nil, move all subtitles from BEG to end of buffer.
 If BEG is nil, move only the current subtitle.
 After subtitles are moved, replay the first moved subtitle if
 replaying is enabled."
+	(interactive (list (if current-prefix-arg
+												 (prefix-numeric-value current-prefix-arg)
+											 (read-number "Milliseconds: "))
+										 (when (region-active-p) (point))
+										 (when (region-active-p) (mark))))
   (cond ((and beg end) (subed--move-subtitles-in-region msecs beg end))
         (beg (subed--move-subtitles-in-region msecs beg (point-max)))
         (t (subed--move-current-subtitle msecs)))

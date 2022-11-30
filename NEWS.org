@@ -1,6 +1,11 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.0.25 - 2022-11-30 - Sacha Chua
+
+subed-move-subtitles and subed-scale-subtitles are now interactive
+commands. The documentation for subed-scale-subtitles now mentions
+subed-move-subtitles, and I've updated the README to mention them.
 
 ** Version 1.0.24 - 2022-11-18 - Sacha Chua
 
