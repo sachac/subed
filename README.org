@@ -158,7 +158,6 @@ following command inside the =subed= directory:
 #+begin_src sh :eval no
 git checkout branchname
 #+end_src
-
 *** use-package configuration
 
 Here's an example setup if you use use-package:
@@ -176,6 +175,14 @@ Here's an example setup if you use use-package:
    ;; Break lines at 40 characters
   (add-hook 'subed-mode-hook (lambda () (setq-local fill-column 40))))
 #+END_SRC
+
+*** straight configuration
+
+If you use [[https://github.com/radian-software/straight.el][straight.el]], you can install subed with the following recipe:
+
+#+begin_src emacs-lisp
+(straight-use-package '(subed :type git :host github :repo "sachac/subed" :files ("subed/*.el")))
+#+end_src
 
 ** Getting started
 
