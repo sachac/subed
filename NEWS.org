@@ -1,6 +1,11 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.0.27 - 2022-12-16 - Sacha Chua
+
+Bugfix: Actually include VTT comments when inserting subtitles
+programmatically.
+
 ** Version 1.0.26 - 2022-11-30 - Sacha Chua
 
 subed-align now keeps VTT comments. It also doesn't remove silences by
