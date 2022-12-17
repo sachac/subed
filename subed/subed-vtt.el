@@ -235,7 +235,8 @@ Make sure COMMENT ends with a blank line."
         ((string-match "\\`NOTE"
                        (concat comment
                                (if (string-match "\n\n\\'" comment)
-                                   "" "\n\n"))))
+                                   "" "\n\n")))
+				 comment)
         ((string-match "\n" comment) (concat "NOTE\n" comment "\n\n"))
         (t (concat "NOTE " comment))))
 
