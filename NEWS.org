@@ -70,8 +70,8 @@ subed-mpv-media-file instead.
 ** Version 1.0.19 - 2022-11-11 - Sacha Chua
 
 New commands subed-merge-dwim, subed-merge-region,
-subed-merge-region-and-set-text, and set-subtitle-text can help with
-making chapter files.
+subed-merge-region-and-set-text, and subed-set-subtitle-text can help
+with making chapter files.
 
 Added more details to the README.org.
 
