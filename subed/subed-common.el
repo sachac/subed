@@ -425,19 +425,20 @@ Return new point."
   "Return the subtitles from FILENAME in a list.
 If MODE-FUNC is non-nil, use that function to initialize the mode.
 Otherwise, initialize the mode based on the filename."
-  (when (file-exists-p filename)
+  (when (and filename (file-exists-p filename))
     (with-temp-buffer
-      (insert-file-contents filename)
-      (if mode-func
-          (funcall mode-func)
-        (let ((mode-entry
-               (seq-find (lambda (mode-alist)
-                           (string-match (car mode-alist) filename))
-                         auto-mode-alist)))
-          (if mode-entry
-              (funcall (cdr mode-entry))
-            (subed-tsv-mode))))
-      (subed-subtitle-list))))
+			(let ((subed-auto-play-media nil))
+				(insert-file-contents filename)
+				(if mode-func
+						(funcall mode-func)
+					(let ((mode-entry
+								 (seq-find (lambda (mode-alist)
+														 (string-match (car mode-alist) filename))
+													 auto-mode-alist)))
+						(if mode-entry
+								(funcall (cdr mode-entry))
+							(subed-tsv-mode))))
+				(subed-subtitle-list)))))
 
 (defun subed-subtitle ()
   "Return the subtitle at point as a list.
