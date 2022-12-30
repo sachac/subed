@@ -185,12 +185,12 @@ action."
   :local t
   :group 'subed)
 
-(defcustom subed-loop-seconds-before 1
+(defcustom subed-loop-seconds-before 0
   "Prelude in seconds when looping over subtitle(s)."
   :type 'float
   :group 'subed)
 
-(defcustom subed-loop-seconds-after 1
+(defcustom subed-loop-seconds-after 0
   "Addendum in seconds when looping over subtitle(s)."
   :type 'float
   :group 'subed)

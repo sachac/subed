@@ -1,6 +1,12 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.0.29 - 2022-12-29 - Sacha Chua
+
+subed-toggle-sync-point-to-player should not confuse subed when it is
+already looping over a subtitle. Also, subed-loop-seconds-before and
+subed-loop-seconds-after now default to 0 for less confusion.
+
 ** Version 1.0.28 - 2022-12-22 - Sacha Chua
 
 subed-parse-file should handle nil filenames now. Also, it should not

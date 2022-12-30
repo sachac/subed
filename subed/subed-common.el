@@ -34,10 +34,11 @@
 
 (declare-function subed-tsv-mode "subed-tsv" ())
 
-;;; Generic functions
+;;; Generic functions and variables
 
 (defvar-local subed--regexp-separator nil "Regexp separating subtitles.")
 (defvar-local subed--regexp-timestamp nil "Regexp matching timestamps.")
+(defvar-local subed--enable-point-to-player-sync-after-disabling-loop nil)
 
 ;;; Macros
 
@@ -1408,7 +1409,6 @@ If QUIET is non-nil, do not display a message in the minibuffer."
   (subed-debug "Replaying subtitle at: %s" (subed-msecs-to-timestamp msecs-start))
   (subed-mpv-jump msecs-start))
 
-
 ;;; Sync point-to-player
 
 (defun subed-sync-point-to-player-p ()
@@ -1420,22 +1420,27 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 
 If QUIET is non-nil, do not display a message in the minibuffer."
   (interactive)
-  (unless (subed-sync-point-to-player-p)
-    (add-hook 'subed-mpv-playback-position-hook #'subed--sync-point-to-player :append :local)
-    (subed-debug "Enabled syncing point to playback position: %s" subed-mpv-playback-position-hook)
-    (unless quiet
-      (message "Enabled syncing point to playback position"))))
+	;; If looping over a subtitle, don't immediately enable it. Set it to be enabled after the loop ends.
+	(if (subed-loop-over-current-subtitle-p)
+			(setq subed--enable-point-to-player-sync-after-disabling-loop t)
+		(unless (subed-sync-point-to-player-p)
+			(add-hook 'subed-mpv-playback-position-hook #'subed--sync-point-to-player :append :local)
+			(subed-debug "Enabled syncing point to playback position: %s" subed-mpv-playback-position-hook)
+			(unless quiet
+				(message "Enabled syncing point to playback position")))))
 
 (defun subed-disable-sync-point-to-player (&optional quiet)
   "Do not move point automatically to the currently playing subtitle.
 
 If QUIET is non-nil, do not display a message in the minibuffer."
   (interactive)
-  (when (subed-sync-point-to-player-p)
-    (remove-hook 'subed-mpv-playback-position-hook #'subed--sync-point-to-player :local)
-    (subed-debug "Disabled syncing point to playback position: %s" subed-mpv-playback-position-hook)
-    (unless quiet
-      (message "Disabled syncing point to playback position"))))
+	(when (subed-loop-over-current-subtitle-p)
+		(setq subed--enable-point-to-player-sync-after-disabling-loop nil))
+	(when (subed-sync-point-to-player-p)
+		(remove-hook 'subed-mpv-playback-position-hook #'subed--sync-point-to-player :local)
+		(subed-debug "Disabled syncing point to playback position: %s" subed-mpv-playback-position-hook)
+		(unless quiet
+			(message "Disabled syncing point to playback position"))))
 
 (defun subed-toggle-sync-point-to-player ()
   "Enable/disable moving point to the currently playing subtitle."
@@ -1532,8 +1537,6 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 (defun subed-loop-over-current-subtitle-p ()
   "Whether the player is looping over the current subtitle."
   (or subed--subtitle-loop-start subed--subtitle-loop-stop))
-
-(defvar-local subed--enable-point-to-player-sync-after-disabling-loop nil)
 
 (defun subed-enable-loop-over-current-subtitle (&optional quiet)
   "Enable looping over the current subtitle in the player.
