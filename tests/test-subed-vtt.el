@@ -1,4 +1,4 @@
-;; -*- eval: (buttercup-minor-mode) -*-
+;; -*- eval: (buttercup-minor-mode); lexical-binding: t -*-
 
 (load-file "./tests/undercover-init.el")
 (require 'subed)
@@ -575,11 +575,11 @@ Baz.
     )
 
   (describe "Setting start/stop time"
-    (it "of current subtitle."
+    (it "of current subtitle updates it."
       (with-temp-vtt-buffer
        (insert mock-vtt-data)
        (subed-jump-to-subtitle-end "00:02:02.234")
-       (subed-set-subtitle-time-start (+ (* 1 60 60 1000) (* 2 60 1000) (* 3 1000) 400))
+       (subed-set-subtitle-time-start (+ (* 1 60 60 1000) (* 2 60 1000) (* 3 1000) 400) nil t)
        (expect (buffer-string) :to-equal (concat "WEBVTT\n\n"
                                                  "00:01:01.000 --> 00:01:05.123\n"
                                                  "Foo.\n\n"
@@ -587,7 +587,7 @@ Baz.
                                                  "Bar.\n\n"
                                                  "00:03:03.45 --> 00:03:15.5\n"
                                                  "Baz.\n"))
-       (subed-set-subtitle-time-stop (+ (* 5 60 60 1000) (* 6 60 1000) (* 7 1000) 800))
+       (subed-set-subtitle-time-stop (+ (* 5 60 60 1000) (* 6 60 1000) (* 7 1000) 800) nil t)
        (expect (buffer-string) :to-equal (concat "WEBVTT\n\n"
                                                  "00:01:01.000 --> 00:01:05.123\n"
                                                  "Foo.\n\n"
@@ -595,11 +595,11 @@ Baz.
                                                  "Bar.\n\n"
                                                  "00:03:03.45 --> 00:03:15.5\n"
                                                  "Baz.\n"))))
-    (it "of specific subtitle."
+    (it "of specific subtitle updates it."
       (with-temp-vtt-buffer
        (insert mock-vtt-data)
        (subed-jump-to-subtitle-time-stop "00:01:01.000")
-       (subed-set-subtitle-time-start (+ (* 2 60 60 1000) (* 4 60 1000) (* 6 1000) 800) 1)
+       (subed-set-subtitle-time-start (+ (* 2 60 60 1000) (* 4 60 1000) (* 6 1000) 800) 1 t)
        (expect (buffer-string) :to-equal (concat "WEBVTT\n\n"
                                                  "02:04:06.800 --> 00:01:05.123\n"
                                                  "Foo.\n\n"
@@ -608,7 +608,7 @@ Baz.
                                                  "00:03:03.45 --> 00:03:15.5\n"
                                                  "Baz.\n"))
        (subed-jump-to-subtitle-text "00:03:03.45")
-       (subed-set-subtitle-time-stop (+ (* 3 60 60 1000) (* 5 60 1000) (* 7 1000) 900) 3)
+       (subed-set-subtitle-time-stop (+ (* 3 60 60 1000) (* 5 60 1000) (* 7 1000) 900) 3 t)
        (expect (buffer-string) :to-equal (concat "WEBVTT\n\n"
                                                  "02:04:06.800 --> 00:01:05.123\n"
                                                  "Foo.\n\n"
@@ -616,15 +616,15 @@ Baz.
                                                  "Bar.\n\n"
                                                  "00:03:03.45 --> 03:05:07.900\n"
                                                  "Baz.\n"))))
-    (it "when milliseconds lack digits."
+    (it "when milliseconds lack digits, fills the rest in."
       (with-temp-vtt-buffer
        (insert mock-vtt-data)
        (subed-jump-to-subtitle-id "00:03:03.45")
-       (subed-set-subtitle-time-start (+ (* 1 60 60 1000) (* 2 60 1000) (* 3 1000) 4) 3)
+       (subed-set-subtitle-time-start (+ (* 1 60 60 1000) (* 2 60 1000) (* 3 1000) 4) 3 t)
        (expect (save-excursion (subed-jump-to-subtitle-time-start)
                                (thing-at-point 'line))
                :to-equal "01:02:03.004 --> 00:03:15.5\n")
-       (subed-set-subtitle-time-stop (+ (* 2 60 60 1000) (* 3 60 1000) (* 4 1000) 60) 3)
+       (subed-set-subtitle-time-stop (+ (* 2 60 60 1000) (* 3 60 1000) (* 4 1000) 60) 3 t)
        (expect (save-excursion (subed-jump-to-subtitle-time-start)
                                (thing-at-point 'line))
                :to-equal "01:02:03.004 --> 02:03:04.060\n"))))

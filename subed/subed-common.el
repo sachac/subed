@@ -347,31 +347,56 @@ If SUB-ID is not given, set the text of the current subtitle."
   "Return the comment preceding this subtitle."
   nil)
 
-(subed-define-generic-function set-subtitle-time-start (msecs &optional sub-id)
+(subed-define-generic-function set-subtitle-time-start (msecs
+																												&optional sub-id
+																												ignore-negative-duration)
   "Set subtitle start time to MSECS milliseconds.
 
 If SUB-ID is not given, set the start of the current subtitle.
+
+Unless either IGNORE-NEGATIVE-DURATION is non-nil or
+`subed-enforce-time-boundaries' is nil, throw an error if
+the start time will be after the stop time.  Zero-length
+subtitles are allowed.
 
 Return the new subtitle start time in milliseconds."
   (save-excursion
     (when (or (not sub-id)
               (and sub-id (subed-jump-to-subtitle-id sub-id)))
+			(when (and subed-enforce-time-boundaries
+								 (not ignore-negative-duration)
+								 (> msecs (subed-subtitle-msecs-stop)))
+				(error "Start time %d will be after stop time %d" msecs (subed-subtitle-msecs-stop)))
       (when (and (subed-jump-to-subtitle-time-start sub-id)
                  (looking-at subed--regexp-timestamp))
         (replace-match
          (save-match-data (subed-msecs-to-timestamp msecs)))))))
 
-(subed-define-generic-function set-subtitle-time-stop (msecs &optional sub-id)
+(subed-define-generic-function set-subtitle-time-stop (msecs &optional sub-id
+																														 ignore-negative-duration)
   "Set subtitle stop time to MSECS milliseconds.
 
 If SUB-ID is not given, set the stop of the current subtitle.
 
+Unless either IGNORE-NEGATIVE-DURATION is non-nil or
+`subed-enforce-time-boundaries' is nil, throw an error if
+the start time will be after the stop time.  Zero-length
+subtitles are allowed.
+
 Return the new subtitle stop time in milliseconds."
   (save-excursion
-    (when (and (subed-jump-to-subtitle-time-stop sub-id)
-               (looking-at subed--regexp-timestamp))
-      (replace-match
-       (save-match-data (subed-msecs-to-timestamp msecs))))))
+		(when (or (not sub-id)
+              (and sub-id (subed-jump-to-subtitle-id sub-id)))
+			(when (subed-jump-to-subtitle-time-stop sub-id)
+				(when (and subed-enforce-time-boundaries
+									 (not ignore-negative-duration)
+									 (< msecs (subed-subtitle-msecs-start)))
+					(error "Stop time %d will be before start time %d" msecs (subed-subtitle-msecs-start))))
+			(when (and
+						 (subed-jump-to-subtitle-time-stop)
+						 (looking-at subed--regexp-timestamp))
+				(replace-match
+				 (save-match-data (subed-msecs-to-timestamp msecs)))))))
 
 (subed-define-generic-function make-subtitle (&optional id start stop text comment)
   "Generate new subtitle string.
@@ -583,13 +608,13 @@ scheduled call is canceled and another call is scheduled in
                                                ignore-overlap)
   "Add MSECS milliseconds to start time (use negative value to subtract).
 
-Unless either IGNORE-NEGATIVE-DURATION or
-`subed-enforce-time-boundaries' are non-nil, adjust MSECS so that
-the stop time isn't smaller than the start time.  Zero-length
+Unless either IGNORE-NEGATIVE-DURATION is non-nil or
+`subed-enforce-time-boundaries' is nil, adjust MSECS so that the
+stop time isn't smaller than the start time.  Zero-length
 subtitles are always allowed.
 
-Unless either IGNORE-OVERLAP or `subed-enforce-time-boundaries'
-are non-nil, ensure that there are no gaps between subtitles
+Unless either IGNORE-OVERLAP is non-nilor `subed-enforce-time-boundaries'
+is nil, ensure that there are no gaps between subtitles
 smaller than `subed-subtitle-spacing' milliseconds by adjusting
 MSECS if necessary.
 
@@ -619,7 +644,7 @@ nil if nothing changed."
       (when (and (>= msecs-new 0)                                  ;; Ignore negative times
                  (or (and (> msecs 0) (> msecs-new msecs-start))   ;; Adding
                      (and (< msecs 0) (< msecs-new msecs-start)))) ;; Subtracting
-        (subed-set-subtitle-time-start msecs-new)
+        (subed-set-subtitle-time-start msecs-new nil ignore-negative-duration)
         (subed--run-subtitle-time-adjusted-hook)
         (- msecs-new msecs-start)))))
 
@@ -664,7 +689,7 @@ nil if nothing changed."
       (when (and (>= msecs-new 0)                                  ;; Ignore negative times
                  (or (and (> msecs 0) (> msecs-new msecs-stop))    ;; Adding
                      (and (< msecs 0) (< msecs-new msecs-stop))))  ;; Subtracting
-        (subed-set-subtitle-time-stop msecs-new)
+        (subed-set-subtitle-time-stop msecs-new nil ignore-negative-duration)
         (subed--run-subtitle-time-adjusted-hook)
         (- msecs-new msecs-stop)))))
 

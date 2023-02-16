@@ -624,7 +624,7 @@ Baz.
       (with-temp-srt-buffer
        (insert mock-srt-data)
        (subed-jump-to-subtitle-end 2)
-       (subed-set-subtitle-time-start (+ (* 1 60 60 1000) (* 2 60 1000) (* 3 1000) 400))
+       (subed-set-subtitle-time-start (+ (* 1 60 60 1000) (* 2 60 1000) (* 3 1000) 400) nil t)
        (expect (buffer-string) :to-equal (concat "1\n"
                                                  "00:01:01,000 --> 00:01:05,123\n"
                                                  "Foo.\n\n"
@@ -634,7 +634,7 @@ Baz.
                                                  "3\n"
                                                  "00:03:03,45 --> 00:03:15,5\n"
                                                  "Baz.\n"))
-       (subed-set-subtitle-time-stop (+ (* 5 60 60 1000) (* 6 60 1000) (* 7 1000) 800))
+       (subed-set-subtitle-time-stop (+ (* 5 60 60 1000) (* 6 60 1000) (* 7 1000) 800) nil t)
        (expect (buffer-string) :to-equal (concat "1\n"
                                                  "00:01:01,000 --> 00:01:05,123\n"
                                                  "Foo.\n\n"
@@ -648,7 +648,7 @@ Baz.
       (with-temp-srt-buffer
        (insert mock-srt-data)
        (subed-jump-to-subtitle-time-stop 3)
-       (subed-set-subtitle-time-start (+ (* 2 60 60 1000) (* 4 60 1000) (* 6 1000) 800) 1)
+       (subed-set-subtitle-time-start (+ (* 2 60 60 1000) (* 4 60 1000) (* 6 1000) 800) 1 t)
        (expect (buffer-string) :to-equal (concat "1\n"
                                                  "02:04:06,800 --> 00:01:05,123\n"
                                                  "Foo.\n\n"
@@ -659,7 +659,7 @@ Baz.
                                                  "00:03:03,45 --> 00:03:15,5\n"
                                                  "Baz.\n"))
        (subed-jump-to-subtitle-text 1)
-       (subed-set-subtitle-time-stop (+ (* 3 60 60 1000) (* 5 60 1000) (* 7 1000) 900) 3)
+       (subed-set-subtitle-time-stop (+ (* 3 60 60 1000) (* 5 60 1000) (* 7 1000) 900) 3 t)
        (expect (buffer-string) :to-equal (concat "1\n"
                                                  "02:04:06,800 --> 00:01:05,123\n"
                                                  "Foo.\n\n"
@@ -673,10 +673,10 @@ Baz.
       (with-temp-srt-buffer
        (insert mock-srt-data)
        (subed-jump-to-subtitle-id 3)
-       (subed-set-subtitle-time-start (+ (* 1 60 60 1000) (* 2 60 1000) (* 3 1000) 4) 3)
+       (subed-set-subtitle-time-start (+ (* 1 60 60 1000) (* 2 60 1000) (* 3 1000) 4) 3 t)
        (expect (save-excursion (subed-jump-to-subtitle-time-start)
                                (thing-at-point 'line)) :to-equal "01:02:03,004 --> 00:03:15,5\n")
-       (subed-set-subtitle-time-stop (+ (* 2 60 60 1000) (* 3 60 1000) (* 4 1000) 60) 3)
+       (subed-set-subtitle-time-stop (+ (* 2 60 60 1000) (* 3 60 1000) (* 4 1000) 60) 3 t)
        (expect (save-excursion (subed-jump-to-subtitle-time-start)
                                (thing-at-point 'line)) :to-equal "01:02:03,004 --> 02:03:04,060\n")))
     )

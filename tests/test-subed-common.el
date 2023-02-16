@@ -161,6 +161,30 @@ Baz.
         )
       )
     )
+	(describe "Setting subtitle start time"
+		(describe "when it will result in invalid duration"
+			:var ((temp-time (+ (* 3 60 1000) (* 17 1000))))
+			(it "throws an error when enforcing time boundaries."
+				(let ((subed-enforce-time-boundaries t))
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 3)
+					 (expect (subed-set-subtitle-time-start temp-time)
+									 :to-throw 'error))))
+			(it "changes it when ignoring time boundaries."
+				(let ((subed-enforce-time-boundaries nil))
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 3)
+					 (subed-set-subtitle-time-start temp-time)
+					 (expect (subed-subtitle-msecs-start) :to-equal temp-time))))
+			(it "changes it when negative durations are allowed."
+				(let ((subed-enforce-time-boundaries t))
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 3)
+					 (subed-set-subtitle-time-start temp-time nil t)
+					 (expect (subed-subtitle-msecs-start) :to-equal temp-time))))))
 
   (describe "Adjusting subtitle start/stop time"
     :var (subed-subtitle-time-adjusted-hook)
@@ -310,7 +334,7 @@ Baz.
          (expect (subed-adjust-subtitle-time-start -1) :to-be nil)
          (expect (subed-subtitle-msecs-start) :to-equal 2000)))
       )
-    (describe "ignores negative duration if the first argument is truthy"
+    (describe "ignores negative duration if the second argument is truthy"
       (it "when adjusting start time."
         (with-temp-srt-buffer
          (insert (concat "1\n"
@@ -482,12 +506,14 @@ Baz.
        (insert (concat "1\n"
                        "00:00:01,000 --> 00:00:02,000\n"
                        "Foo.\n"))
-       (let ((subed-mpv-playback-position (+ 60000 2000 123)))
+       (let ((subed-mpv-playback-position (+ 60000 2000 123))
+						 (subed-enforce-time-boundaries nil))
          (expect (subed-copy-player-pos-to-start-time) :to-be subed-mpv-playback-position)
          (expect (buffer-string) :to-equal (concat "1\n"
                                                    "00:01:02,123 --> 00:00:02,000\n"
                                                    "Foo.\n")))
-       (let ((subed-mpv-playback-position (+ 60000 5000 456)))
+       (let ((subed-mpv-playback-position (+ 60000 5000 456))
+						 (subed-enforce-time-boundaries nil))
          (expect (subed-copy-player-pos-to-stop-time) :to-be subed-mpv-playback-position)
          (expect (buffer-string) :to-equal (concat "1\n"
                                                    "00:01:02,123 --> 00:01:05,456\n"
@@ -497,7 +523,8 @@ Baz.
        (insert (concat "1\n"
                        "00:00:01,000 --> 00:00:02,000\n"
                        "Foo.\n"))
-       (let ((foo (setf (symbol-function 'foo) (lambda (msecs) ()))))
+       (let ((foo (setf (symbol-function 'foo) (lambda (msecs) ())))
+						 (subed-enforce-time-boundaries nil))
          (spy-on 'foo)
          (add-hook 'subed-subtitle-time-adjusted-hook 'foo)
          (let ((subed-mpv-playback-position (+ 60000 2000 123)))
@@ -2331,10 +2358,10 @@ This is another.
            (insert text)
            (re-search-backward "subtitle")
            (end-of-line)
-           (subed-split-subtitle "00:01:03,100")
-           (expect (subed-subtitle-msecs-start) :to-equal 63100)
+           (subed-split-subtitle "00:01:43,100")
+           (expect (subed-subtitle-msecs-start) :to-equal 103100)
            (subed-backward-subtitle-time-start)
-           (expect (subed-subtitle-msecs-stop) :to-equal (- 63100 subed-subtitle-spacing))))))
+           (expect (subed-subtitle-msecs-stop) :to-equal (- 103100 subed-subtitle-spacing))))))
     (describe "when playing the media in MPV"
       (it "splits at point in the middle of the subtitle."
         (with-temp-srt-buffer
