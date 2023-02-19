@@ -349,7 +349,8 @@ If SUB-ID is not given, set the text of the current subtitle."
 
 (subed-define-generic-function set-subtitle-time-start (msecs
 																												&optional sub-id
-																												ignore-negative-duration)
+																												ignore-negative-duration
+																												ignore-overlap)
   "Set subtitle start time to MSECS milliseconds.
 
 If SUB-ID is not given, set the start of the current subtitle.
@@ -359,21 +360,46 @@ Unless either IGNORE-NEGATIVE-DURATION is non-nil or
 the start time will be after the stop time.  Zero-length
 subtitles are allowed.
 
+Unless either IGNORE-OVERLAP is non-nil or `subed-enforce-time-boundaries'
+is nil, ensure that there are no gaps between subtitles
+smaller than `subed-subtitle-spacing' milliseconds by adjusting
+MSECS if necessary.
+
 Return the new subtitle start time in milliseconds."
   (save-excursion
     (when (or (not sub-id)
               (and sub-id (subed-jump-to-subtitle-id sub-id)))
+			(when (and
+						 (not ignore-negative-duration)
+						 subed-enforce-time-boundaries
+						 (> msecs (subed-subtitle-msecs-stop)))
+				(if (eq subed-enforce-time-boundaries 'error)
+						(error "Start time %s will be after stop time %s"
+									 (subed-msecs-to-timestamp msecs)
+									 (subed-msecs-to-timestamp (subed-subtitle-msecs-stop)))
+					(let ((subed-enforce-time-boundaries nil))
+						(subed-set-subtitle-time-stop msecs))))
 			(when (and subed-enforce-time-boundaries
-								 (not ignore-negative-duration)
-								 (> msecs (subed-subtitle-msecs-stop)))
-				(error "Start time %d will be after stop time %d" msecs (subed-subtitle-msecs-stop)))
-      (when (and (subed-jump-to-subtitle-time-start sub-id)
+								 (not ignore-overlap))
+				(subed-save-excursion
+				 (when (and (subed-backward-subtitle-time-stop)
+										subed-subtitle-spacing
+										(> (subed-subtitle-msecs-stop)
+											 (- msecs subed-subtitle-spacing)))
+					 (if (eq subed-enforce-time-boundaries 'error)
+							 (error "Start time %s will be too close to previous stop time of %s"
+											(subed-msecs-to-timestamp msecs)
+											(subed-msecs-to-timestamp (subed-subtitle-msecs-stop)))
+						 (let ((subed-enforce-time-boundaries nil))
+							 (subed-set-subtitle-time-stop (- msecs subed-subtitle-spacing)))))))
+			(when (and (subed-jump-to-subtitle-time-start sub-id)
                  (looking-at subed--regexp-timestamp))
         (replace-match
          (save-match-data (subed-msecs-to-timestamp msecs)))))))
 
 (subed-define-generic-function set-subtitle-time-stop (msecs &optional sub-id
-																														 ignore-negative-duration)
+																														 ignore-negative-duration
+																														 ignore-overlap)
   "Set subtitle stop time to MSECS milliseconds.
 
 If SUB-ID is not given, set the stop of the current subtitle.
@@ -383,6 +409,11 @@ Unless either IGNORE-NEGATIVE-DURATION is non-nil or
 the start time will be after the stop time.  Zero-length
 subtitles are allowed.
 
+Unless either IGNORE-OVERLAP is non-nil or `subed-enforce-time-boundaries'
+is nil, ensure that there are no gaps between subtitles
+smaller than `subed-subtitle-spacing' milliseconds by adjusting
+MSECS if necessary.
+
 Return the new subtitle stop time in milliseconds."
   (save-excursion
 		(when (or (not sub-id)
@@ -391,7 +422,25 @@ Return the new subtitle stop time in milliseconds."
 				(when (and subed-enforce-time-boundaries
 									 (not ignore-negative-duration)
 									 (< msecs (subed-subtitle-msecs-start)))
-					(error "Stop time %d will be before start time %d" msecs (subed-subtitle-msecs-start))))
+					(if (eq subed-enforce-time-boundaries 'error)
+							(error "Stop time %s will be before start time %s"
+										 (subed-msecs-to-timestamp msecs)
+										 (subed-msecs-to-timestamp (subed-subtitle-msecs-start)))
+						(let ((subed-enforce-time-boundaries nil))
+							(subed-set-subtitle-time-start msecs)))))
+			(when (and subed-enforce-time-boundaries
+								 (not ignore-overlap))
+				(subed-save-excursion
+				 (when (and (subed-forward-subtitle-time-stop)
+										subed-subtitle-spacing
+										(< (subed-subtitle-msecs-start)
+											 (+ msecs subed-subtitle-spacing)))
+					 (if (eq subed-enforce-time-boundaries 'error)
+							 (error "Stop time %s will be too close to next start time of %s"
+											(subed-msecs-to-timestamp msecs)
+											(subed-msecs-to-timestamp (subed-subtitle-msecs-start)))
+						 (let ((subed-enforce-time-boundaries nil))
+							 (subed-set-subtitle-time-start (+ msecs subed-subtitle-spacing)))))))
 			(when (and
 						 (subed-jump-to-subtitle-time-stop)
 						 (looking-at subed--regexp-timestamp))
@@ -613,7 +662,7 @@ Unless either IGNORE-NEGATIVE-DURATION is non-nil or
 stop time isn't smaller than the start time.  Zero-length
 subtitles are always allowed.
 
-Unless either IGNORE-OVERLAP is non-nilor `subed-enforce-time-boundaries'
+Unless either IGNORE-OVERLAP is non-nil or `subed-enforce-time-boundaries'
 is nil, ensure that there are no gaps between subtitles
 smaller than `subed-subtitle-spacing' milliseconds by adjusting
 MSECS if necessary.
@@ -624,29 +673,13 @@ nil if nothing changed."
   (let* ((msecs-start (subed-subtitle-msecs-start))
          (msecs-new (when msecs-start (+ msecs-start msecs))))
     (when msecs-new
-      (if (> msecs 0)
-          ;; Adding to start time
-          (unless (or ignore-negative-duration
-                      (not subed-enforce-time-boundaries))
-            (let ((msecs-stop (subed-subtitle-msecs-stop)))
-              (setq msecs-new (min msecs-new msecs-stop))))
-        ;; Subtracting from start time
-        (unless (or ignore-overlap
-                    (not subed-enforce-time-boundaries))
-          (let* ((msecs-prev-stop (save-excursion (when (subed-backward-subtitle-id)
-                                                    (subed-subtitle-msecs-stop))))
-                 (msecs-min (if msecs-prev-stop
-                                (+ msecs-prev-stop subed-subtitle-spacing) 0)))
-            (when msecs-min
-              (setq msecs-new (max msecs-new msecs-min))))))
       ;; MSECS-NEW must be bigger than the current start time if we are adding
       ;; or smaller if we are subtracting.
-      (when (and (>= msecs-new 0)                                  ;; Ignore negative times
-                 (or (and (> msecs 0) (> msecs-new msecs-start))   ;; Adding
-                     (and (< msecs 0) (< msecs-new msecs-start)))) ;; Subtracting
-        (subed-set-subtitle-time-start msecs-new nil ignore-negative-duration)
-        (subed--run-subtitle-time-adjusted-hook)
-        (- msecs-new msecs-start)))))
+      (subed-set-subtitle-time-start msecs-new nil
+																		 ignore-negative-duration
+																		 ignore-overlap)
+      (subed--run-subtitle-time-adjusted-hook)
+      (- msecs-new msecs-start))))
 
 (defun subed-adjust-subtitle-time-stop (msecs &optional
                                               ignore-negative-duration
@@ -668,30 +701,14 @@ nil if nothing changed."
   (subed-disable-sync-point-to-player-temporarily)
   (let* ((msecs-stop (subed-subtitle-msecs-stop))
          (msecs-new (when msecs-stop (+ msecs-stop msecs))))
-    (when msecs-new
-      (if (> msecs 0)
-          ;; Adding to stop time
-          (unless (or ignore-overlap
-                      (not subed-enforce-time-boundaries))
-            (let* ((msecs-next-start (save-excursion (when (subed-forward-subtitle-id)
-                                                       (subed-subtitle-msecs-start))))
-                   (msecs-max (when msecs-next-start
-                                (- msecs-next-start subed-subtitle-spacing))))
-              (when msecs-max
-                (setq msecs-new (min msecs-new msecs-max)))))
-        ;; Subtracting from stop time
-        (unless (or ignore-negative-duration
-                    (not subed-enforce-time-boundaries))
-          (let ((msecs-start (subed-subtitle-msecs-start)))
-            (setq msecs-new (max msecs-new msecs-start)))))
-      ;; MSECS-NEW must be bigger than the current stop time if we are adding or
-      ;; smaller if we are subtracting.
-      (when (and (>= msecs-new 0)                                  ;; Ignore negative times
-                 (or (and (> msecs 0) (> msecs-new msecs-stop))    ;; Adding
-                     (and (< msecs 0) (< msecs-new msecs-stop))))  ;; Subtracting
-        (subed-set-subtitle-time-stop msecs-new nil ignore-negative-duration)
-        (subed--run-subtitle-time-adjusted-hook)
-        (- msecs-new msecs-stop)))))
+    ;; MSECS-NEW must be bigger than the current stop time if we are adding or
+    ;; smaller if we are subtracting.
+    (when (and (>= msecs-new 0)                                  ;; Ignore negative times
+               (or (and (> msecs 0) (> msecs-new msecs-stop))    ;; Adding
+                   (and (< msecs 0) (< msecs-new msecs-stop))))  ;; Subtracting
+      (subed-set-subtitle-time-stop msecs-new nil ignore-negative-duration ignore-overlap)
+      (subed--run-subtitle-time-adjusted-hook)
+      (- msecs-new msecs-stop))))
 
 (defun subed-increase-start-time (&optional arg)
   "Add `subed-milliseconds-adjust' milliseconds to start time.

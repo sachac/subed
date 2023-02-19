@@ -159,11 +159,19 @@ If set to zero or smaller, playback is paused."
   :type 'float
   :group 'subed)
 
-(defcustom subed-enforce-time-boundaries t
-  "Non-nil means refuse time adjustments that result in invalid subtitles.
-For example, refuse adjustments that result in overlapping
-subtitles or negative duration."
-  :type 'boolean
+(defcustom subed-enforce-time-boundaries 'adjust
+  "How to manage changes that cause overlapping subtitles or negative durations.
+- 'adjust means adjust the stop or start time of the current subtitle to
+  keep duration >= 0, and adjust the previous or next subtitle as needed
+  to maintain `subed-subtitle-spacing'.
+- 'error means report an error.
+- nil means perform the change without checking.
+
+Other values aside from the ones specified above will be treated as 'adjust."
+  :type '(choice
+					(const :tag "Adjust other times as needed" adjust)
+					(const :tag "Report an error" error)
+					(const :tag "Do not check" nil))
   :group 'subed)
 
 (defcustom subed-sanitize-functions

@@ -162,10 +162,100 @@ Baz.
       )
     )
 	(describe "Setting subtitle start time"
+		(describe "when this causes an overlap"
+			(describe "when time boundaries are enforced by errors"
+				:var ((subed-subtitle-spacing 100))
+				(it "continues when setting the first subtitle's start time."
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 1)
+					 (let ((subed-enforce-time-boundaries 'error))
+						 (subed-set-subtitle-time-start 30000))
+					 (expect (subed-subtitle-msecs-start) :to-equal 30000)))
+				(it "ignores the previous subtitle's stop time if there's enough spacing."
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 2)
+					 (let ((subed-enforce-time-boundaries 'error))
+						 (subed-set-subtitle-time-start (subed-timestamp-to-msecs "00:01:10,000")))
+					 (expect (subed-subtitle-msecs-start) :to-equal (subed-timestamp-to-msecs "00:01:10,000"))
+					 (expect (subed-subtitle-msecs-stop 1) :to-equal (subed-timestamp-to-msecs "00:01:05,123"))))
+				(it "ignores the previous subtitle's stop time if spacing is unspecified."
+					(let ((subed-subtitle-spacing nil)
+								(subed-enforce-time-boundaries 'error))
+						(with-temp-srt-buffer
+						 (insert mock-srt-data)
+						 (subed-jump-to-subtitle-id 2)
+						 (subed-set-subtitle-time-start (subed-timestamp-to-msecs "00:01:05,000"))
+						 (expect (subed-subtitle-msecs-start) :to-equal (subed-timestamp-to-msecs "00:01:05,000"))
+						 (expect (subed-subtitle-msecs-stop 1) :to-equal (subed-timestamp-to-msecs "00:01:05,123")))))
+				(it "reports an error if the change violates spacing."
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 2)
+					 (let ((subed-enforce-time-boundaries 'error)
+								 (subed-subtitle-spacing 100))
+						 (expect (subed-set-subtitle-time-start (subed-timestamp-to-msecs "00:01:05,000")) :to-throw 'error)))))
+			(describe "when time boundaries are enforced by adjusting"
+				(it "continues when setting the first subtitle's start time."
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 1)
+					 (let ((subed-enforce-time-boundaries 'adjust)
+								 (subed-subtitle-spacing 100))
+						 (subed-set-subtitle-time-start (subed-timestamp-to-msecs "00:01:00,000")))
+					 (expect (subed-subtitle-msecs-start) :to-equal (subed-timestamp-to-msecs "00:01:00,000"))))
+				(it "ignores the previous subtitle's stop time if there's enough spacing."
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 2)
+					 (let ((subed-enforce-time-boundaries 'adjust)
+								 (subed-subtitle-spacing 100))
+						 (subed-set-subtitle-time-start (subed-timestamp-to-msecs "00:01:10,000")))
+					 (expect (subed-subtitle-msecs-start) :to-equal (subed-timestamp-to-msecs "00:01:10,000"))
+					 (expect (subed-subtitle-msecs-stop 1) :to-equal (subed-timestamp-to-msecs "00:01:05,123"))))
+				(it "ignores the previous subtitle's stop time if spacing is unspecified."
+					(let ((subed-subtitle-spacing nil)
+								(subed-enforce-time-boundaries 'adjust))
+						(with-temp-srt-buffer
+						 (insert mock-srt-data)
+						 (subed-jump-to-subtitle-id 2)
+						 (subed-set-subtitle-time-start (subed-timestamp-to-msecs "00:01:05,000"))
+						 (expect (subed-subtitle-msecs-start) :to-equal (subed-timestamp-to-msecs "00:01:05,000"))
+						 (expect (subed-subtitle-msecs-stop 1) :to-equal (subed-timestamp-to-msecs "00:01:05,123")))))
+				(it "adjusts the previous subtitle's stop time to maintain spacing."
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 2)
+					 (let ((subed-enforce-time-boundaries 'adjust)
+								 (subed-subtitle-spacing 100))
+						 (subed-set-subtitle-time-start (subed-timestamp-to-msecs "00:01:05,000"))) 
+					 (expect (subed-subtitle-msecs-start) :to-equal (subed-timestamp-to-msecs "00:01:05,000"))
+					 (expect (subed-subtitle-msecs-stop 1) :to-equal (subed-timestamp-to-msecs "00:01:04,900"))))
+				(it "adjusts the previous subtitle's stop time, but not the one before it."
+					;; TODO: Decide if we want to change this expectation
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 3)
+					 (let ((subed-enforce-time-boundaries 'adjust)
+								 (subed-subtitle-spacing 100))
+						 (subed-set-subtitle-time-start (subed-timestamp-to-msecs "00:01:05,000")))
+					 (expect (subed-subtitle-msecs-start) :to-equal (subed-timestamp-to-msecs "00:01:05,000"))
+					 (expect (subed-subtitle-msecs-stop 2) :to-equal (subed-timestamp-to-msecs "00:01:04,900"))
+					 (expect (subed-subtitle-msecs-stop 1) :to-equal (subed-timestamp-to-msecs "00:01:05,123"))))
+				(it "adjusts the current subtitle's stop time to at least the start time."
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 2)
+					 (let ((subed-enforce-time-boundaries 'adjust)
+								 (subed-subtitle-spacing 100))
+						 (subed-set-subtitle-time-start (subed-timestamp-to-msecs "00:02:11,000")))
+					 (expect (subed-subtitle-msecs-start) :to-equal (subed-timestamp-to-msecs "00:02:11,000"))
+					 (expect (subed-subtitle-msecs-stop 1) :to-equal (subed-timestamp-to-msecs "00:01:05,123"))))))
 		(describe "when it will result in invalid duration"
 			:var ((temp-time (+ (* 3 60 1000) (* 17 1000))))
 			(it "throws an error when enforcing time boundaries."
-				(let ((subed-enforce-time-boundaries t))
+				(let ((subed-enforce-time-boundaries 'error))
 					(with-temp-srt-buffer
 					 (insert mock-srt-data)
 					 (subed-jump-to-subtitle-id 3)
@@ -179,13 +269,129 @@ Baz.
 					 (subed-set-subtitle-time-start temp-time)
 					 (expect (subed-subtitle-msecs-start) :to-equal temp-time))))
 			(it "changes it when negative durations are allowed."
-				(let ((subed-enforce-time-boundaries t))
+				(let ((subed-enforce-time-boundaries 'error))
 					(with-temp-srt-buffer
 					 (insert mock-srt-data)
 					 (subed-jump-to-subtitle-id 3)
 					 (subed-set-subtitle-time-start temp-time nil t)
 					 (expect (subed-subtitle-msecs-start) :to-equal temp-time))))))
-
+	(describe "Setting subtitle stop time"
+		(describe "when this causes an overlap"
+			(describe "when time boundaries are enforced by errors"
+				:var ((subed-subtitle-spacing 100))
+				(it "continues when setting the last subtitle's stop time."
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 3)
+					 (let ((subed-enforce-time-boundaries 'error))
+						 (subed-set-subtitle-time-stop (subed-timestamp-to-msecs "00:03:30,000")))
+					 (expect (subed-subtitle-msecs-stop) :to-equal (subed-timestamp-to-msecs "00:03:30,000"))))
+				(it "ignores the next subtitle's start time if there's enough spacing."
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 2)
+					 (let ((subed-enforce-time-boundaries 'error))
+						 (subed-set-subtitle-time-stop (subed-timestamp-to-msecs "00:03:01,000")))
+					 (expect (subed-subtitle-msecs-stop) :to-equal (subed-timestamp-to-msecs "00:03:01,000"))
+					 (expect (subed-subtitle-msecs-start 3) :to-equal (subed-timestamp-to-msecs "00:03:03,45"))))
+				(it "ignores the next subtitle's start time if spacing is unspecified."
+					(let ((subed-subtitle-spacing nil)
+								(subed-enforce-time-boundaries 'error))
+						(with-temp-srt-buffer
+						 (insert mock-srt-data)
+						 (subed-jump-to-subtitle-id 2)
+						 (let ((subed-enforce-time-boundaries 'error))
+							 (subed-set-subtitle-time-stop (subed-timestamp-to-msecs "00:03:05,000")))
+						 (expect (subed-subtitle-msecs-stop) :to-equal (subed-timestamp-to-msecs "00:03:05,000"))
+						 (expect (subed-subtitle-msecs-start 3) :to-equal (subed-timestamp-to-msecs "00:03:03,45")))))
+				(it "reports an error if the change violates spacing."
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 2)
+					 (let ((subed-enforce-time-boundaries 'error)
+								 (subed-subtitle-spacing 100))
+						 (expect (subed-set-subtitle-time-stop (subed-timestamp-to-msecs "00:03:05,000"))
+										 :to-throw 'error)))))
+			(describe "when time boundaries are enforced by adjusting"
+				:var ((subed-subtitle-spacing 100))
+				(it "continues when setting the last subtitle's stop time."
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 3)
+					 (let ((subed-enforce-time-boundaries 'adjust))
+						 (subed-set-subtitle-time-stop (subed-timestamp-to-msecs "00:03:30,000")))
+					 (expect (subed-subtitle-msecs-stop) :to-equal (subed-timestamp-to-msecs "00:03:30,000"))))
+				(it "ignores the next subtitle's start time if there's enough spacing."
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 2)
+					 (let ((subed-enforce-time-boundaries 'adjust))
+						 (subed-set-subtitle-time-stop (subed-timestamp-to-msecs "00:03:01,000")))
+					 (expect (subed-subtitle-msecs-stop) :to-equal (subed-timestamp-to-msecs "00:03:01,000"))
+					 (expect (subed-subtitle-msecs-start 3) :to-equal (subed-timestamp-to-msecs "00:03:03,45"))))
+				(it "ignores the next subtitle's start time if spacing is unspecified."
+					(let ((subed-subtitle-spacing nil))
+						(with-temp-srt-buffer
+						 (insert mock-srt-data)
+						 (subed-jump-to-subtitle-id 2)
+						 (let ((subed-enforce-time-boundaries 'adjust))
+							 (subed-set-subtitle-time-stop (subed-timestamp-to-msecs "00:03:05,000")))
+						 (expect (subed-subtitle-msecs-stop) :to-equal (subed-timestamp-to-msecs "00:03:05,000"))
+						 (expect (subed-subtitle-msecs-start 3) :to-equal (subed-timestamp-to-msecs "00:03:03,45")))))
+				(it "adjusts the next subtitle's start time to maintain spacing."
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 2)
+					 (let ((subed-enforce-time-boundaries 'adjust)
+								 (subed-subtitle-spacing 100))
+						 (subed-set-subtitle-time-stop (subed-timestamp-to-msecs "00:03:05,000"))) 
+					 (expect (subed-subtitle-msecs-stop) :to-equal (subed-timestamp-to-msecs "00:03:05,000"))
+					 (expect (subed-subtitle-msecs-start 3) :to-equal (subed-timestamp-to-msecs "00:03:05,100"))))
+				(it "adjusts the next subtitle's stop time, but not the one after it."
+					;; TODO: Decide if we want to change this expectation
+					(with-temp-srt-buffer
+					 (insert mock-srt-data)
+					 (subed-jump-to-subtitle-id 1)
+					 (let ((subed-enforce-time-boundaries 'adjust)
+								 (subed-subtitle-spacing 100))
+						 (subed-set-subtitle-time-stop (subed-timestamp-to-msecs "00:03:05,000")))
+					 (expect (subed-subtitle-msecs-stop) :to-equal (subed-timestamp-to-msecs "00:03:05,000"))
+					 (expect (subed-subtitle-msecs-start 2) :to-equal (subed-timestamp-to-msecs "00:03:05,100"))
+					 (expect (subed-subtitle-msecs-start 3) :to-equal (subed-timestamp-to-msecs "00:03:03,45"))))))
+		(describe "when it will result in invalid duration"
+			(it "adjusts the start time as needed."
+				(with-temp-srt-buffer
+				 (insert mock-srt-data)
+				 (subed-jump-to-subtitle-id 3)
+				 (let ((subed-enforce-time-boundaries 'adjust)
+							 (temp-time (subed-timestamp-to-msecs "00:03:01,000")))
+					 (subed-set-subtitle-time-stop temp-time)
+					 (expect (subed-subtitle-msecs-start) :to-equal temp-time)
+					 (expect (subed-subtitle-msecs-stop) :to-equal temp-time))))
+			(it "throws an error when enforcing time boundaries."
+				(with-temp-srt-buffer
+				 (insert mock-srt-data)
+				 (subed-jump-to-subtitle-id 3)
+				 (let ((subed-enforce-time-boundaries 'error)
+							 (temp-time (subed-timestamp-to-msecs "00:03:01,000")))
+					 (expect (subed-set-subtitle-time-stop temp-time)
+									 :to-throw 'error))))
+			(it "changes it when ignoring time boundaries."
+				(with-temp-srt-buffer
+				 (insert mock-srt-data)
+				 (subed-jump-to-subtitle-id 3)
+				 (let ((subed-enforce-time-boundaries nil)
+							 (temp-time (subed-timestamp-to-msecs "00:03:01,000")))
+					 (subed-set-subtitle-time-stop temp-time)
+					 (expect (subed-subtitle-msecs-stop) :to-equal temp-time))))
+			(it "changes it when negative durations are allowed."
+				(with-temp-srt-buffer
+				 (insert mock-srt-data)
+				 (subed-jump-to-subtitle-id 3)
+				 (let ((subed-enforce-time-boundaries 'error)
+							 (temp-time (subed-timestamp-to-msecs "00:03:01,000")))
+					 (subed-set-subtitle-time-stop temp-time nil t)
+					 (expect (subed-subtitle-msecs-stop) :to-equal temp-time))))))
   (describe "Adjusting subtitle start/stop time"
     :var (subed-subtitle-time-adjusted-hook)
     (it "runs the appropriate hook."
