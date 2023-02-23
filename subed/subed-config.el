@@ -164,12 +164,14 @@ If set to zero or smaller, playback is paused."
 - 'adjust means adjust the stop or start time of the current subtitle to
   keep duration >= 0, and adjust the previous or next subtitle as needed
   to maintain `subed-subtitle-spacing'.
-- 'error means report an error.
+- 'clip means limit the change to the maximum it can be within the boundaries.
+- 'error means report an error if there will be overlaps or negative duration.
 - nil means perform the change without checking.
 
-Other values aside from the ones specified above will be treated as 'adjust."
+Other values aside from the ones specified above will be treated as nil."
   :type '(choice
 					(const :tag "Adjust other times as needed" adjust)
+					(const :tag "Limit changes" clip)
 					(const :tag "Report an error" error)
 					(const :tag "Do not check" nil))
   :group 'subed)
