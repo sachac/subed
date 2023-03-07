@@ -1,6 +1,24 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.1.0 - 2023-03-07 - Sacha Chua
+
+There are new customizable values for subed-enforce-time-boundaries
+that affect setting or adjusting the start or stop times if a subtitle
+will end up overlapping with the previous or next subtitle (based on
+subed-subtitle-spacing), or if a subtitle will have negative duration.
+
+- ='adjust=: the new default. If a subtitle will have invalid times,
+  adjust the other time to resolve the conflict.
+- ='clip=: set the current time to at most (or at least) the other time, taking spacing into account.
+- ='error=: report an error when trying to set an invalid time.
+- =nil=: don't perform any checks, just set the time.
+
+By default, you can adjust times with ~M-[~ (~decrease-start-time~), ~M-]~ (~increase-start-time~), ~M-{~ (~decrease-stop-time~), and ~M-}~ (~increase-stop-time~).
+
+I've been writing more tests to cover the behavior, but I might've
+missed stuff, so please let me know if things turn up!
+
 ** Version 1.0.29 - 2022-12-29 - Sacha Chua
 
 subed-toggle-sync-point-to-player should not confuse subed when it is
