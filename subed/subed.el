@@ -1,6 +1,6 @@
 ;;; subed.el --- A major mode for editing subtitles  -*- lexical-binding: t; -*-
 
-;; Version: 1.1.0
+;; Version: 1.2.0
 ;; Maintainer: Sacha Chua <sacha@sachachua.com>
 ;; Author: Random User
 ;; Keywords: convenience, files, hypermedia, multimedia
@@ -127,17 +127,15 @@ Adjust - Increase or decrease start or stop time of a subtitle
 Key bindings:
 \\{subed-mode-map}"
   :group 'subed
-  (add-hook 'subed-mode-hook #'subed-guess-format :local)
   (add-hook 'post-command-hook #'subed--post-command-handler :append :local)
   (add-hook 'before-save-hook #'subed-prepare-to-save :append :local)
   (add-hook 'after-save-hook #'subed-mpv-reload-subtitles :append :local)
   (add-hook 'kill-buffer-hook #'subed-mpv-kill :append :local)
   (add-hook 'kill-emacs-hook #'subed-mpv-kill :append :local)
   (when subed-trim-overlap-check-on-load
-    (add-hook 'subed-mode-hook #'subed-trim-overlap-check :append :local))
-  (add-hook 'subed-mode-hook #'subed-set-up-defaults :append :local)
+		(subed-trim-overlap-check))
   (when subed-auto-play-media
-    (add-hook 'subed-mode-hook #'subed-auto-play-media-maybe :append :local)))
+		(subed-auto-play-media-maybe)))
 
 (declare-function subed-ass-mode "subed-ass" (&optional arg))
 (declare-function subed-vtt-mode "subed-vtt" (&optional arg))

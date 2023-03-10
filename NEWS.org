@@ -1,6 +1,15 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.0 - 2023-03-10 - Sacha Chua
+
+I changed ~subed-mode~ so that it doesn't add functions to local
+hooks, because that seems to mess up configuring hooks from your Emacs
+init file. Please see README.org for recommended code to add to your
+~subed-mode-hook~. I decided to suggest each line separately so that
+it's easier for people to disable specific behaviors instead of hiding
+it in ~subed-setup-defaults~.
+
 ** Version 1.1.0 - 2023-03-07 - Sacha Chua
 
 There are new customizable values for subed-enforce-time-boundaries
