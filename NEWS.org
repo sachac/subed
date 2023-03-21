@@ -1,6 +1,11 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.1 - 2023-03-21 - Sacha Chua
+
+Adjusting the starting or stopping timestamp (including via merges)
+should now also update the looping start and stop times.
+
 ** Version 1.2.0 - 2023-03-10 - Sacha Chua
 
 I changed ~subed-mode~ so that it doesn't add functions to local

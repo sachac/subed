@@ -411,6 +411,14 @@ Return the new subtitle start time in milliseconds."
 								(subed-set-subtitle-time-stop (- msecs subed-subtitle-spacing))
 								(message "Adjusted previous stop time to %s to maintain spacing"
 												 (subed-msecs-to-timestamp (subed-subtitle-msecs-stop)))))))))
+			;; Update loop start if it's within the current subtitle
+			(when (and subed--subtitle-loop-start
+								 (>= subed--subtitle-loop-start
+										(floor (- (subed-subtitle-msecs-start)
+															(* 1000 (or subed-loop-seconds-before 0)))))
+								 (< subed--subtitle-loop-start (subed-subtitle-msecs-stop)))
+				(setq subed--subtitle-loop-start
+							(floor (- msecs (* 1000 (or subed-loop-seconds-before 0))))))
 			(when (and (subed-jump-to-subtitle-time-start sub-id)
                  (looking-at subed--regexp-timestamp))
         (replace-match
@@ -477,6 +485,14 @@ Return the new subtitle stop time in milliseconds."
 								(subed-set-subtitle-time-start (+ msecs subed-subtitle-spacing))
 								(message "Adjusted next start time to %s to maintain spacing"
 												 (subed-msecs-to-timestamp (subed-subtitle-msecs-start)))))))))
+			;; Update loop end if it's within the current subtitle
+			(when (and subed--subtitle-loop-stop
+								 (> subed--subtitle-loop-stop (subed-subtitle-msecs-start))
+								 (<= subed--subtitle-loop-stop
+										 (floor (+ (subed-subtitle-msecs-stop)
+															 (* 1000 (or subed-loop-seconds-after 0))))))
+				(setq subed--subtitle-loop-stop
+							(floor (+ msecs (* 1000 (or subed-loop-seconds-after 0))))))
 			(when (and
 						 (subed-jump-to-subtitle-time-stop)
 						 (looking-at subed--regexp-timestamp))

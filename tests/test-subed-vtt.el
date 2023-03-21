@@ -1302,7 +1302,19 @@ This is another test here.
        (subed-merge-with-next)
        (expect (subed-subtitle-text) :to-equal "Bar.\nBaz.")
        (expect (subed-subtitle-msecs-start) :to-equal 122234)
-       (expect (subed-subtitle-msecs-stop) :to-equal 195500))))
+       (expect (subed-subtitle-msecs-stop) :to-equal 195500)))
+		(it "updates looping."
+			(with-temp-vtt-buffer
+       (insert mock-vtt-data)
+       (subed-jump-to-subtitle-text "00:02:02.234")
+			 (let ((subed-loop-seconds-before 1)
+						 (subed-loop-seconds-after 1))
+				 (subed--set-subtitle-loop)
+				 (expect subed--subtitle-loop-start :to-equal (subed-timestamp-to-msecs "00:02:01.234"))
+				 (expect subed--subtitle-loop-stop :to-equal (subed-timestamp-to-msecs "00:02:11.345"))
+				 (subed-merge-with-next)
+				 (expect subed--subtitle-loop-start :to-equal (subed-timestamp-to-msecs "00:02:01.234"))
+				 (expect subed--subtitle-loop-stop :to-equal (subed-timestamp-to-msecs "00:03:16.500"))))))
   (describe "Font-locking"
     (it "recognizes VTT syntax."
       (with-temp-vtt-buffer

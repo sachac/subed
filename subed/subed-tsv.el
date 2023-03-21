@@ -430,7 +430,8 @@ Use the format-specific function for MAJOR-MODE."
             (subed-jump-to-subtitle-text)
             (delete-region pos (point))
             (insert " ")
-            (subed-set-subtitle-time-stop new-end))
+						(let ((subed-enforce-time-boundaries nil))
+							(subed-set-subtitle-time-stop new-end)))
         (error "No subtitle to merge into")))))
 
 
