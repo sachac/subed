@@ -1,6 +1,10 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.2 - 2023-04-09 - Sacha Chua
+
+subed should not autoplay media over TRAMP.
+
 ** Version 1.2.1 - 2023-03-21 - Sacha Chua
 
 Adjusting the starting or stopping timestamp (including via merges)

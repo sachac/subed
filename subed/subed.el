@@ -1,6 +1,6 @@
 ;;; subed.el --- A major mode for editing subtitles  -*- lexical-binding: t; -*-
 
-;; Version: 1.2.1
+;; Version: 1.2.2
 ;; Maintainer: Sacha Chua <sacha@sachachua.com>
 ;; Author: Random User
 ;; Keywords: convenience, files, hypermedia, multimedia
@@ -91,14 +91,18 @@
   "A keymap for editing subtitles.")
 
 (defun subed-auto-play-media-maybe ()
-  "Load media file associated with this subtitle file."
-  (let ((file (subed-guess-media-file)))
-    (when file
-      (subed-debug "Auto-discovered media file: %s" file)
-      (condition-case err
-          (subed-mpv-play-from-file file)
-        (error (message "%s -- Set subed-auto-find-media to nil to avoid this error."
-                        (car (cdr err))))))))
+  "Load media file associated with this subtitle file.
+Do not autoplay media over TRAMP."
+	(unless (and (featurep 'tramp)
+							 (buffer-file-name)
+							 (tramp-tramp-file-p (buffer-file-name)))
+		(let ((file (subed-guess-media-file)))
+			(when file
+				(subed-debug "Auto-discovered media file: %s" file)
+				(condition-case err
+						(subed-mpv-play-from-file file)
+					(error (message "%s -- Set subed-auto-find-media to nil to avoid this error."
+													(car (cdr err)))))))))
 (define-obsolete-function-alias 'subed-auto-find-video-maybe 'subed-auto-play-media-maybe "1.20")
 
 ;; TODO: Make these more configurable.
