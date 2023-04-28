@@ -73,6 +73,14 @@ when people speak are indistinguishable from silence."
   :type 'number
   :group 'subed-waveform)
 
+(defcustom subed-waveform-timestamp-resolution
+  20
+  "Resolution of the timestamps.
+When the user clicks on the waveform, the timestamp set will be
+rounded to the nearest multiple of this number."
+  :type 'integer
+  :group 'subed-waveform)
+
 (defun subed-show-waveform-p ()
   "Whether waveform is displayed for the current subtitle."
   (member #'subed-waveform-put-svg subed-subtitle-motion-hook))
@@ -249,6 +257,13 @@ times per second."
     subed--waveform-stop))
   (subed--waveform-update-overlay-svg))
 
+(defconst subed-waveform-map
+  (let ((subed-waveform-map (make-keymap)))
+    (define-key subed-waveform-map [mouse-1] #'subed-waveform-set-start)
+    (define-key subed-waveform-map [mouse-3] #'subed-waveform-set-stop)
+    subed-waveform-map)
+  "A keymap for clicking on the waveform.")
+
 (defun subed--waveform-update-overlay-svg ()
   "Update the SVG in the overlay.
 Assume `subed--waveform-svg' is already set."
@@ -256,8 +271,9 @@ Assume `subed--waveform-svg' is already set."
 	       'before-string
 	       (propertize
 		" "
-		'display
-		(svg-image subed--waveform-svg))))
+		'display (svg-image subed--waveform-svg)
+		'pointer 'arrow
+		'keymap subed-waveform-map)))
 
 (defun subed-waveform-put-svg ()
   "Put an overlay with the SVG in the current subtitle.
@@ -274,6 +290,27 @@ Set the relevant variables if necessary."
 		 "\n"))
   (subed--waveform-set-svg))
 
+(defun waveform-mouse-event-to-ms (event)
+  "Return the millisecond position of EVENT."
+  (let* ((x (car (elt (cadr event) 8)))
+         (width (car (elt (cadr event) 9))))
+    (* subed-waveform-timestamp-resolution
+       (round (+ (* (/ (* 1.0 x) width)
+		    (- subed--waveform-stop subed--waveform-start))
+		 subed--waveform-start)
+	      subed-waveform-timestamp-resolution))))
+
+(defun subed-waveform-set-start (event)
+  "Set the start timestamp in the place clicked."
+  (interactive "e")
+  (subed-set-subtitle-time-start (waveform-mouse-event-to-ms event))
+  (subed--waveform-update-bars (subed-subtitle-msecs-start)))
+
+(defun subed-waveform-set-stop (event)
+  "Set the start timestamp in the place clicked."
+  (interactive "e")
+  (subed-set-subtitle-time-stop (waveform-mouse-event-to-ms event))
+  (subed--waveform-update-bars (subed-subtitle-msecs-start)))
 
 (provide 'subed-waveform)
 ;;; subed-waveform.el ends here
