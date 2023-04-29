@@ -103,6 +103,13 @@ Microsoft Windows, you will not be able to synchronize with MPV.
 - Move one frame forward or backward (~C-c C-f .~ and ~C-c C-f ,~;
   pressing ~,~ or ~.~ afterwards moves by frames until any other
   key is pressed).
+- Show the waveform (~M-x subed-toggle-show-waveform~, off by default)
+  extracted from the media file using ~ffmpeg~ with the start/stop
+  positions of the current subtitle and the current position in MPV
+  marked along with the subtitle.  Change the "volume" of the waveform
+  (i.e., the /visible/ amplitude) with ~C-c C--~ and ~C-c C-=~.
+  Redisplay the waveform with ~C-c |~.  Left/right-click on the
+  waveform to set the start/stop timestamps.
 
 ** Installation
 *** Installing the subed package from NonGNU Elpa
