@@ -25,8 +25,8 @@
 ;; This file supports tab-separated values such as labels exported from Audacity.
 ;; Example:
 ;;
-;; 6.191196	27.488912	This is a test
-;; 44.328966	80.733201	This is another line, a little longer than the first.
+;; 6.191196 27.488912 This is a test
+;; 44.328966  80.733201 This is another line, a little longer than the first.
 
 ;;; Code:
 
@@ -430,8 +430,8 @@ Use the format-specific function for MAJOR-MODE."
             (subed-jump-to-subtitle-text)
             (delete-region pos (point))
             (insert " ")
-						(let ((subed-enforce-time-boundaries nil))
-							(subed-set-subtitle-time-stop new-end)))
+            (let ((subed-enforce-time-boundaries nil))
+              (subed-set-subtitle-time-stop new-end)))
         (error "No subtitle to merge into")))))
 
 

@@ -124,9 +124,9 @@ The keys in it are `:start', `:stop' and `:current'.  The values are
 SVG parameters of the displayed bars.  Every bar must have a unique
 `:id' parameter."
   :type '(alist :key-type (choice (const :tag "Start" :start)
-				  (const :tag "Stop" :stop)
-				  (const :tag "Current" :current))
-		:value-type (plist :key-type symbol :value-type string))
+          (const :tag "Stop" :stop)
+          (const :tag "Current" :current))
+    :value-type (plist :key-type symbol :value-type string))
   :group 'subed-waveform)
 
 (defcustom subed-waveform-preview-msecs-before 2000
@@ -164,39 +164,39 @@ rounded to the nearest multiple of this number."
 (defun subed-waveform-remove ()
   "Remove waveform overlay."
   (interactive)
-	(remove-overlays (point-min) (point-max) 'subed-waveform t)
+  (remove-overlays (point-min) (point-max) 'subed-waveform t)
   (when (overlayp subed-waveform--image-overlay)
     (delete-overlay subed-waveform--image-overlay)))
 
 ;;;###autoload
 (define-minor-mode subed-waveform-minor-mode
   "Display waveforms for subtitles. Update on motion."
-	:lighter "w"
-	:require 'subed
+  :lighter "w"
+  :require 'subed
   (if subed-waveform-minor-mode
       (progn
         (add-hook 'before-save-hook #'subed-waveform-remove nil t)
         (add-hook 'after-save-hook #'subed-waveform-put-svg nil t)
         (add-hook 'subed-subtitle-motion-hook #'subed-waveform-put-svg nil t)
         (add-hook 'after-change-motion-hook #'subed-waveform-put-svg nil t)
-				(add-hook 'subed-mpv-playback-position-hook #'subed-waveform--update-current-bar t)
+        (add-hook 'subed-mpv-playback-position-hook #'subed-waveform--update-current-bar t)
         (add-hook 'subed-subtitle-time-adjusted-hook #'subed-waveform-put-svg nil t)
-				(subed-waveform-put-svg))
+        (subed-waveform-put-svg))
     (subed-waveform-remove)
     (remove-hook 'before-save-hook #'subed-waveform-remove t)
     (remove-hook 'after-save-hook #'subed-waveform-put-svg t)
     (remove-hook 'subed-subtitle-motion-hook #'subed-waveform-put-svg t)
     (remove-hook 'subed-subtitle-time-adjusted-hook #'subed-waveform-put-svg t)
-		(remove-hook 'subed-mpv-playback-position-hook #'subed-waveform--update-current-bar t)
+    (remove-hook 'subed-mpv-playback-position-hook #'subed-waveform--update-current-bar t)
     (remove-hook 'after-change-motion-hook #'subed-waveform-put-svg t)))
 
 (defvar subed-waveform-minor-mode-map
-	(let ((map (make-sparse-keymap)))
-		(define-key map (kbd "C-c C-=") #'subed-waveform-volume-increase)
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-=") #'subed-waveform-volume-increase)
     (define-key map (kbd "C-c C--") #'subed-waveform-volume-decrease)
     (define-key map (kbd "C-c |") #'subed-waveform-put-svg)
-		map)
-	"Keymap for `subed-waveform-minor-mode'.")
+    map)
+  "Keymap for `subed-waveform-minor-mode'.")
 
 (defconst subed-waveform-volume-map
   (let ((map (make-sparse-keymap)))
@@ -217,7 +217,7 @@ rounded to the nearest multiple of this number."
   "Increase `subed-waveform-value' by AMOUNT/2."
   (interactive "p")
   (setq subed-waveform-volume (max 1.0
-				   (- subed-waveform-volume (/ amount 2.0))))
+           (- subed-waveform-volume (/ amount 2.0))))
   (message "Waveform volume multiplier is now set to %s" subed-waveform-volume)
   (subed-waveform-put-svg)
   (set-transient-map subed-waveform-volume-map))
@@ -225,48 +225,48 @@ rounded to the nearest multiple of this number."
 (defun subed-waveform-fancy-filter (width height)
   "Display green waveforms on a dark green background with a grid.
 WIDTH and HEIGHT are given in pixels."
-	(concat
-	 ":colors=#9cf42f[fg];"
+  (concat
+   ":colors=#9cf42f[fg];"
    (format "color=s=%dx%d:color=#44582c,drawgrid=width=iw/10:height=ih/5:color=#9cf42f@0.1[bg];"
            width height)
    "[bg][fg]overlay=format=auto,drawbox=x=(iw-w)/2:y=(ih-h)/2:w=iw:h=1:color=#9cf42f"))
 
 (defun subed-waveform--from-file (filename from to width height)
-	"Returns a string representing the image data in PNG format.
+  "Returns a string representing the image data in PNG format.
 FILENAME is the input file, FROM and TO are time positions, WIDTH
 and HEIGHT are dimensions in pixels."
-	(let* ((args
-					(append
-					 (list "-accurate_seek"
-								 "-ss" (format "%s" from)
-								 "-to" (format "%s" to))
-					 (list "-i" filename)
-					 (list
-						"-loglevel"
-						"0"
-						"-filter_complex"
-						(format "volume=%s,showwavespic=s=%dx%d%s"
-										subed-waveform-volume
-										width height
-										(cond
+  (let* ((args
+          (append
+           (list "-accurate_seek"
+                 "-ss" (format "%s" from)
+                 "-to" (format "%s" to))
+           (list "-i" filename)
+           (list
+            "-loglevel"
+            "0"
+            "-filter_complex"
+            (format "volume=%s,showwavespic=s=%dx%d%s"
+                    subed-waveform-volume
+                    width height
+                    (cond
                      ((functionp subed-waveform-ffmpeg-filter-args)
                       (funcall subed-waveform-ffmpeg-filter-args width height))
                      ((stringp subed-waveform-ffmpeg-filter-args)
                       subed-waveform-ffmpeg-filter-args)
                      (t "")))
-						"-frames:v" "1"
-						"-c:v" "png"
-						"-f" "image2" "-"))))
-		(with-temp-buffer
-			(apply 'call-process subed-waveform-ffmpeg-executable nil t nil args)
-			(encode-coding-string (buffer-string) 'binary))))
+            "-frames:v" "1"
+            "-c:v" "png"
+            "-f" "image2" "-"))))
+    (with-temp-buffer
+      (apply 'call-process subed-waveform-ffmpeg-executable nil t nil args)
+      (encode-coding-string (buffer-string) 'binary))))
 
 (defvar-local subed-waveform--start nil
   "Timestamp (in milliseconds) of the start of the waveform.")
 (defvar-local subed-waveform--stop nil
   "Timestamp (in milliseconds) of the stop of the waveform.")
 (defvar-local subed-waveform--pixels-per-second nil
-	"Number of pixels used for displaying one second.")
+  "Number of pixels used for displaying one second.")
 
 (defun subed-waveform--msecs-to-ffmpeg (msecs)
   "Convert MSECS to string in the format HH:MM:SS.MS."
@@ -275,8 +275,8 @@ and HEIGHT are dimensions in pixels."
 
 (defun subed-waveform--position-to-percent (pos start stop)
   "Return a percentage of POS relative to START/STOP."
-	(when pos
-		(format "%s%%" (/ (* 100 (- pos start)) (- stop start)))))
+  (when pos
+    (format "%s%%" (/ (* 100 (- pos start)) (- stop start)))))
 
 (defvar-local subed-waveform--pos nil
   "Buffer position of the image with the current waveform.")
@@ -293,61 +293,61 @@ and HEIGHT are dimensions in pixels."
 Set `subed-waveform--svg' and `subed-waveform--pos'."
   (save-excursion
     (let ((start (subed-subtitle-msecs-start))
-					(stop (subed-subtitle-msecs-stop)))
+          (stop (subed-subtitle-msecs-stop)))
       (setq subed-waveform--start
-						(floor (max 0 (- start subed-waveform-preview-msecs-before))))
+            (floor (max 0 (- start subed-waveform-preview-msecs-before))))
       (setq subed-waveform--stop
-						(floor (+ stop subed-waveform-preview-msecs-after)))
-			(when (> subed-waveform--stop subed-waveform--start)
-				(let* ((width (string-pixel-width (make-string fill-column ?*)))
-							 (height (save-excursion
-												 ;; don't count the current waveform towards the
-												 ;; line height
-												 (forward-line -1)
-												 (* 2 (line-pixel-height))))
-							 (image (subed-waveform--from-file
-											 (or subed-mpv-media-file (error "No media file found"))
-											 (subed-waveform--msecs-to-ffmpeg subed-waveform--start)
-											 (subed-waveform--msecs-to-ffmpeg subed-waveform--stop)
-											 width
-											 height)))
-					(setq subed-waveform--pixels-per-second (/ width (* 0.001 (- stop start))))
-					(setq subed-waveform--svg (svg-create width height))
-					(svg-embed subed-waveform--svg image "image/png" t
-										 :x 0 :y 0
- 										 :width "100%" :height "100%"
-										 :preserveAspectRatio "none")
-					(subed-waveform--update-bars (subed-subtitle-msecs-start)))))))
+            (floor (+ stop subed-waveform-preview-msecs-after)))
+      (when (> subed-waveform--stop subed-waveform--start)
+        (let* ((width (string-pixel-width (make-string fill-column ?*)))
+               (height (save-excursion
+                         ;; don't count the current waveform towards the
+                         ;; line height
+                         (forward-line -1)
+                         (* 2 (line-pixel-height))))
+               (image (subed-waveform--from-file
+                       (or subed-mpv-media-file (error "No media file found"))
+                       (subed-waveform--msecs-to-ffmpeg subed-waveform--start)
+                       (subed-waveform--msecs-to-ffmpeg subed-waveform--stop)
+                       width
+                       height)))
+          (setq subed-waveform--pixels-per-second (/ width (* 0.001 (- stop start))))
+          (setq subed-waveform--svg (svg-create width height))
+          (svg-embed subed-waveform--svg image "image/png" t
+                     :x 0 :y 0
+                     :width "100%" :height "100%"
+                     :preserveAspectRatio "none")
+          (subed-waveform--update-bars (subed-subtitle-msecs-start)))))))
 
 (defun subed-waveform--move-bar (bar-type position)
   "Update `subed-waveform--svg', moving bar BAR-TYPE to POSITION.
 BAR-TYPE should be a symbol, one of :start, :stop, :current.
 POSITION should be a percentage as a string."
   (svg-remove subed-waveform--svg
-	      (plist-get (alist-get bar-type subed-waveform-bar-params)
-									 ":id"
-									 #'string=))
+        (plist-get (alist-get bar-type subed-waveform-bar-params)
+                   ":id"
+                   #'string=))
   (apply #'svg-line
-	 subed-waveform--svg position 0 position "100%"
-	 (alist-get bar-type subed-waveform-bar-params)))
+   subed-waveform--svg position 0 position "100%"
+   (alist-get bar-type subed-waveform-bar-params)))
 
 (defun subed-waveform--update-bars (subed-subtitle-msecs-start)
   "Update the bars in `subed-waveform--svg'.
 Recompute the waveform if the start bar is too far to the left or
 the stop bar is too far to the right."
   (let* ((start subed-subtitle-msecs-start)
-	 (stop (subed-subtitle-msecs-stop))
-	 (start-pos (subed-waveform--position-to-percent
-		     start
-		     subed-waveform--start
-		     subed-waveform--stop))
-	 (stop-pos (subed-waveform--position-to-percent
-		    stop
-		    subed-waveform--start
-		    subed-waveform--stop)))
+   (stop (subed-subtitle-msecs-stop))
+   (start-pos (subed-waveform--position-to-percent
+         start
+         subed-waveform--start
+         subed-waveform--stop))
+   (stop-pos (subed-waveform--position-to-percent
+        stop
+        subed-waveform--start
+        subed-waveform--stop)))
     (when (or (not subed-waveform--svg)
-	      (< start subed-waveform--start)
-	      (> stop subed-waveform--stop))
+        (< start subed-waveform--start)
+        (> stop subed-waveform--stop))
       (subed-waveform--set-svg))
     (subed-waveform--move-bar :start start-pos)
     (subed-waveform--move-bar :stop stop-pos))
@@ -358,22 +358,22 @@ the stop bar is too far to the right."
 Assume all necessary variables are already set.  This function is
 meant to be as fast as possible so that it can be called many
 times per second."
-	(when subed-mpv-playback-position
-		(subed-waveform--move-bar
-		 :current
-		 (subed-waveform--position-to-percent
-			subed-mpv-playback-position
-			subed-waveform--start
-			subed-waveform--stop)))
+  (when subed-mpv-playback-position
+    (subed-waveform--move-bar
+     :current
+     (subed-waveform--position-to-percent
+      subed-mpv-playback-position
+      subed-waveform--start
+      subed-waveform--stop)))
   (subed-waveform--update-overlay-svg))
 
 (defvar subed-waveform-svg-map
   (let ((subed-waveform-svg-map (make-keymap)))
     (define-key subed-waveform-svg-map [mouse-1] #'subed-waveform-set-start)
-		(define-key subed-waveform-svg-map [mouse-2] #'subed-waveform-jump-to-timestamp)
+    (define-key subed-waveform-svg-map [mouse-2] #'subed-waveform-jump-to-timestamp)
     (define-key subed-waveform-svg-map [mouse-3] #'subed-waveform-set-stop)
     (define-key subed-waveform-svg-map [down-mouse-3] #'ignore)
-		(define-key subed-waveform-svg-map [C-mouse-2] #'ignore)
+    (define-key subed-waveform-svg-map [C-mouse-2] #'ignore)
     (define-key subed-waveform-svg-map [S-mouse-3] #'ignore)
     (define-key subed-waveform-svg-map [C-mouse-3] #'ignore)
     (define-key subed-waveform-svg-map [S-down-mouse-1] #'ignore)
@@ -390,12 +390,12 @@ times per second."
   "Update the SVG in the overlay.
 Assume `subed-waveform--svg' is already set."
   (overlay-put subed-waveform--image-overlay
-	       'before-string
-	       (propertize
-					" "
-					'display (svg-image subed-waveform--svg)
-					'pointer 'arrow
-					'keymap subed-waveform-svg-map)))
+         'before-string
+         (propertize
+          " "
+          'display (svg-image subed-waveform--svg)
+          'pointer 'arrow
+          'keymap subed-waveform-svg-map)))
 
 (defun subed-waveform-put-svg (&rest _)
   "Put an overlay with the SVG in the current subtitle.
@@ -403,17 +403,17 @@ Set the relevant variables if necessary.
 This function ignores arguments and can be used in hooks."
   (interactive)
   (setq subed-waveform--pos (subed-jump-to-subtitle-text))
-	(when subed-waveform--pos
-		(if (overlayp subed-waveform--image-overlay)
-				(move-overlay subed-waveform--image-overlay
-											subed-waveform--pos subed-waveform--pos)
-			(setq subed-waveform--image-overlay
-						(make-overlay subed-waveform--pos subed-waveform--pos))
-			(overlay-put subed-waveform--image-overlay 'subed-waveform t)
-			(overlay-put subed-waveform--image-overlay
-									 'after-string
-									 "\n"))
-		(subed-waveform--set-svg)))
+  (when subed-waveform--pos
+    (if (overlayp subed-waveform--image-overlay)
+        (move-overlay subed-waveform--image-overlay
+                      subed-waveform--pos subed-waveform--pos)
+      (setq subed-waveform--image-overlay
+            (make-overlay subed-waveform--pos subed-waveform--pos))
+      (overlay-put subed-waveform--image-overlay 'subed-waveform t)
+      (overlay-put subed-waveform--image-overlay
+                   'after-string
+                   "\n"))
+    (subed-waveform--set-svg)))
 
 ;;; Adjusting based on the mouse
 
@@ -423,9 +423,9 @@ This function ignores arguments and can be used in hooks."
          (width (car (elt (cadr event) 9))))
     (* subed-waveform-timestamp-resolution
        (round (+ (* (/ (* 1.0 x) width)
-										(- subed-waveform--stop subed-waveform--start))
-								 subed-waveform--start)
-							subed-waveform-timestamp-resolution))))
+                    (- subed-waveform--stop subed-waveform--start))
+                 subed-waveform--start)
+              subed-waveform-timestamp-resolution))))
 
 (defun subed-waveform-set-start (event)
   "Set the start timestamp in the place clicked."
@@ -443,13 +443,13 @@ This function ignores arguments and can be used in hooks."
   "Make this subtitle start `subed-milliseconds-adjust' milliseconds earlier."
   (interactive "e")
   (save-excursion
-		(when subed-waveform--pixels-per-second
-	    (let* ((x1 (car (elt (elt event 2) 2)))
-						 (x2 (car (elt (elt event 1) 2)))
-						 (msecs
-							(floor (* 1000 (/ (- x1 x2)	; pixels moved
-																subed-waveform--pixels-per-second)))))
-				(subed-adjust-subtitle-time-start msecs)))))
+    (when subed-waveform--pixels-per-second
+      (let* ((x1 (car (elt (elt event 2) 2)))
+             (x2 (car (elt (elt event 1) 2)))
+             (msecs
+              (floor (* 1000 (/ (- x1 x2) ; pixels moved
+                                subed-waveform--pixels-per-second)))))
+        (subed-adjust-subtitle-time-start msecs)))))
 
 (defun subed-waveform-increase-stop-time (event)
   "Make this subtitle stop later.
@@ -459,12 +459,12 @@ by `subed-milliseconds-adjust' milliseconds."
   (interactive "e")
   (save-excursion
     (when subed-waveform--pixels-per-second
-	    (let* ((x1 (car (elt (elt event 2) 2)))
-						 (x2 (car (elt (elt event 1) 2)))
-						 (msecs
-							(floor (* 1000 (/ (- x1 x2)	; pixels moved
-																subed-waveform--pixels-per-second)))))
-				(subed-adjust-subtitle-time-stop msecs)))))
+      (let* ((x1 (car (elt (elt event 2) 2)))
+             (x2 (car (elt (elt event 1) 2)))
+             (msecs
+              (floor (* 1000 (/ (- x1 x2) ; pixels moved
+                                subed-waveform--pixels-per-second)))))
+        (subed-adjust-subtitle-time-stop msecs)))))
 
 (defun subed-waveform-split (event)
   "Split the current subtitle.

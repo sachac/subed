@@ -170,10 +170,10 @@ If set to zero or smaller, playback is paused."
 
 Other values aside from the ones specified above will be treated as nil."
   :type '(choice
-					(const :tag "Adjust other times as needed" adjust)
-					(const :tag "Limit changes" clip)
-					(const :tag "Report an error" error)
-					(const :tag "Do not check" nil))
+          (const :tag "Adjust other times as needed" adjust)
+          (const :tag "Limit changes" clip)
+          (const :tag "Report an error" error)
+          (const :tag "Do not check" nil))
   :group 'subed)
 
 (defcustom subed-sanitize-functions

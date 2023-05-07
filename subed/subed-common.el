@@ -349,9 +349,9 @@ If SUB-ID is not given, set the text of the current subtitle."
   nil)
 
 (subed-define-generic-function set-subtitle-time-start (msecs
-																												&optional sub-id
-																												ignore-negative-duration
-																												ignore-overlap)
+                                                        &optional sub-id
+                                                        ignore-negative-duration
+                                                        ignore-overlap)
   "Set subtitle start time to MSECS milliseconds.
 
 If SUB-ID is not given, set the start of the current subtitle.
@@ -369,66 +369,66 @@ Return the new subtitle start time in milliseconds."
   (save-excursion
     (when (or (not sub-id)
               (and sub-id (subed-jump-to-subtitle-id sub-id)))
-			(when (< msecs 0)
-				(if	(eq subed-enforce-time-boundaries 'error)
-						(error "Start time %d is negative." msecs)
-					(setq msecs 0)))
-			(when (and
-						 (not ignore-negative-duration)
-						 subed-enforce-time-boundaries
-						 (> msecs (subed-subtitle-msecs-stop)))
-				(pcase subed-enforce-time-boundaries
-					('error
-					 (error "Start time %s will be after stop time %s"
-									(subed-msecs-to-timestamp msecs)
-									(subed-msecs-to-timestamp (subed-subtitle-msecs-stop))))
-					('clip
-					 (setq msecs (subed-subtitle-msecs-stop))
-					 (message "Clipping to %s" (subed-msecs-to-timestamp msecs)))
-					('adjust
-					 (let ((subed-enforce-time-boundaries nil))
-						 (subed-set-subtitle-time-stop msecs)
-						 (message "Adjusted stop time to %s to avoid negative duration"
-											(subed-msecs-to-timestamp (subed-subtitle-msecs-stop)))))))
-			(when (and subed-enforce-time-boundaries
-								 (not ignore-overlap))
-				(subed-save-excursion
-				 (when (and (subed-backward-subtitle-time-stop)
-										subed-subtitle-spacing
-										(> (subed-subtitle-msecs-stop)
-											 (- msecs subed-subtitle-spacing)))
-					 (pcase subed-enforce-time-boundaries
-						 ('error
-							(error "Start time %s will be too close to previous stop time of %s"
-										 (subed-msecs-to-timestamp msecs)
-										 (subed-msecs-to-timestamp (subed-subtitle-msecs-stop))))
-						 ('clip
-							(setq msecs (+ (subed-subtitle-msecs-stop) subed-subtitle-spacing))
-							(message "Clipping to %s to maintain spacing from previous stop time of %s"
-											 msecs
-											 (subed-subtitle-msecs-stop)))
-						 ('adjust
-							(let ((subed-enforce-time-boundaries nil))
-								(subed-set-subtitle-time-stop (- msecs subed-subtitle-spacing))
-								(message "Adjusted previous stop time to %s to maintain spacing"
-												 (subed-msecs-to-timestamp (subed-subtitle-msecs-stop)))))))))
-			;; Update loop start if it's within the current subtitle
-			(when (and subed--subtitle-loop-start
-								 (>= subed--subtitle-loop-start
-										(floor (- (subed-subtitle-msecs-start)
-															(* 1000 (or subed-loop-seconds-before 0)))))
-								 (< subed--subtitle-loop-start (subed-subtitle-msecs-stop)))
-				(setq subed--subtitle-loop-start
-							(floor (- msecs (* 1000 (or subed-loop-seconds-before 0))))))
-			(when (and (subed-jump-to-subtitle-time-start sub-id)
+      (when (< msecs 0)
+        (if (eq subed-enforce-time-boundaries 'error)
+            (error "Start time %d is negative." msecs)
+          (setq msecs 0)))
+      (when (and
+             (not ignore-negative-duration)
+             subed-enforce-time-boundaries
+             (> msecs (subed-subtitle-msecs-stop)))
+        (pcase subed-enforce-time-boundaries
+          ('error
+           (error "Start time %s will be after stop time %s"
+                  (subed-msecs-to-timestamp msecs)
+                  (subed-msecs-to-timestamp (subed-subtitle-msecs-stop))))
+          ('clip
+           (setq msecs (subed-subtitle-msecs-stop))
+           (message "Clipping to %s" (subed-msecs-to-timestamp msecs)))
+          ('adjust
+           (let ((subed-enforce-time-boundaries nil))
+             (subed-set-subtitle-time-stop msecs)
+             (message "Adjusted stop time to %s to avoid negative duration"
+                      (subed-msecs-to-timestamp (subed-subtitle-msecs-stop)))))))
+      (when (and subed-enforce-time-boundaries
+                 (not ignore-overlap))
+        (subed-save-excursion
+         (when (and (subed-backward-subtitle-time-stop)
+                    subed-subtitle-spacing
+                    (> (subed-subtitle-msecs-stop)
+                       (- msecs subed-subtitle-spacing)))
+           (pcase subed-enforce-time-boundaries
+             ('error
+              (error "Start time %s will be too close to previous stop time of %s"
+                     (subed-msecs-to-timestamp msecs)
+                     (subed-msecs-to-timestamp (subed-subtitle-msecs-stop))))
+             ('clip
+              (setq msecs (+ (subed-subtitle-msecs-stop) subed-subtitle-spacing))
+              (message "Clipping to %s to maintain spacing from previous stop time of %s"
+                       msecs
+                       (subed-subtitle-msecs-stop)))
+             ('adjust
+              (let ((subed-enforce-time-boundaries nil))
+                (subed-set-subtitle-time-stop (- msecs subed-subtitle-spacing))
+                (message "Adjusted previous stop time to %s to maintain spacing"
+                         (subed-msecs-to-timestamp (subed-subtitle-msecs-stop)))))))))
+      ;; Update loop start if it's within the current subtitle
+      (when (and subed--subtitle-loop-start
+                 (>= subed--subtitle-loop-start
+                    (floor (- (subed-subtitle-msecs-start)
+                              (* 1000 (or subed-loop-seconds-before 0)))))
+                 (< subed--subtitle-loop-start (subed-subtitle-msecs-stop)))
+        (setq subed--subtitle-loop-start
+              (floor (- msecs (* 1000 (or subed-loop-seconds-before 0))))))
+      (when (and (subed-jump-to-subtitle-time-start sub-id)
                  (looking-at subed--regexp-timestamp))
         (replace-match
          (save-match-data (subed-msecs-to-timestamp msecs)))
-				(subed-subtitle-msecs-start)))))
+        (subed-subtitle-msecs-start)))))
 
 (subed-define-generic-function set-subtitle-time-stop (msecs &optional sub-id
-																														 ignore-negative-duration
-																														 ignore-overlap)
+                                                             ignore-negative-duration
+                                                             ignore-overlap)
   "Set subtitle stop time to MSECS milliseconds.
 
 If SUB-ID is not given, set the stop of the current subtitle.
@@ -445,61 +445,61 @@ checking.
 
 Return the new subtitle stop time in milliseconds."
   (save-excursion
-		(when (or (not sub-id)
+    (when (or (not sub-id)
               (and sub-id (subed-jump-to-subtitle-id sub-id)))
-			(let ((current-start (subed-subtitle-msecs-start)))
-				(when (subed-jump-to-subtitle-time-stop sub-id)
-					(when (and subed-enforce-time-boundaries
-										 (not ignore-negative-duration)
-										 (< msecs current-start))
-						(pcase subed-enforce-time-boundaries
-							('error
-							 (error "Stop time %s will be before start time %s"
-											(subed-msecs-to-timestamp msecs)
-											(subed-msecs-to-timestamp current-start)))
-							('clip
-							 (message "Clipping time to %s" (subed-msecs-to-timestamp current-start))
-							 (setq msecs (subed-subtitle-msecs-start)))
-							('adjust
-							 (let ((subed-enforce-time-boundaries nil))
-								 (subed-set-subtitle-time-start msecs)
-								 (message "Adjusted start time to %s to avoid negative duration"
-													(subed-msecs-to-timestamp current-start))))))))
-			(when (and subed-enforce-time-boundaries
-								 (not ignore-overlap))
-				(subed-save-excursion
-				 (when (and (subed-forward-subtitle-time-stop)
-										subed-subtitle-spacing
-										(< (subed-subtitle-msecs-start)
-											 (+ msecs subed-subtitle-spacing)))
-					 (pcase subed-enforce-time-boundaries
-						 ('error
-							(error "Stop time %s will be too close to next start time of %s"
-										 (subed-msecs-to-timestamp msecs)
-										 (subed-msecs-to-timestamp (subed-subtitle-msecs-start))))
-						 ('clip
-							(setq msecs (- (subed-subtitle-msecs-start) subed-subtitle-spacing))
-							(message "Clipping to %s to preserve spacing"
-											 (subed-msecs-to-timestamp msecs)))
-						 ('adjust
-							(let ((subed-enforce-time-boundaries nil))
-								(subed-set-subtitle-time-start (+ msecs subed-subtitle-spacing))
-								(message "Adjusted next start time to %s to maintain spacing"
-												 (subed-msecs-to-timestamp (subed-subtitle-msecs-start)))))))))
-			;; Update loop end if it's within the current subtitle
-			(when (and subed--subtitle-loop-stop
-								 (> subed--subtitle-loop-stop (subed-subtitle-msecs-start))
-								 (<= subed--subtitle-loop-stop
-										 (floor (+ (subed-subtitle-msecs-stop)
-															 (* 1000 (or subed-loop-seconds-after 0))))))
-				(setq subed--subtitle-loop-stop
-							(floor (+ msecs (* 1000 (or subed-loop-seconds-after 0))))))
-			(when (and
-						 (subed-jump-to-subtitle-time-stop)
-						 (looking-at subed--regexp-timestamp))
-				(replace-match
-				 (save-match-data (subed-msecs-to-timestamp msecs)))
-				(subed-subtitle-msecs-stop)))))
+      (let ((current-start (subed-subtitle-msecs-start)))
+        (when (subed-jump-to-subtitle-time-stop sub-id)
+          (when (and subed-enforce-time-boundaries
+                     (not ignore-negative-duration)
+                     (< msecs current-start))
+            (pcase subed-enforce-time-boundaries
+              ('error
+               (error "Stop time %s will be before start time %s"
+                      (subed-msecs-to-timestamp msecs)
+                      (subed-msecs-to-timestamp current-start)))
+              ('clip
+               (message "Clipping time to %s" (subed-msecs-to-timestamp current-start))
+               (setq msecs (subed-subtitle-msecs-start)))
+              ('adjust
+               (let ((subed-enforce-time-boundaries nil))
+                 (subed-set-subtitle-time-start msecs)
+                 (message "Adjusted start time to %s to avoid negative duration"
+                          (subed-msecs-to-timestamp current-start))))))))
+      (when (and subed-enforce-time-boundaries
+                 (not ignore-overlap))
+        (subed-save-excursion
+         (when (and (subed-forward-subtitle-time-stop)
+                    subed-subtitle-spacing
+                    (< (subed-subtitle-msecs-start)
+                       (+ msecs subed-subtitle-spacing)))
+           (pcase subed-enforce-time-boundaries
+             ('error
+              (error "Stop time %s will be too close to next start time of %s"
+                     (subed-msecs-to-timestamp msecs)
+                     (subed-msecs-to-timestamp (subed-subtitle-msecs-start))))
+             ('clip
+              (setq msecs (- (subed-subtitle-msecs-start) subed-subtitle-spacing))
+              (message "Clipping to %s to preserve spacing"
+                       (subed-msecs-to-timestamp msecs)))
+             ('adjust
+              (let ((subed-enforce-time-boundaries nil))
+                (subed-set-subtitle-time-start (+ msecs subed-subtitle-spacing))
+                (message "Adjusted next start time to %s to maintain spacing"
+                         (subed-msecs-to-timestamp (subed-subtitle-msecs-start)))))))))
+      ;; Update loop end if it's within the current subtitle
+      (when (and subed--subtitle-loop-stop
+                 (> subed--subtitle-loop-stop (subed-subtitle-msecs-start))
+                 (<= subed--subtitle-loop-stop
+                     (floor (+ (subed-subtitle-msecs-stop)
+                               (* 1000 (or subed-loop-seconds-after 0))))))
+        (setq subed--subtitle-loop-stop
+              (floor (+ msecs (* 1000 (or subed-loop-seconds-after 0))))))
+      (when (and
+             (subed-jump-to-subtitle-time-stop)
+             (looking-at subed--regexp-timestamp))
+        (replace-match
+         (save-match-data (subed-msecs-to-timestamp msecs)))
+        (subed-subtitle-msecs-stop)))))
 
 (subed-define-generic-function make-subtitle (&optional id start stop text comment)
   "Generate new subtitle string.
@@ -556,18 +556,18 @@ If MODE-FUNC is non-nil, use that function to initialize the mode.
 Otherwise, initialize the mode based on the filename."
   (when (and filename (file-exists-p filename))
     (with-temp-buffer
-			(let ((subed-auto-play-media nil))
-				(insert-file-contents filename)
-				(if mode-func
-						(funcall mode-func)
-					(let ((mode-entry
-								 (seq-find (lambda (mode-alist)
-														 (string-match (car mode-alist) filename))
-													 auto-mode-alist)))
-						(if mode-entry
-								(funcall (cdr mode-entry))
-							(subed-tsv-mode))))
-				(subed-subtitle-list)))))
+      (let ((subed-auto-play-media nil))
+        (insert-file-contents filename)
+        (if mode-func
+            (funcall mode-func)
+          (let ((mode-entry
+                 (seq-find (lambda (mode-alist)
+                             (string-match (car mode-alist) filename))
+                           auto-mode-alist)))
+            (if mode-entry
+                (funcall (cdr mode-entry))
+              (subed-tsv-mode))))
+        (subed-subtitle-list)))))
 
 (defun subed-subtitle ()
   "Return the subtitle at point as a list.
@@ -729,10 +729,10 @@ nil if nothing changed."
     (when msecs-new
       ;; MSECS-NEW must be bigger than the current start time if we are adding
       ;; or smaller if we are subtracting.
-			(setq msecs-new
-						(subed-set-subtitle-time-start msecs-new nil
-																					 ignore-negative-duration
-																					 ignore-overlap))
+      (setq msecs-new
+            (subed-set-subtitle-time-start msecs-new nil
+                                           ignore-negative-duration
+                                           ignore-overlap))
       (subed--run-subtitle-time-adjusted-hook)
       (- msecs-new msecs-start))))
 
@@ -758,11 +758,11 @@ nil if nothing changed."
          (msecs-new (when msecs-stop (+ msecs-stop msecs))))
     ;; MSECS-NEW must be bigger than the current stop time if we are adding or
     ;; smaller if we are subtracting.
-    (when (and (>= msecs-new 0)	;; Ignore negative times
-               (or (and (> msecs 0) (> msecs-new msecs-stop))	;; Adding
-                   (and (< msecs 0) (< msecs-new msecs-stop))))	;; Subtracting
-			(setq msecs-new
-						(subed-set-subtitle-time-stop msecs-new nil ignore-negative-duration ignore-overlap))
+    (when (and (>= msecs-new 0) ;; Ignore negative times
+               (or (and (> msecs 0) (> msecs-new msecs-stop)) ;; Adding
+                   (and (< msecs 0) (< msecs-new msecs-stop)))) ;; Subtracting
+      (setq msecs-new
+            (subed-set-subtitle-time-stop msecs-new nil ignore-negative-duration ignore-overlap))
       (subed--run-subtitle-time-adjusted-hook)
       (- msecs-new msecs-stop))))
 
@@ -817,7 +817,7 @@ See `subed-increase-start-time' about ARG."
   "Replace current subtitle's start time with current playback time."
   (interactive)
   (when (and subed-mpv-playback-position
-	         (subed-subtitle-msecs-start))
+           (subed-subtitle-msecs-start))
     (subed-set-subtitle-time-start subed-mpv-playback-position)
     (subed--run-subtitle-time-adjusted-hook)
     subed-mpv-playback-position))
@@ -826,7 +826,7 @@ See `subed-increase-start-time' about ARG."
   "Replace current subtitle's stop time with current playback time."
   (interactive)
   (when (and subed-mpv-playback-position
-	         (subed-subtitle-msecs-stop))
+           (subed-subtitle-msecs-stop))
     (subed-set-subtitle-time-stop subed-mpv-playback-position)
     (subed--run-subtitle-time-adjusted-hook)
     subed-mpv-playback-position))
@@ -876,7 +876,7 @@ but we move the start time first."
 BEG and END specify a region.  This stretches the subtitles so
 that they cover the new timespan.  If you want to shift all the
 subtitles by the same offset, use `subed-move-subtitles' instead."
-  (let* ((beg-point (save-excursion	; normalized to fixed location over BEG
+  (let* ((beg-point (save-excursion ; normalized to fixed location over BEG
                       (goto-char beg)
                       (subed-jump-to-subtitle-end)
                       (point)))
@@ -915,24 +915,24 @@ subtitles by the same offset, use `subed-move-subtitles' instead."
     ;; check for range with 0 time interval
     (unless (/= beg-start-msecs old-end-start-msecs)
       (user-error "Can't scale subtitle range with 0 time interval"))
-		;; check for overlap
-		(when (and (> msecs 0) (eq subed-enforce-time-boundaries 'error))
-			(subed-save-excursion
-			 (goto-char end-point)
-			 (let ((old-stop (subed-subtitle-msecs-stop)))
-				 (when (and (subed-forward-subtitle-time-start)
-										(> (+ old-stop msecs subed-subtitle-spacing)
-											 (subed-subtitle-msecs-start)))
-					 (user-error "Can't scale when extension would overlap subsequent subtitles")))))
-		;; check for non-chronological: last will start before previous subtitle stops
-		(let ((list
-					 (subed-subtitle-list beg end)))
-			;; make sure each subtitle ends before the next subtitle starts
-			(while list
-				(when (and (cdr list)
-									 (> (elt (car list) 2) (elt (cadr list) 1)))
-					(user-error "Can't scale when nonchronological subtitles exist"))
-				(setq list (cdr list))))
+    ;; check for overlap
+    (when (and (> msecs 0) (eq subed-enforce-time-boundaries 'error))
+      (subed-save-excursion
+       (goto-char end-point)
+       (let ((old-stop (subed-subtitle-msecs-stop)))
+         (when (and (subed-forward-subtitle-time-start)
+                    (> (+ old-stop msecs subed-subtitle-spacing)
+                       (subed-subtitle-msecs-start)))
+           (user-error "Can't scale when extension would overlap subsequent subtitles")))))
+    ;; check for non-chronological: last will start before previous subtitle stops
+    (let ((list
+           (subed-subtitle-list beg end)))
+      ;; make sure each subtitle ends before the next subtitle starts
+      (while list
+        (when (and (cdr list)
+                   (> (elt (car list) 2) (elt (cadr list) 1)))
+          (user-error "Can't scale when nonchronological subtitles exist"))
+        (setq list (cdr list))))
     (unless (= msecs 0)
       (subed-with-subtitle-replay-disabled
         (cl-flet ((move-subtitle (subed--get-move-subtitle-func msecs)))
@@ -1002,8 +1002,8 @@ subtitles by the same offset, use `subed-move-subtitles' instead."
               (unless (setq msecs (move-subtitle msecs))
                 (throw 'bumped-into-subtitle t))
               (subed-forward-subtitle-id)
-							(subed-for-each-subtitle (point) end nil
-								(move-subtitle msecs :ignore-negative-duration)))))))))
+              (subed-for-each-subtitle (point) end nil
+                (move-subtitle msecs :ignore-negative-duration)))))))))
 
 (defun subed-scale-subtitles (msecs &optional beg end)
   "Scale subtitles between BEG and END after moving END MSECS.
@@ -1013,12 +1013,12 @@ If BEG is nil, BEG will be the first subtitle in the buffer.
 
 If you want to shift all the subtitles by the same offset, use
 `subed-move-subtitles' instead."
-	(interactive (list (if current-prefix-arg
-												 (prefix-numeric-value current-prefix-arg)
-											 (read-number "Milliseconds: "))
-										 (when (region-active-p) (point))
-										 (when (region-active-p) (mark))))
-	(let ((beg (or beg (point-min)))
+  (interactive (list (if current-prefix-arg
+                         (prefix-numeric-value current-prefix-arg)
+                       (read-number "Milliseconds: "))
+                     (when (region-active-p) (point))
+                     (when (region-active-p) (mark))))
+  (let ((beg (or beg (point-min)))
         (end (or end (point-max))))
     (subed--scale-subtitles-in-region msecs beg end)
     (when (subed-replay-adjusted-subtitle-p)
@@ -1092,11 +1092,11 @@ If END is nil, move all subtitles from BEG to end of buffer.
 If BEG is nil, move only the current subtitle.
 After subtitles are moved, replay the first moved subtitle if
 replaying is enabled."
-	(interactive (list (if current-prefix-arg
-												 (prefix-numeric-value current-prefix-arg)
-											 (read-number "Milliseconds: "))
-										 (when (region-active-p) (point))
-										 (when (region-active-p) (mark))))
+  (interactive (list (if current-prefix-arg
+                         (prefix-numeric-value current-prefix-arg)
+                       (read-number "Milliseconds: "))
+                     (when (region-active-p) (point))
+                     (when (region-active-p) (mark))))
   (cond ((and beg end) (subed--move-subtitles-in-region msecs beg end))
         (beg (subed--move-subtitles-in-region msecs beg (point-max)))
         (t (subed--move-current-subtitle msecs)))
@@ -1532,27 +1532,27 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 
 If QUIET is non-nil, do not display a message in the minibuffer."
   (interactive)
-	;; If looping over a subtitle, don't immediately enable it. Set it to be enabled after the loop ends.
-	(if (subed-loop-over-current-subtitle-p)
-			(setq subed--enable-point-to-player-sync-after-disabling-loop t)
-		(unless (subed-sync-point-to-player-p)
-			(add-hook 'subed-mpv-playback-position-hook #'subed--sync-point-to-player :append :local)
-			(subed-debug "Enabled syncing point to playback position: %s" subed-mpv-playback-position-hook)
-			(unless quiet
-				(message "Enabled syncing point to playback position")))))
+  ;; If looping over a subtitle, don't immediately enable it. Set it to be enabled after the loop ends.
+  (if (subed-loop-over-current-subtitle-p)
+      (setq subed--enable-point-to-player-sync-after-disabling-loop t)
+    (unless (subed-sync-point-to-player-p)
+      (add-hook 'subed-mpv-playback-position-hook #'subed--sync-point-to-player :append :local)
+      (subed-debug "Enabled syncing point to playback position: %s" subed-mpv-playback-position-hook)
+      (unless quiet
+        (message "Enabled syncing point to playback position")))))
 
 (defun subed-disable-sync-point-to-player (&optional quiet)
   "Do not move point automatically to the currently playing subtitle.
 
 If QUIET is non-nil, do not display a message in the minibuffer."
   (interactive)
-	(when (subed-loop-over-current-subtitle-p)
-		(setq subed--enable-point-to-player-sync-after-disabling-loop nil))
-	(when (subed-sync-point-to-player-p)
-		(remove-hook 'subed-mpv-playback-position-hook #'subed--sync-point-to-player :local)
-		(subed-debug "Disabled syncing point to playback position: %s" subed-mpv-playback-position-hook)
-		(unless quiet
-			(message "Disabled syncing point to playback position"))))
+  (when (subed-loop-over-current-subtitle-p)
+    (setq subed--enable-point-to-player-sync-after-disabling-loop nil))
+  (when (subed-sync-point-to-player-p)
+    (remove-hook 'subed-mpv-playback-position-hook #'subed--sync-point-to-player :local)
+    (subed-debug "Disabled syncing point to playback position: %s" subed-mpv-playback-position-hook)
+    (unless quiet
+      (message "Disabled syncing point to playback position"))))
 
 (defun subed-toggle-sync-point-to-player ()
   "Enable/disable moving point to the currently playing subtitle."
@@ -1583,8 +1583,8 @@ If QUIET is non-nil, do not display a message in the minibuffer."
 
 After `subed-point-sync-delay-after-motion' seconds point is re-synced."
   (if subed--point-sync-delay-after-motion-timer
-			(when (timerp subed--point-sync-delay-after-motion-timer)
-				(cancel-timer subed--point-sync-delay-after-motion-timer))
+      (when (timerp subed--point-sync-delay-after-motion-timer)
+        (cancel-timer subed--point-sync-delay-after-motion-timer))
     (setq subed--point-was-synced (subed-sync-point-to-player-p)))
   (when subed--point-was-synced
     (subed-disable-sync-point-to-player :quiet))
@@ -1812,15 +1812,15 @@ Return nil if function `buffer-file-name' returns nil."
   (when (buffer-file-name)
     (catch 'found-file
       (let* ((file-base (file-name-sans-extension (buffer-file-name)))
-	           (file-stem (file-name-sans-extension file-base)))
-	      (dolist (extension
+             (file-stem (file-name-sans-extension file-base)))
+        (dolist (extension
                  (or extensions (append subed-video-extensions subed-audio-extensions)))
-	        (let ((file-base-media (format "%s.%s" file-base extension))
-		            (file-stem-media (format "%s.%s" file-stem extension)))
-	          (when (file-exists-p file-base-media)
-	            (throw 'found-file file-base-media))
-	          (when (file-exists-p file-stem-media)
-	            (throw 'found-file file-stem-media))))))))
+          (let ((file-base-media (format "%s.%s" file-base extension))
+                (file-stem-media (format "%s.%s" file-stem extension)))
+            (when (file-exists-p file-base-media)
+              (throw 'found-file file-base-media))
+            (when (file-exists-p file-stem-media)
+              (throw 'found-file file-stem-media))))))))
 (define-obsolete-function-alias 'subed-guess-video-file 'subed-guess-media-file "1.0.20")
 
 ;;; Inserting HTML-like tags
@@ -1837,12 +1837,12 @@ If region is not active, insert a pair of tags and put the point
 between them.  If called with a prefix argument, also ask for
 ATTRIBUTE(s)."
   (interactive (let* ((region-p (use-region-p))
-		                  (begin (if region-p (region-beginning) (point)))
-		                  (end (if region-p (region-end) (point)))
-		                  (tag (read-string "Tag: " nil 'subed--html-tag-history))
-		                  (attributes (when current-prefix-arg
-				                            (read-string "Attribute(s): " nil 'subed--html-attr-history))))
-		             (list begin end tag attributes)))
+                      (begin (if region-p (region-beginning) (point)))
+                      (end (if region-p (region-end) (point)))
+                      (tag (read-string "Tag: " nil 'subed--html-tag-history))
+                      (attributes (when current-prefix-arg
+                                    (read-string "Attribute(s): " nil 'subed--html-attr-history))))
+                 (list begin end tag attributes)))
   (save-excursion
     (push (point) buffer-undo-list)
     (goto-char end)
@@ -1856,18 +1856,18 @@ ATTRIBUTE(s)."
   "Insert a pair of <i> tags at point or around the region.
 The region is defined by BEGIN and END."
   (interactive (let* ((region-p (use-region-p))
-		                  (begin (if region-p (region-beginning) (point)))
-		                  (end (if region-p (region-end) (point))))
-		             (list begin end)))
+                      (begin (if region-p (region-beginning) (point)))
+                      (end (if region-p (region-end) (point))))
+                 (list begin end)))
   (subed-insert-html-tag begin end "i"))
 
 (defun subed-insert-html-tag-bold (begin end)
   "Insert a pair of <b> tags at point or around the region.
 The region is defined by BEGIN and END."
   (interactive (let* ((region-p (use-region-p))
-		                  (begin (if region-p (region-beginning) (point)))
-		                  (end (if region-p (region-end) (point))))
-		             (list begin end)))
+                      (begin (if region-p (region-beginning) (point)))
+                      (end (if region-p (region-end) (point))))
+                 (list begin end)))
   (subed-insert-html-tag begin end "b"))
 
 ;;; Characters per second computation
@@ -1897,7 +1897,7 @@ If QUIET is nil, show a message."
   (remove-hook 'subed-subtitle-motion-hook #'subed--move-cps-overlay-to-current-subtitle t)
   (remove-hook 'after-save-hook #'subed--move-cps-overlay-to-current-subtitle t)
   (when subed--cps-overlay
-	  (remove-overlays (point-min) (point-max) 'subed 'cps)
+    (remove-overlays (point-min) (point-max) 'subed 'cps)
     (setq subed--cps-overlay nil))
   (unless quiet
     (message "Disabled showing characters per second")))
@@ -1925,29 +1925,29 @@ If QUIET is nil, show a message."
 if PRINT-MESSAGE is non-nil, display a message."
   (interactive "p")
   (let* ((msecs-start (ignore-errors (subed-subtitle-msecs-start)))
-	       (msecs-stop (ignore-errors (subed-subtitle-msecs-stop)))
-	       (text (if (fboundp subed-transform-for-cps)
-		               (funcall subed-transform-for-cps (subed-subtitle-text))
-		             (subed-subtitle-text)))
-	       (length (length text))
-	       (cps (when (and (numberp msecs-stop)
-			                   (numberp msecs-start))
-		            (/ length 0.001 (- msecs-stop msecs-start)))))
+         (msecs-stop (ignore-errors (subed-subtitle-msecs-stop)))
+         (text (if (fboundp subed-transform-for-cps)
+                   (funcall subed-transform-for-cps (subed-subtitle-text))
+                 (subed-subtitle-text)))
+         (length (length text))
+         (cps (when (and (numberp msecs-stop)
+                         (numberp msecs-start))
+                (/ length 0.001 (- msecs-stop msecs-start)))))
     (if (and print-message cps)
-	      (message "%.1f characters per second" cps)
-	    cps)))
+        (message "%.1f characters per second" cps)
+      cps)))
 
 (defun subed--move-cps-overlay-to-current-subtitle ()
   "Move the CPS overlay to the current subtitle."
   (unless subed--batch-editing
     (let* ((begin (save-excursion
-		                (subed-jump-to-subtitle-time-start)
-		                (point)))
-	         (end (save-excursion
-		              (goto-char begin)
-		              (line-end-position))))
+                    (subed-jump-to-subtitle-time-start)
+                    (point)))
+           (end (save-excursion
+                  (goto-char begin)
+                  (line-end-position))))
       (if subed--cps-overlay
-	        (move-overlay subed--cps-overlay begin end (current-buffer))
+          (move-overlay subed--cps-overlay begin end (current-buffer))
         (setq subed--cps-overlay (make-overlay begin end))
         (overlay-put subed--cps-overlay 'subed 'cps))
       (subed--update-cps-overlay))))
@@ -2036,13 +2036,13 @@ Return the new stop time."
                                 (subed-subtitle-msecs-start))))
         (this-sub-stop-time (subed-subtitle-msecs-stop)))
     (when (and next-sub-start-time this-sub-stop-time
-							 (> this-sub-stop-time
-									(- next-sub-start-time
-										 (if (numberp msecs) msecs subed-subtitle-spacing))))
+               (> this-sub-stop-time
+                  (- next-sub-start-time
+                     (if (numberp msecs) msecs subed-subtitle-spacing))))
       (subed-set-subtitle-time-stop
        (- next-sub-start-time
           (if (numberp msecs) msecs subed-subtitle-spacing))
-			 nil
+       nil
        ignore-negative-duration
        t))))
 
@@ -2065,12 +2065,12 @@ Return the new start time."
       (when (and this-sub-stop-time
                  next-sub-start-time
                  (or msecs subed-subtitle-spacing)
-								 (< next-sub-start-time
-										(+ this-sub-stop-time
-											 (if (numberp msecs) msecs subed-subtitle-spacing))))
+                 (< next-sub-start-time
+                    (+ this-sub-stop-time
+                       (if (numberp msecs) msecs subed-subtitle-spacing))))
         (subed-set-subtitle-time-start
-				 (+ this-sub-stop-time (or msecs subed-subtitle-spacing))
-				 nil
+         (+ this-sub-stop-time (or msecs subed-subtitle-spacing))
+         nil
          ignore-negative-duration
          t)))))
 

@@ -236,7 +236,7 @@ Make sure COMMENT ends with a blank line."
                        (concat comment
                                (if (string-match "\n\n\\'" comment)
                                    "" "\n\n")))
-				 comment)
+         comment)
         ((string-match "\n" comment) (concat "NOTE\n" comment "\n\n"))
         (t (concat "NOTE " comment))))
 
@@ -315,8 +315,8 @@ Use the format-specific function for MAJOR-MODE."
             (subed-jump-to-subtitle-text)
             (delete-region pos (point))
             (insert "\n")
-						(let ((subed-enforce-time-boundaries nil))
-							(subed-set-subtitle-time-stop new-end)))
+            (let ((subed-enforce-time-boundaries nil))
+              (subed-set-subtitle-time-stop new-end)))
         (error "No subtitle to merge into")))))
 
 ;;; Maintenance
