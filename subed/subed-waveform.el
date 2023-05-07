@@ -168,11 +168,20 @@ rounded to the nearest multiple of this number."
   (when (overlayp subed-waveform--image-overlay)
     (delete-overlay subed-waveform--image-overlay)))
 
+(defvar subed-waveform-minor-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-=") #'subed-waveform-volume-increase)
+    (define-key map (kbd "C-c C--") #'subed-waveform-volume-decrease)
+    (define-key map (kbd "C-c |") #'subed-waveform-put-svg)
+    map)
+  "Keymap for `subed-waveform-minor-mode'.")
+
 ;;;###autoload
 (define-minor-mode subed-waveform-minor-mode
   "Display waveforms for subtitles. Update on motion."
-  :lighter "w"
-  :require 'subed
+  :keymap subed-waveform-minor-mode-map
+	:lighter "w"
+	:require 'subed
   (if subed-waveform-minor-mode
       (progn
         (add-hook 'before-save-hook #'subed-waveform-remove nil t)
@@ -189,14 +198,6 @@ rounded to the nearest multiple of this number."
     (remove-hook 'subed-subtitle-time-adjusted-hook #'subed-waveform-put-svg t)
     (remove-hook 'subed-mpv-playback-position-hook #'subed-waveform--update-current-bar t)
     (remove-hook 'after-change-motion-hook #'subed-waveform-put-svg t)))
-
-(defvar subed-waveform-minor-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-=") #'subed-waveform-volume-increase)
-    (define-key map (kbd "C-c C--") #'subed-waveform-volume-decrease)
-    (define-key map (kbd "C-c |") #'subed-waveform-put-svg)
-    map)
-  "Keymap for `subed-waveform-minor-mode'.")
 
 (defconst subed-waveform-volume-map
   (let ((map (make-sparse-keymap)))
