@@ -1,6 +1,13 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.3 - 2023-06-18 - Sacha Chua
+
+Added subed-waveform, which you can enable with
+subed-waveform-minor-mode. This makes it easier to review the waveform
+for the current subtitle so that you can use it to adjust the start or
+stop time. It requires the ffmpeg executable. Thanks, mbork!
+
 ** Version 1.2.2 - 2023-04-09 - Sacha Chua
 
 subed should not autoplay media over TRAMP.
