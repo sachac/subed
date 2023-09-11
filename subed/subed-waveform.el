@@ -89,6 +89,8 @@
 
 ;;; Code:
 
+(require 'svg)
+
 (defgroup subed-waveform nil
   "Minor mode for viewing subtitle waveforms while in `subed-mode'."
   :group 'subed

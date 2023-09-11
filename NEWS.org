@@ -1,6 +1,11 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.4 - 2023-09-11 - Sacha Chua
+
+Guess the format when the generic subed-mode is loaded. Also, require
+svg when subed-waveform is loaded.
+
 ** Version 1.2.3 - 2023-06-18 - Sacha Chua
 
 Added subed-waveform, which you can enable with
