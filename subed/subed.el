@@ -136,6 +136,7 @@ Key bindings:
   (add-hook 'after-save-hook #'subed-mpv-reload-subtitles :append :local)
   (add-hook 'kill-buffer-hook #'subed-mpv-kill :append :local)
   (add-hook 'kill-emacs-hook #'subed-mpv-kill :append :local)
+  (add-hook 'after-change-major-mode-hook #'subed-guess-format :append :local)
   (when subed-trim-overlap-check-on-load
 		(subed-trim-overlap-check))
   (when subed-auto-play-media

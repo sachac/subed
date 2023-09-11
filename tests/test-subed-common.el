@@ -10858,3 +10858,17 @@ Baz.
 			 (progn (subed-jump-to-subtitle-id 2) (point))
 			 (progn (subed-jump-to-subtitle-end 3) (point)))
 			(expect (current-kill 0) :to-equal "Bar.\nBaz.\n"))))
+
+(describe "Guessing the format"
+  (it "works when the generic functions is called."
+    (let ((file (make-temp-file "subed-test" nil ".srt"))
+          (auto-mode-alist '(("\\.srt\\'" . subed-mode))))
+      (find-file file)
+      (expect major-mode :to-equal 'subed-srt-mode)
+      (delete-file file)))
+  (it "does not cause a loop when the more-specific function is called."
+    (let ((file (make-temp-file "subed-test" nil ".srt"))
+          (auto-mode-alist '(("\\.srt\\'" . subed-srt-mode))))
+      (find-file file)
+      (expect major-mode :to-equal 'subed-srt-mode)
+      (delete-file file))))
