@@ -300,6 +300,11 @@ using generic functions such as ~subed-jump-to-subtitle-id~.
    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
    FOR A PARTICULAR PURPOSE.  See the [[https://www.gnu.org/licenses/gpl-3.0.txt][GNU General Public License]] for more
    details.
+* Other resources
+
+- [[https://mbork.pl/2023-09-18_Making_Anki_flashcards_from_subtitles][Marcin Borkowski: 2023-09-18 Making Anki flashcards from subtitles]]
+- [[https://github.com/sachac/subed-record][sachac/subed-record: Record audio in segments and compile it into a file]]
+- [[https://emacsconf.org/captioning/][EmacsConf -  Captioning tips]]
 
 #+STARTUP: showeverything
 #+OPTIONS: num:nil
