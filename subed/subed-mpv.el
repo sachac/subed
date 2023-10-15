@@ -74,18 +74,21 @@
 
 ;;; Server (mpv process that provides an IPC socket)
 
-(defun subed-mpv--socket ()
+(defun subed-mpv--socket (&optional skip-create)
   "Path to mpv's RPC socket for a particular buffer.
-See also `subed-mpv-socket-dir'."
-  (unless (file-exists-p subed-mpv-socket-dir)
+See also `subed-mpv-socket-dir'.
+If SKIP-CREATE is non-nil, don't create it if it doesn't exist."
+  (unless (or skip-create (file-exists-p subed-mpv-socket-dir))
     (condition-case err
         (make-directory subed-mpv-socket-dir :create-parents)
       (file-error
-       (error "%s" (mapconcat #'identity (cdr err) ": ")))))
-  (expand-file-name
-   (format "subed-%s"
-           (md5 (subed--buffer-file-name)))
-   subed-mpv-socket-dir))
+       (error "%s" (mapconcat #'identity (cdr err) ": "))
+       nil)))
+  (when (file-exists-p subed-mpv-socket-dir)
+    (expand-file-name
+     (format "subed-%s"
+             (md5 (subed--buffer-file-name)))
+     subed-mpv-socket-dir)))
 
 (defun subed-mpv--server-start (&rest args)
   "Run mpv in JSON IPC mode.
@@ -115,10 +118,11 @@ Pass ARGS as command line arguments.  \"--idle\" and
   (when (and subed-mpv--server-proc (process-live-p subed-mpv--server-proc))
     (delete-process subed-mpv--server-proc)
     (subed-debug "Killed mpv process"))
-  (let ((socket-file (subed-mpv--socket)))
-    (when (file-exists-p socket-file)
-      (subed-debug "Removing IPC socket: %s" socket-file)
-      (ignore-errors (delete-file socket-file))))
+  (ignore-errors
+    (let ((socket-file (subed-mpv--socket t)))
+      (when (file-exists-p socket-file)
+        (subed-debug "Removing IPC socket: %s" socket-file)
+        (ignore-errors (delete-file socket-file)))))
   (setq subed-mpv--server-proc nil))
 
 (defun subed-mpv--server-started-p ()

@@ -1,6 +1,10 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.5 - 2023-10-15 - Sacha Chua
+
+Ignore MPV socket errors when closing files on remote computers.
+
 ** Version 1.2.4 - 2023-09-11 - Sacha Chua
 
 Guess the format when the generic subed-mode is loaded. Also, require
