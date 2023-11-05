@@ -592,6 +592,11 @@ If BEG and END are not specified, use the whole buffer."
         (setq result (cons (subed-subtitle) result))))
     (nreverse result)))
 
+(defun subed-append-subtitle-list (subtitles)
+  "Append SUBTITLES.
+SUBTITLES should be a list with entries of the form (id start stop text comment)."
+  (mapc (lambda (sub) (apply #'subed-append-subtitle sub)) subtitles))
+
 (defun subed-subtitle-list-text (subtitles &optional include-comments)
   "Return the text in SUBTITLES.
 If INCLUDE-COMMENTS is non-nil, include the comments.
@@ -2140,7 +2145,7 @@ If INIT-FUNC is non-nil, call that function to initialize."
     (erase-buffer)
     (if init-func (funcall init-func))
     (subed-auto-insert)
-    (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub))) subtitles)))
+    (subed-append-subtitle-list subtitles)))
 
 (defun subed-convert (format &optional include-comments)
   "Create a buffer with the current subtitles converted to FORMAT.
