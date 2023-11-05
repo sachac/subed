@@ -467,7 +467,9 @@ by `subed-milliseconds-adjust' milliseconds."
              (msecs
               (floor (* 1000 (/ (- x1 x2) ; pixels moved
                                 subed-waveform--pixels-per-second)))))
-        (subed-adjust-subtitle-time-stop msecs)))))
+        (subed-adjust-subtitle-time-stop msecs)
+        (when (subed-loop-over-current-subtitle-p)
+          (subed--set-subtitle-loop))))))
 
 (defun subed-waveform-split (event)
   "Split the current subtitle.

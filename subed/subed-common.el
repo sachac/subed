@@ -789,7 +789,9 @@ Example usage:
        \\[universal-argument] \\[subed-increase-start-time]  Increase start time by 100ms (the default)
            \\[subed-increase-start-time]  Increase start time by 100ms (the default) again"
   (interactive "P")
-  (subed-adjust-subtitle-time-start (subed-get-milliseconds-adjust arg)))
+  (subed-adjust-subtitle-time-start (subed-get-milliseconds-adjust arg))
+  (when (subed-loop-over-current-subtitle-p)
+    (subed--set-subtitle-loop)))
 
 (defun subed-decrease-start-time (&optional arg)
   "Subtract `subed-milliseconds-adjust' milliseconds from start time.
@@ -798,7 +800,9 @@ Return new start time in milliseconds or nil if it didn't change.
 
 See `subed-increase-start-time' about ARG."
   (interactive "P")
-  (subed-adjust-subtitle-time-start (* -1 (subed-get-milliseconds-adjust arg))))
+  (subed-adjust-subtitle-time-start (* -1 (subed-get-milliseconds-adjust arg)))
+  (when (subed-loop-over-current-subtitle-p)
+    (subed--set-subtitle-loop)))
 
 (defun subed-increase-stop-time (&optional arg)
   "Add `subed-milliseconds-adjust' milliseconds to stop time.
@@ -807,7 +811,9 @@ Return new stop time in milliseconds or nil if it didn't change.
 
 See `subed-increase-start-time' about ARG."
   (interactive "P")
-  (subed-adjust-subtitle-time-stop (subed-get-milliseconds-adjust arg)))
+  (subed-adjust-subtitle-time-stop (subed-get-milliseconds-adjust arg))
+  (when (subed-loop-over-current-subtitle-p)
+    (subed--set-subtitle-loop)))
 
 (defun subed-decrease-stop-time (&optional arg)
   "Subtract `subed-milliseconds-adjust' milliseconds from stop time.
@@ -816,7 +822,9 @@ Return new stop time in milliseconds or nil if it didn't change.
 
 See `subed-increase-start-time' about ARG."
   (interactive "P")
-  (subed-adjust-subtitle-time-stop (* -1 (subed-get-milliseconds-adjust arg))))
+  (subed-adjust-subtitle-time-stop (* -1 (subed-get-milliseconds-adjust arg)))
+  (when (subed-loop-over-current-subtitle-p)
+    (subed--set-subtitle-loop)))
 
 (defun subed-copy-player-pos-to-start-time ()
   "Replace current subtitle's start time with current playback time."
