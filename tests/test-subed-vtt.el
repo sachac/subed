@@ -899,6 +899,24 @@ Baz.
              (expect (point) :to-equal 67)))
           )
         )
+      (describe "before a comment"
+        (it "inserts before the comment."
+            (with-temp-vtt-buffer
+             (insert (concat "00:00:01.000 --> 00:00:02.000\n"
+                             "Foo.\n\n"
+                             "NOTE comment\n\n00:00:05.000 --> 00:00:06.000\n"
+                             "Bar.\n"))
+             (subed-jump-to-subtitle-time-start "00:00:01.000")
+             (expect (subed-append-subtitle nil 2500 4000 "Baz.") :to-equal 67)
+             (expect (buffer-string) :to-equal (concat "00:00:01.000 --> 00:00:02.000\n"
+                                                       "Foo.\n\n"
+                                                       "00:00:02.500 --> 00:00:04.000\n"
+                                                       "Baz.\n\n"
+                                                       "NOTE comment\n\n00:00:05.000 --> 00:00:06.000\n"
+                                                       "Bar.\n"))
+             (expect (point) :to-equal 67))
+          )
+        )
       (it "when point is on empty text."
         (with-temp-vtt-buffer
          (insert (concat "00:00:01.000 --> 00:00:02.000\n"

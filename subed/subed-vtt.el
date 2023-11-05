@@ -238,7 +238,7 @@ Make sure COMMENT ends with a blank line."
                                    "" "\n\n")))
          comment)
         ((string-match "\n" comment) (concat "NOTE\n" comment "\n\n"))
-        (t (concat "NOTE " comment))))
+        (t (concat "NOTE " comment "\n\n"))))
 
 (cl-defmethod subed--make-subtitle (&context (major-mode subed-vtt-mode)
                                              &optional _ start stop text comment)
@@ -284,16 +284,23 @@ TEXT defaults to an empty string.
 
 Move point to the text of the inserted subtitle.  Return new
 point.  Use the format-specific function for MAJOR-MODE."
-  (unless (subed-forward-subtitle-id)
-    ;; Point is on last subtitle or buffer is empty
-    (subed-jump-to-subtitle-end)
-    (when (looking-at "[[:space:]]+")
-      (replace-match ""))
-    ;; Moved point to end of last subtitle; ensure separator exists
-    (while (not (looking-at "\\(\\`\\|[[:blank:]]*\n[[:blank:]]*\n\\)"))
-      (save-excursion (insert ?\n)))
-    ;; Move to end of separator
-    (goto-char (match-end 0)))
+  (let ((pos (point)))
+    (if (subed-forward-subtitle-id)
+        ;; Insert before any comments
+        (progn
+          (subed-backward-subtitle-end)
+          (cond
+           ((eobp) (insert "\n\n"))
+           ((looking-at " *\n\n") (goto-char (match-end 0)))))
+      ;; Point is on last subtitle or buffer is empty
+      (subed-jump-to-subtitle-end)
+      (when (looking-at "[[:space:]]+")
+        (replace-match ""))
+      ;; Moved point to end of last subtitle; ensure separator exists
+      (while (not (looking-at "\\(\\`\\|[[:blank:]]*\n[[:blank:]]*\n\\)"))
+        (save-excursion (insert ?\n)))
+      ;; Move to end of separator
+      (goto-char (match-end 0))))
   (insert (subed-make-subtitle id start stop text comment))
   (unless (eolp)
     ;; Complete separator with another newline unless we inserted at the end
