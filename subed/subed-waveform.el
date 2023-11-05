@@ -377,14 +377,14 @@ times per second."
     (define-key subed-waveform-svg-map [mouse-3] #'subed-waveform-set-stop)
     (define-key subed-waveform-svg-map [down-mouse-3] #'ignore)
     (define-key subed-waveform-svg-map [C-mouse-2] #'ignore)
-    (define-key subed-waveform-svg-map [S-mouse-3] #'ignore)
+    (define-key subed-waveform-svg-map [S-mouse-1] #'subed-waveform-set-start-and-copy-to-previous)
+    (define-key subed-waveform-svg-map [S-mouse-3] #'subed-waveform-set-stop-and-copy-to-next)
     (define-key subed-waveform-svg-map [C-mouse-3] #'ignore)
     (define-key subed-waveform-svg-map [S-down-mouse-1] #'ignore)
     (define-key subed-waveform-svg-map [S-drag-mouse-1] #'subed-waveform-reduce-start-time)
     (define-key subed-waveform-svg-map [S-down-mouse-3] #'ignore)
     (define-key subed-waveform-svg-map [S-drag-mouse-3] #'subed-waveform-increase-stop-time)
     (define-key subed-waveform-svg-map [S-C-down-mouse-2] #'subed-waveform-split)
-    (define-key subed-waveform-svg-map [S-mouse-1] #'ignore)
     (define-key subed-waveform-svg-map [C-mouse-1] #'ignore)
     subed-waveform-svg-map)
   "A keymap for clicking on the waveform.")
@@ -434,13 +434,51 @@ This function ignores arguments and can be used in hooks."
   "Set the start timestamp in the place clicked."
   (interactive "e")
   (subed-set-subtitle-time-start (subed-waveform--mouse-event-to-ms event))
+  (when (subed-loop-over-current-subtitle-p)
+    (subed--set-subtitle-loop))
+  (subed--run-subtitle-time-adjusted-hook)
+  (subed-waveform--update-bars (subed-subtitle-msecs-start)))
+
+(defun subed-waveform-set-start-and-copy-to-previous (event)
+  "Set the start timestamp in the place clicked.
+Copy it to the stop time of the previous subtitle, leaving a gap of
+`subed-subtitle-spacing'."
+  (interactive "e")
+  (subed-set-subtitle-time-start (subed-waveform--mouse-event-to-ms event))
+  (when (subed-loop-over-current-subtitle-p)
+    (subed--set-subtitle-loop))
+  (save-excursion
+    (when (subed-backward-subtitle-time-stop)
+      (subed-set-subtitle-time-stop
+       (- (subed-waveform--mouse-event-to-ms event) subed-subtitle-spacing)))
+    (subed--run-subtitle-time-adjusted-hook))
+  (subed--run-subtitle-time-adjusted-hook)
+  (subed-waveform--update-bars (subed-subtitle-msecs-start)))
+
+(defun subed-waveform-set-stop-and-copy-to-next (event)
+  "Set the stop timestamp in the place clicked.
+Copy it to the start time of the next subtitle, leaving a gap of
+`subed-subtitle-spacing'."
+  (interactive "e")
+  (subed-set-subtitle-time-stop (subed-waveform--mouse-event-to-ms event))
+  (when (subed-loop-over-current-subtitle-p)
+      (subed--set-subtitle-loop))
+  (save-excursion
+    (when (subed-forward-subtitle-time-start)
+      (subed-set-subtitle-time-start
+       (+ (subed-waveform--mouse-event-to-ms event) subed-subtitle-spacing)))
+    (subed--run-subtitle-time-adjusted-hook))
+  (subed--run-subtitle-time-adjusted-hook)
   (subed-waveform--update-bars (subed-subtitle-msecs-start)))
 
 (defun subed-waveform-set-stop (event)
   "Set the start timestamp in the place clicked."
   (interactive "e")
   (subed-set-subtitle-time-stop (subed-waveform--mouse-event-to-ms event))
-  (subed-waveform--update-bars (subed-subtitle-msecs-start)))
+  (when (subed-loop-over-current-subtitle-p)
+    (subed--set-subtitle-loop))
+  (subed--run-subtitle-time-adjusted-hook)
+  (subed-waveform--update-bars (subed-subtitle-msecs-stop)))
 
 (defun subed-waveform-reduce-start-time (event)
   "Make this subtitle start `subed-milliseconds-adjust' milliseconds earlier."
