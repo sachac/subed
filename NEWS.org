@@ -1,6 +1,23 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.6 - 2023-11-05 - Sacha Chua
+
+New commands and functions:
+- M-J: subed-mpv-jump-to-current-subtitle-near-end
+- subed-waveform:
+  - S-mouse-1: subed-waveform-set-start-and-copy-to-previous
+  - S-mouse-3 (right-click): subed-waveform-set-stop-and-copy-to-next
+- subed-append-subtitle-list
+
+New option:
+- subed-sample-msecs
+
+Other changes:
+- Update loop after adjusting timestamps
+- Appending or splitting subtitles in VTT files with comments now puts
+  new subtitles before the next comment.
+
 ** Version 1.2.5 - 2023-10-15 - Sacha Chua
 
 Ignore MPV socket errors when closing files on remote computers.
