@@ -837,7 +837,7 @@ Baz.
              (expect (point) :to-equal 67)))
           )
         (describe "with point on a non-last subtitle"
-          (it "passing nothing."
+          (it "inserts an empty subtitle."
             (with-temp-vtt-buffer
              (insert (concat "00:00:01.000 --> 00:00:02.000\n"
                              "Foo.\n\n"

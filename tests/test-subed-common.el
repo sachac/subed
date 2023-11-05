@@ -3407,6 +3407,15 @@ This is another.
 								:to-equal
 								'((1 61000 65123 "Foo." nil)
 									(2 122234 130345 "Bar." nil))))))
+  (describe "Appending a list of subtitles"
+    (it "adds them."
+      (with-temp-srt-buffer
+       (let ((list '((1 61000 65123 "Foo." nil)
+									   (2 122234 130345 "Bar." nil)
+									   (3 183450 195500 "Baz." nil))))
+         (subed-append-subtitle-list list)
+				 (expect (subed-subtitle-list)
+                 :to-equal list)))))
   (describe "Getting the text of a list"
     (it "returns a blank string when given nothing."
       (expect (subed-subtitle-list-text nil) :to-equal ""))
