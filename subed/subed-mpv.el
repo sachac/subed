@@ -331,6 +331,15 @@ See \"List of events\" in mpv(1)."
       (subed-debug "Seeking player to focused subtitle: %S" cur-sub-start)
       (subed-mpv-jump cur-sub-start))))
 
+(defun subed-mpv-jump-to-current-subtitle-near-end ()
+  "Move playback position to near the end of the current subtitle."
+  (interactive)
+  (let ((cur-sub-end (subed-subtitle-msecs-stop)))
+    (when cur-sub-end
+      (setq cur-sub-end (- cur-sub-end subed-sample-msecs))
+      (subed-debug "Seeking player to end of focused subtitle: %S" cur-sub-end)
+      (subed-mpv-jump cur-sub-end))))
+
 (defun subed-mpv-frame-step ()
   "Step one frame forward.
 Set up keybindings so that repeatedly pressing `,' and `.' moves

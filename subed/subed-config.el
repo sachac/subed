@@ -205,6 +205,11 @@ action."
   :type 'float
   :group 'subed)
 
+(defcustom subed-sample-msecs 2000
+  "Number of milliseconds to play when jumping near the end of a subtitle."
+  :type 'integer
+  :group 'subed)
+
 (defvar-local subed--subtitle-loop-start nil
   "Start position of loop in player in milliseconds.")
 
