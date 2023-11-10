@@ -90,7 +90,7 @@
   :type 'list
   :group 'subed)
 
-(defcustom subed-audio-extensions '("wav" "ogg" "mp3" "opus")
+(defcustom subed-audio-extensions '("wav" "ogg" "mp3" "opus" "m4a")
   "Audio file name extensions."
   :type 'list
   :group 'subed)

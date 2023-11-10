@@ -1,6 +1,12 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.7 - 2023-11-10 - Sacha Chua
+
+- subed-align: Use current media file even if it's a video, and
+  restore the comments assuming the subtitles are in sequence.
+- add .m4a to the list of media extensions
+
 ** Version 1.2.6 - 2023-11-05 - Sacha Chua
 
 New commands and functions:

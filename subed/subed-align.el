@@ -98,7 +98,7 @@ Return a buffer with FORMAT."
   "Reinsert the comments from SUBTITLES.
 Assume that the subtitles are still in the same sequence."
   (goto-char (point-min))
-  (seq-map
+  (mapc
    (lambda (sub)
      (subed-forward-subtitle-time-start)
      (when (elt sub 4)
