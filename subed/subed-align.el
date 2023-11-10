@@ -95,16 +95,14 @@ Return a buffer with FORMAT."
         (subed-align-reinsert-comments subtitles)))))
 
 (defun subed-align-reinsert-comments (subtitles)
-  "Reinsert the comments from SUBTITLES."
+  "Reinsert the comments from SUBTITLES.
+Assume that the subtitles are still in the same sequence."
   (goto-char (point-min))
-  (mapc
+  (seq-map
    (lambda (sub)
+     (subed-forward-subtitle-time-start)
      (when (elt sub 4)
-       ;; find the first subtitle that matches the sub, although the times may have changed.
-       ;; Probably the midpoint of the subtitle will still be within the sub
-       ;; TODO: Accommodate comments in other formats
-       (when (subed-jump-to-subtitle-id-at-msecs (/ (+ (elt sub 2) (elt sub 1)) 2))
-         (insert (elt sub 4)))))
+       (insert (elt sub 4))))
    subtitles))
 
 (provide 'subed-align)
