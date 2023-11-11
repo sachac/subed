@@ -1385,4 +1385,21 @@ World
 00:01:21.058 --> 00:01:23.868
 Again")
        (with-current-buffer (subed-convert "TXT" t)
-         (expect (buffer-string) :to-equal "Hello\n\nNOTE Comment\n\nWorld\nAgain\n"))))))
+         (expect (buffer-string) :to-equal "Hello\n\nNOTE Comment\n\nWorld\nAgain\n")))))
+  (describe "iterating over subtitles"
+    (describe "forwards"
+      (it "does not get confused by the header."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (let (result)
+           (subed-for-each-subtitle (point-min) (point-max) nil
+             (add-to-list 'result (point)))
+           (expect (length result) :to-equal 3)))))
+    (describe "backwards"
+      (it "does not get confused by the header."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (let (result)
+           (subed-for-each-subtitle (point-min) (point-max) t
+             (add-to-list 'result (point)))
+           (expect (length result) :to-equal 3)))))))
