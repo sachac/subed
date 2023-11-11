@@ -109,7 +109,8 @@ If END is nil, it defaults to `point-max'.
 If BEG and END are both nil, run BODY only on the subtitle at point.
 If REVERSE is non-nil, start on the subtitle at END and move backwards.
 Before BODY is run, point is placed on the subtitle's ID."
-  (declare (indent defun))
+  (declare (indent defun)
+           (debug 1))
   `(atomic-change-group
      (if (not ,beg)
          ;; Run body on subtitle at point
@@ -134,15 +135,17 @@ Before BODY is run, point is placed on the subtitle's ID."
                                  (unless (subed-backward-subtitle-id)
                                    (throw 'first-subtitle-reached t)))))
            ;; Iterate forwards
-           (save-excursion (goto-char begm)
-                           (subed-jump-to-subtitle-id)
-                           (catch 'last-subtitle-reached
-                             (while t
-                               (when (> (point) endm)
-                                 (throw 'last-subtitle-reached t))
-                               (progn ,@body)
-                               (unless (subed-forward-subtitle-id)
-                                 (throw 'last-subtitle-reached t))))))))))
+           (save-excursion
+             (goto-char begm)
+             (unless (subed-jump-to-subtitle-id)
+               (subed-forward-subtitle-id))
+             (catch 'last-subtitle-reached
+               (while t
+                 (when (> (point) endm)
+                   (throw 'last-subtitle-reached t))
+                 (progn ,@body)
+                 (unless (subed-forward-subtitle-id)
+                   (throw 'last-subtitle-reached t))))))))))
 
 (defmacro subed-with-subtitle-replay-disabled (&rest body)
   "Run BODY while automatic subtitle replay is disabled."
