@@ -274,7 +274,8 @@ function for MAJOR-MODE."
             (delete-region pos (point))
             (insert " ")
             (let ((subed-enforce-time-boundaries nil))
-              (subed-set-subtitle-time-stop new-end)))
+              (subed-set-subtitle-time-stop new-end))
+            (run-hooks 'subed-subtitle-merged-hook))
         (error "No subtitle to merge into")))))
 
 (cl-defmethod subed--auto-insert (&context (major-mode subed-ass-mode))

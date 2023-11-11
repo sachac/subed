@@ -284,6 +284,7 @@ Use the format-specific function for MAJOR-MODE."
             (insert "\n")
             (let ((subed-enforce-time-boundaries nil))
               (subed-set-subtitle-time-stop new-end))
+            (run-hooks 'subed-subtitle-merged-hook)
             (subed-regenerate-ids-soon))
         (error "No subtitle to merge into")))))
 

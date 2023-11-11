@@ -290,6 +290,9 @@ Otherwise, adjust the stop time of the current subtitle."
   "Functions to call when a subtitle's start or stop time has changed.
 The functions are called with the subtitle's start time.")
 
+(defvar-local subed-subtitle-merged-hook nil
+  "Functions to call when a subtitle has been merged.")
+
 (declare-function subed-subtitle-msecs-start "subed-common" (&optional id))
 
 (defun subed--run-subtitle-time-adjusted-hook ()
