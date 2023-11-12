@@ -418,6 +418,10 @@ Baz.
          (expect (looking-at (regexp-quote "00:03:15.5")) :to-be t)
          (expect (subed-backward-subtitle-id) :to-be 45)
          (expect (looking-at (regexp-quote "00:02:02.234")) :to-be t)))
+      (it "does not get confused by empty lines at the end of the buffer."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data "\n\n")
+         (expect (subed-backward-subtitle-id) :not :to-be nil)))
       (it "returns nil and doesn't move when there is no previous subtitle."
         (with-temp-vtt-buffer
          (expect (subed-backward-subtitle-id) :to-be nil))
@@ -1388,7 +1392,7 @@ Again")
          (expect (buffer-string) :to-equal "Hello\n\nNOTE Comment\n\nWorld\nAgain\n")))))
   (describe "iterating over subtitles"
     (describe "forwards"
-      (it "does not get confused by the header."
+      (it "handles headers."
         (with-temp-vtt-buffer
          (insert mock-vtt-data)
          (let (result)
@@ -1396,9 +1400,16 @@ Again")
              (add-to-list 'result (point)))
            (expect (length result) :to-equal 3)))))
     (describe "backwards"
-      (it "does not get confused by the header."
+      (it "handles headers."
         (with-temp-vtt-buffer
          (insert mock-vtt-data)
+         (let (result)
+           (subed-for-each-subtitle (point-min) (point-max) t
+             (add-to-list 'result (point)))
+           (expect (length result) :to-equal 3))))
+      (it "handles empty lines."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data "\n\n")
          (let (result)
            (subed-for-each-subtitle (point-min) (point-max) t
              (add-to-list 'result (point)))

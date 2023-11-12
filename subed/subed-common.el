@@ -110,7 +110,7 @@ If BEG and END are both nil, run BODY only on the subtitle at point.
 If REVERSE is non-nil, start on the subtitle at END and move backwards.
 Before BODY is run, point is placed on the subtitle's ID."
   (declare (indent defun)
-           (debug 1))
+           (debug t))
   `(atomic-change-group
      (if (not ,beg)
          ;; Run body on subtitle at point
@@ -123,17 +123,19 @@ Before BODY is run, point is placed on the subtitle's ID."
          ;; Run body on multiple subtitles
          (if ,reverse
              ;; Iterate backwards
-             (save-excursion (goto-char endm)
-                             (subed-jump-to-subtitle-id)
-                             (catch 'first-subtitle-reached
-                               (while t
-                                 ;; The subtitle includes every character up to the next subtitle's ID (or eob)
-                                 (let ((sub-end (save-excursion (subed-jump-to-subtitle-end))))
-                                   (when (< sub-end begm)
-                                     (throw 'first-subtitle-reached t)))
-                                 (progn ,@body)
-                                 (unless (subed-backward-subtitle-id)
-                                   (throw 'first-subtitle-reached t)))))
+             (save-excursion
+               (goto-char endm)
+               (unless (subed-jump-to-subtitle-id)
+                 (subed-backward-subtitle-id))
+               (catch 'first-subtitle-reached
+                 (while t
+                   ;; The subtitle includes every character up to the next subtitle's ID (or eob)
+                   (let ((sub-end (save-excursion (subed-jump-to-subtitle-end))))
+                     (when (< sub-end begm)
+                       (throw 'first-subtitle-reached t)))
+                   (progn ,@body)
+                   (unless (subed-backward-subtitle-id)
+                     (throw 'first-subtitle-reached t)))))
            ;; Iterate forwards
            (save-excursion
              (goto-char begm)

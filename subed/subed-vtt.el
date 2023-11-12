@@ -217,13 +217,13 @@ format-specific function for MAJOR-MODE."
 Return point or nil if there is no previous subtitle.  Use the
 format-specific function for MAJOR-MODE."
   (let ((orig-point (point)))
-    (when (subed-jump-to-subtitle-id)
-      (or
-       (catch 'found
-         (while (re-search-backward subed--regexp-separator nil t)
-           (when (subed-jump-to-subtitle-id)
-             (throw 'found (point)))))
-       (progn (goto-char orig-point) nil)))))
+    (subed-jump-to-subtitle-id)
+    (or
+     (catch 'found
+       (while (re-search-backward subed--regexp-separator nil t)
+         (when (subed-jump-to-subtitle-id)
+           (throw 'found (point)))))
+     (progn (goto-char orig-point) nil))))
 
 ;;; Manipulation
 
