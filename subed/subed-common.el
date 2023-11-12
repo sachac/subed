@@ -1980,6 +1980,30 @@ if PRINT-MESSAGE is non-nil, display a message."
          'after-string
          (propertize (format " %.1f CPS" cps) 'face 'shadow 'display '(height 0.9)))))))
 
+(defun subed-wpm (&optional subtitles)
+  "Display words per minute.
+Use SUBTITILES if specified."
+  (interactive)
+  (setq subtitles (or subtitles (subed-subtitle-list)))
+  (let (word-count
+        (minutes
+         (/ (apply '+ (mapcar (lambda (o) (- (elt o 2) (elt o 1))) subtitles))
+            60000.0)))
+    (with-temp-buffer
+      (insert
+       (mapconcat (lambda (o)
+                    (replace-regexp-in-string "</?[^>]+>" "" (elt o 3)))
+                  subtitles
+                  " "))
+      (setq word-count (count-words (point-min) (point-max))))
+    (if (called-interactively-p 'any)
+        (message
+         "%d wpm (%d words / %.1f minutes)"
+         (/ (* 1.0 word-count) minutes)
+         word-count
+         minutes)
+      (/ (* 1.0 word-count) minutes))))
+
 ;;; Trimming overlaps
 
 (defun subed--identify-overlaps ()
