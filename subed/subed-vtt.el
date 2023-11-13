@@ -94,18 +94,6 @@ format-specific function for MAJOR-MODE."
         (unless (subed-forward-subtitle-id)
           (throw 'subtitle-id nil))))))
 
-(cl-defmethod subed--subtitle-comment (&context (major-mode subed-vtt-mode) &optional sub-id)
-  "Return the comment or comments before the current subtitle.
-If SUB-ID is specified, jump to that subtitle first.
-Use the format-specific function for MAJOR-MODE."
-  (save-excursion
-    (subed-jump-to-subtitle-id sub-id)
-    (let ((sub-start-point (point)))
-      (or (subed-backward-subtitle-end)
-          (goto-char (point-min)))
-      (when (re-search-forward "^\\(NOTE\\(.*\n\\)+\n+\\)" sub-start-point t)
-        (match-string 0)))))
-
 ;;; Traversing
 
 (cl-defmethod subed--jump-to-subtitle-id (&context (major-mode subed-vtt-mode) &optional sub-id)
@@ -119,14 +107,13 @@ Use the format-specific function for MAJOR-MODE."
         ;; Look for a line that contains the timestamp, preceded by one or more
         ;; blank lines or the beginning of the buffer.
         (let* ((regex (concat "\\(" subed--regexp-separator "\\|\\`\\)\\("
-                              (regexp-quote sub-id) "\\)")))
+                              (regexp-quote sub-id) "\\)[ \n]")))
           (goto-char (point-min))
           (setq found (re-search-forward regex nil t))
           (if found
               (goto-char (match-beginning 2))
             (goto-char orig-point)
             nil))
-
       ;; Find two or more blank lines or the beginning of the buffer, followed
       ;; by an optional line and a timestamp.
       (or (and (re-search-backward subed--regexp-separator nil t)
@@ -138,6 +125,17 @@ Use the format-specific function for MAJOR-MODE."
         (point))
        ((looking-at (concat "\\(.*\\)\n" subed-vtt--regexp-timestamp " *--> *" subed-vtt--regexp-timestamp " *\n"))
         (point))
+       ((looking-at "^NOTE[ \n]")
+        ;; At a subtitle's comment; scan forward for the timestamp
+        (if (re-search-forward
+             (concat
+              subed--regexp-separator
+              (concat "\\(.*\n\\)?" subed-vtt--regexp-timestamp " *--> *" subed-vtt--regexp-timestamp " *\n")) nil t)
+            (progn
+              (goto-char (or (match-beginning 1) (match-beginning 2)))
+              (point))
+          (goto-char orig-point)
+          nil))
        (t
         (goto-char orig-point)
         nil)))))
@@ -200,11 +198,13 @@ can be found.  Use the format-specific function for MAJOR-MODE."
 Return point or nil if there is no next subtitle.  Use the
 format-specific function for MAJOR-MODE."
   (let ((orig-point (point)))
-    (if (and
-         (re-search-forward subed--regexp-separator nil t)
-         (re-search-forward (concat "^" subed--regexp-timestamp
-                                    " *--> *" subed--regexp-timestamp)
-                            nil t))
+    (subed-jump-to-subtitle-end)
+    (when (and (bolp) (> (point) (point-min))) (forward-char -1))
+    (if (re-search-forward (concat subed--regexp-separator
+                                   "\\(.*?\n\\)?"
+                                   subed--regexp-timestamp
+                                   " *--> *" subed--regexp-timestamp)
+                           nil t)
         (or (subed-jump-to-subtitle-id)
             (progn
               (goto-char orig-point)
@@ -220,7 +220,11 @@ format-specific function for MAJOR-MODE."
     (subed-jump-to-subtitle-id)
     (or
      (catch 'found
-       (while (re-search-backward subed--regexp-separator nil t)
+       (while (re-search-backward
+               (concat "^\\(.*?\\n\\)?"
+                       subed--regexp-timestamp
+                       " *--> *" subed--regexp-timestamp)
+               nil t)
          (when (subed-jump-to-subtitle-id)
            (throw 'found (point)))))
      (progn (goto-char orig-point) nil))))
@@ -239,6 +243,46 @@ Make sure COMMENT ends with a blank line."
          comment)
         ((string-match "\n" comment) (concat "NOTE\n" comment "\n\n"))
         (t (concat "NOTE " comment "\n\n"))))
+
+(cl-defmethod subed--jump-to-subtitle-comment (&context (major-mode subed-vtt-mode)
+                                                        &optional sub-id)
+  "Move point to subtitle's comment.
+If SUB-ID is not given, use subtitle on point.
+Return point, or nil if no comment could be found.
+Use the format-specific function for MAJOR-MODE."
+  (let ((pos (point)))
+    (if (and (subed-jump-to-subtitle-id sub-id)
+             (re-search-backward "^NOTE"
+                                 (or (save-excursion (subed-backward-subtitle-end)) (point-min)) t))
+        (progn (goto-char (match-beginning 0))
+               (point))
+      (goto-char pos)
+      nil)))
+
+(cl-defmethod subed--subtitle-comment (&context (major-mode subed-vtt-mode)
+                                                &optional sub-id)
+  "Return subtitle comment or an empty string.
+If SUB-ID is not given, use the subtitle on point.
+Use the format-specific function for MAJOR-MODE."
+  (save-excursion
+    (let ((comment-start (subed-jump-to-subtitle-comment sub-id)))
+      (if comment-start
+          (buffer-substring comment-start (subed-jump-to-subtitle-id sub-id))
+        ""))))
+
+(cl-defmethod subed--set-subtitle-comment (comment &context (major-mode subed-vtt-mode)
+                                                   &optional sub-id)
+  "Set the current subtitle's comment to COMMENT.
+If COMMENT is nil or the empty string, remove the comment.
+If SUB-ID is not given, use the subtitle on point.
+Use the format-specific function for MAJOR-MODE."
+  (let ((comment-start (subed-jump-to-subtitle-comment sub-id)))
+    ;; remove previous comment
+    (if comment-start
+        (delete-region comment-start (subed-jump-to-subtitle-id sub-id))
+      (subed-jump-to-subtitle-id sub-id))
+    (when (and comment (not (string= comment "")))
+      (insert (subed-vtt--format-comment comment)))))
 
 (cl-defmethod subed--make-subtitle (&context (major-mode subed-vtt-mode)
                                              &optional _ start stop text comment)
@@ -268,7 +312,7 @@ TEXT defaults to an empty string.
 
 Move point to the text of the inserted subtitle.  Return new
 point.  Use the format-specific function for MAJOR-MODE."
-  (subed-jump-to-subtitle-id)
+  (or (subed-jump-to-subtitle-comment) (subed-jump-to-subtitle-id))
   (insert (subed-make-subtitle id start stop text comment))
   (when (looking-at (concat "\\([[:space:]]*\\|^\\)" subed--regexp-timestamp))
     (insert "\n"))
@@ -285,13 +329,7 @@ TEXT defaults to an empty string.
 Move point to the text of the inserted subtitle.  Return new
 point.  Use the format-specific function for MAJOR-MODE."
   (let ((pos (point)))
-    (if (subed-forward-subtitle-id)
-        ;; Insert before any comments
-        (progn
-          (subed-backward-subtitle-end)
-          (cond
-           ((eobp) (insert "\n\n"))
-           ((looking-at " *\n\n") (goto-char (match-end 0)))))
+    (unless (or (subed-forward-subtitle-comment) (subed-forward-subtitle-id))
       ;; Point is on last subtitle or buffer is empty
       (subed-jump-to-subtitle-end)
       (when (looking-at "[[:space:]]+")

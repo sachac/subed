@@ -218,6 +218,12 @@ If SUB-ID is not given, use subtitle on point.
 Return point or nil if a the subtitle's text can't be found."
   (interactive))
 
+(subed-define-generic-function jump-to-subtitle-comment (&optional sub-id)
+  "Move point on the first character of subtitle's comment.
+If SUB-ID is not given, use subtitle on point.
+Return point or nil if a the subtitle's comment can't be found."
+  (interactive))
+
 (subed-define-generic-function jump-to-subtitle-end (&optional sub-id)
   "Move point after the last character of the subtitle's text.
 If SUB-ID is not given, use subtitle on point.
@@ -264,6 +270,28 @@ Return point or nil if there is no previous subtitle."
   (interactive)
   (when (subed-backward-subtitle-id)
     (subed-jump-to-subtitle-text)))
+
+(subed-define-generic-function forward-subtitle-comment ()
+  "Move point to next subtitle's comment.
+Return point or nil if there is no next subtitle."
+  (interactive)
+  (let ((pos (point)))
+    (if (and (subed-forward-subtitle-id)
+             (subed-jump-to-subtitle-comment))
+        (point)
+      (goto-char pos)
+      nil)))
+
+(subed-define-generic-function backward-subtitle-comment ()
+  "Move point to previous subtitle's comment.
+Return point or nil if there is no previous subtitle."
+  (interactive)
+  (let ((pos (point)))
+    (if (and (subed-backward-subtitle-id)
+             (subed-jump-to-subtitle-comment))
+        (point)
+      (goto-char pos)
+      nil)))
 
 (subed-define-generic-function forward-subtitle-end ()
   "Move point to end of next subtitle.
@@ -350,7 +378,12 @@ If SUB-ID is not given, set the text of the current subtitle."
       (- (point) start-point))))
 
 (subed-define-generic-function subtitle-comment (&optional _)
-  "Return the comment preceding this subtitle."
+  "Return subtitle comment or an empty string."
+  nil)
+
+(subed-define-generic-function set-subtitle-comment (comment &optional _)
+   "Set the current subtitle's comment to COMMENT.
+If COMMENT is nil or the empty string, remove the comment."
   nil)
 
 (subed-define-generic-function set-subtitle-time-start (msecs
@@ -609,7 +642,7 @@ If INCLUDE-COMMENTS is a function, call the function on comments
 before including them."
   (mapconcat
    (lambda (sub)
-     (if (and include-comments (elt sub 4))
+     (if (and include-comments (elt sub 4) (not (string= (elt sub 4) "")))
          (concat "\n"
                  (if (functionp include-comments)
                      (funcall include-comments (elt sub 4))

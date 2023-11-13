@@ -216,24 +216,120 @@ Baz.
          (expect (looking-at subed--regexp-timestamp) :to-be t)
          (expect (match-string 0) :to-equal "00:01:01.000")))
       )
-    (describe "to specific subtitle by timestamp"
-      (it "returns timestamp's point if wanted time exists."
-        (with-temp-vtt-buffer
-         (insert mock-vtt-data)
-         (goto-char (point-max))
-         (expect (subed-jump-to-subtitle-id "00:02:02.234") :to-equal 45)
-         (expect (looking-at (regexp-quote "00:02:02.234")) :to-be t)
-         (expect (subed-jump-to-subtitle-id "00:01:01.000") :to-equal 9)
-         (expect (looking-at (regexp-quote "00:01:01.000")) :to-be t)))
-      (it "returns nil and does not move if wanted ID does not exists."
-        (with-temp-vtt-buffer
-         (insert mock-vtt-data)
-         (goto-char (point-min))
-         (search-forward "Foo")
-         (let ((stored-point (point)))
-           (expect (subed-jump-to-subtitle-id "0:08:00") :to-equal nil)
-           (expect stored-point :to-equal (point)))))
-      )
+    (describe "to subtitle ID"
+      (describe "in the current subtitle"
+        (it "returns nil in the header."
+          (with-temp-vtt-buffer
+           (insert mock-vtt-data)
+           (goto-char (point-min))
+           (expect (subed-jump-to-subtitle-id) :to-be nil)))
+        (it "goes to the ID if specified."
+          (with-temp-vtt-buffer
+           (insert "WEBVTT
+
+1
+00:01:01.000 --> 00:01:05.123
+Foo.
+
+00:02:02.234 --> 00:02:10.345
+Bar.
+")
+           (re-search-backward "Foo")
+           (expect (subed-jump-to-subtitle-id) :not :to-be nil)
+           (expect (looking-at "1") :to-be t)))
+        (it "goes to the timestamp if there is no ID."
+          (with-temp-vtt-buffer
+           (insert "WEBVTT
+
+1
+00:01:01.000 --> 00:01:05.123
+Foo.
+
+00:02:02.234 --> 00:02:10.345
+Bar.
+")
+           (re-search-backward "Bar")
+           (expect (subed-jump-to-subtitle-id) :not :to-be nil)
+           (expect (looking-at "00:02:02.234") :to-be t)))
+        (describe "when called from a comment"
+          (it "goes to the ID of the subtitle after the comment."
+					  (with-temp-vtt-buffer
+					   (insert "WEBVTT
+
+NOTE
+This is a comment
+
+1
+00:01:01.000 --> 00:01:05.123
+Foo.
+
+00:02:02.234 --> 00:02:10.345
+Bar.
+")
+					   (re-search-backward "This is a comment")
+					   (expect (subed-jump-to-subtitle-id) :not :to-be nil)
+					   (expect (looking-at "1\n") :to-be t)))
+          (it "goes to the timestamp of the subtitle after the comment if no ID is specified."
+					  (with-temp-vtt-buffer
+					   (insert "WEBVTT
+
+1
+00:01:01.000 --> 00:01:05.123
+Foo.
+
+NOTE
+This is a comment
+
+00:02:02.234 --> 00:02:10.345
+Bar.
+")
+					   (re-search-backward "This is a comment")
+					   (expect (subed-jump-to-subtitle-id) :not :to-be nil)
+					   (expect (looking-at (regexp-quote "00:02:02.234")) :to-be t)))))
+      (describe "when given an ID"
+        (it "returns ID's point if wanted time exists."
+          (with-temp-vtt-buffer
+           (insert "WEBVTT
+
+1
+00:01:01.000 --> 00:01:05.123
+Foo.
+
+NOTE
+This is a comment
+
+00:02:02.234 --> 00:02:10.345
+Bar.
+")
+           (goto-char (point-max))
+           (expect (subed-jump-to-subtitle-id "1") :not :to-be nil)
+           (expect (looking-at "1\n") :to-be t)))
+        (it "returns nil and does not move if wanted ID does not exists."
+          (with-temp-vtt-buffer
+           (insert mock-vtt-data)
+           (goto-char (point-min))
+           (search-forward "Foo")
+           (let ((stored-point (point)))
+             (expect (subed-jump-to-subtitle-id "3") :to-equal nil)
+             (expect stored-point :to-equal (point))))))
+      (describe "when given a timestamp"
+        (it "returns timestamp's point if wanted time exists."
+          (with-temp-vtt-buffer
+           (insert mock-vtt-data)
+           (goto-char (point-max))
+           (expect (subed-jump-to-subtitle-id "00:02:02.234") :to-equal 45)
+           (expect (looking-at (regexp-quote "00:02:02.234")) :to-be t)
+           (expect (subed-jump-to-subtitle-id "00:01:01.000") :to-equal 9)
+           (expect (looking-at (regexp-quote "00:01:01.000")) :to-be t)))
+        (it "returns nil and does not move if wanted ID does not exists."
+          (with-temp-vtt-buffer
+           (insert mock-vtt-data)
+           (goto-char (point-min))
+           (search-forward "Foo")
+           (let ((stored-point (point)))
+             (expect (subed-jump-to-subtitle-id "0:08:00") :to-equal nil)
+             (expect stored-point :to-equal (point)))))))
+
     (describe "to subtitle start time"
       (it "returns start time's point if movement was successful."
         (with-temp-vtt-buffer
@@ -575,8 +671,7 @@ Baz.
          (expect (looking-at (regexp-quote "00:01:01.000")) :to-be t)
          (expect (subed-backward-subtitle-time-stop) :to-be nil)
          (expect (looking-at (regexp-quote "00:01:01.000")) :to-be t)))
-      )
-    )
+      ))
 
   (describe "Setting start/stop time"
     (it "of current subtitle updates it."
@@ -848,7 +943,8 @@ Baz.
                              "00:00:05.000 --> 00:00:06.000\n"
                              "Bar.\n"))
              (subed-jump-to-subtitle-time-start "00:00:01.000")
-             (expect (subed-append-subtitle) :to-equal 67)
+             (subed-append-subtitle)
+             (expect (point) :to-equal 67)
              (expect (buffer-string) :to-equal (concat "00:00:01.000 --> 00:00:02.000\n"
                                                        "Foo.\n\n"
                                                        "00:00:00.000 --> 00:00:01.000\n"
@@ -1289,9 +1385,9 @@ Baz.
       (with-temp-vtt-buffer
        (expect (subed-msecs-to-timestamp 1401) :to-equal "00:00:01.401"))))
   (describe "Working with comments"
-    (it "ignores the comment when jumping to the end of the subtitle"
-      (with-temp-vtt-buffer
-       (insert "WEBVTT
+    (before-each
+      (setq mock-vtt-comments-data
+            "WEBVTT
 
 00:00:00.000 --> 00:00:01.000
 This is a test.
@@ -1301,13 +1397,127 @@ and have more text as needed.
 
 00:01:00.000 --> 00:00:02.000
 This is another test here.
-")
+"))
+    (it "ignores the comment when jumping to the end of the subtitle"
+      (with-temp-vtt-buffer
+       (insert mock-vtt-comments-data)
        (goto-char (point-min))
        (subed-forward-subtitle-end)
        (expect (current-word) :to-equal "test")
        (subed-forward-subtitle-end)
-       (expect (current-word) :to-equal "here"))))
+       (expect (current-word) :to-equal "here")))
+    (describe "jumping to the comment"
+      (it "returns nil when there is no comment."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (re-search-backward "This is a test")
+         (expect (subed-jump-to-subtitle-comment) :to-be nil)))
+      (it "jumps to the comment for the current subtitle."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (goto-char (point-max))
+         (subed-jump-to-subtitle-comment)
+         (expect (looking-at "NOTE A comment") :to-be t))))
+    (describe "getting the comment"
+      (it "returns an empty string when there is no comment."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (re-search-backward "This is a test")
+         (expect (subed-subtitle-comment) :to-equal "")))
+      (it "returns the comment."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (goto-char (point-max))
+         (expect (subed-subtitle-comment) :to-equal "NOTE A comment can go here\nand have more text as needed.\n\n"))))
+    (describe "setting the comment"
+      (it "sets the comment when there isn't one yet."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (re-search-backward "This is a test")
+         (subed-set-subtitle-comment "Skip")
+         (expect (buffer-string) :to-equal
+                 "WEBVTT
 
+NOTE Skip
+
+00:00:00.000 --> 00:00:01.000
+This is a test.
+
+NOTE A comment can go here
+and have more text as needed.
+
+00:01:00.000 --> 00:00:02.000
+This is another test here.
+")))
+      (it "replaces the comment."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (goto-char (point-max))
+         (subed-set-subtitle-comment "Replaced.")
+         (expect (buffer-string) :to-equal
+                 "WEBVTT
+
+00:00:00.000 --> 00:00:01.000
+This is a test.
+
+NOTE Replaced.
+
+00:01:00.000 --> 00:00:02.000
+This is another test here.
+")))
+      (it "clears the comment."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (goto-char (point-max))
+         (subed-set-subtitle-comment nil)
+         (expect (buffer-string) :to-equal
+                 "WEBVTT
+
+00:00:00.000 --> 00:00:01.000
+This is a test.
+
+00:01:00.000 --> 00:00:02.000
+This is another test here.
+"))))
+    (describe "going to the next subtitle's comment"
+      (it "returns nil in an empty buffer."
+        (with-temp-vtt-buffer
+         (expect (subed-forward-subtitle-comment) :to-be nil)))
+      (it "returns nil at the end of the file."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (expect (subed-forward-subtitle-comment) :to-be nil)))
+      (it "returns nil if the next subtitle does not have a comment."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (save-excursion (subed-append-subtitle))
+         (expect (subed-forward-subtitle-comment) :to-be nil)))
+      (it "jumps to the next subtitle's comment."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (re-search-backward "This is a test")
+         (expect (subed-forward-subtitle-comment) :not :to-be nil)
+         (expect (looking-at "NOTE ") :to-be t))))
+    (describe "going to the previous comment"
+      (it "returns nil in an empty buffer."
+        (with-temp-vtt-buffer
+         (expect (subed-backward-subtitle-comment) :to-be nil)))
+      (it "returns nil at the start of the file."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (goto-char (point-min))
+         (expect (subed-backward-subtitle-comment) :to-be nil)))
+      (it "returns nil if the previous subtitle does not have a comment."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (re-search-backward "This is another test here")
+         (expect (subed-backward-subtitle-comment) :to-be nil)))
+      (it "jumps to the previous subtitle's comment."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (subed-append-subtitle)
+         (expect (subed-backward-subtitle-comment) :not :to-be nil)
+         (expect (looking-at "NOTE ") :to-be t)))))
   (describe "Merging with next subtitle"
     (it "throws an error in an empty buffer."
       (with-temp-vtt-buffer
