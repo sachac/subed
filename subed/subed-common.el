@@ -194,6 +194,15 @@ Return nil if TIME-STRING doesn't match the pattern.")
   "Return the ID of the subtitle at MSECS milliseconds.
 Return nil if there is no subtitle at MSECS.")
 
+(subed-define-generic-function jump-to-subtitle-start-pos (&optional sub-id)
+  "Move to the beginning of a subtitle and return point.
+If SUB-ID is not given, focus the current subtitle.
+Return point or nil if no subtitle could be found."
+  (interactive)
+  (or
+   (subed-jump-to-subtitle-comment sub-id)
+   (subed-jump-to-subtitle-id sub-id)))
+
 (subed-define-generic-function jump-to-subtitle-id (&optional sub-id)
   "Move to the ID of a subtitle and return point.
 If SUB-ID is not given, focus the current subtitle's ID.
@@ -222,7 +231,8 @@ Return point or nil if a the subtitle's text can't be found."
   "Move point on the first character of subtitle's comment.
 If SUB-ID is not given, use subtitle on point.
 Return point or nil if a the subtitle's comment can't be found."
-  (interactive))
+  (interactive)
+  nil)
 
 (subed-define-generic-function jump-to-subtitle-end (&optional sub-id)
   "Move point after the last character of the subtitle's text.
@@ -246,6 +256,20 @@ Return point or nil if point is still on the same subtitle.
 See also `subed-vtt--subtitle-id-at-msecs'."
   (when (subed-jump-to-subtitle-id-at-msecs msecs)
     (subed-jump-to-subtitle-text)))
+
+(subed-define-generic-function forward-subtitle-start-pos ()
+  "Move point to the beginning of the next subtitle.
+Return point or nil if there is no next subtitle."
+  (interactive)
+  (when (subed-forward-subtitle-id)
+    (subed-jump-to-subtitle-start-pos)))
+
+(subed-define-generic-function backward-subtitle-start-pos ()
+  "Move point to the beginning of the previous subtitle.
+Return point or nil if there is no previous subtitle."
+  (interactive)
+  (when (subed-backward-subtitle-id)
+    (subed-jump-to-subtitle-start-pos)))
 
 (subed-define-generic-function forward-subtitle-id ()
   "Move point to next subtitle's ID.
@@ -575,18 +599,18 @@ Return new point."
 (subed-define-generic-function kill-subtitle ()
   "Remove subtitle at point."
   (interactive)
-  (let ((beg (save-excursion (subed-jump-to-subtitle-id)
-                             (point)))
-        (end (save-excursion (subed-jump-to-subtitle-id)
-                             (when (subed-forward-subtitle-id)
-                               (point)))))
+  (let ((beg (save-excursion (subed-jump-to-subtitle-start-pos)))
+        (end (save-excursion (subed-forward-subtitle-start-pos))))
     (if (not end)
         ;; Removing the last subtitle because forward-subtitle-id returned nil
-        (setq beg (save-excursion (goto-char beg)
-                                  (subed-backward-subtitle-end)
-                                  (1+ (point)))
-              end (save-excursion (goto-char (point-max)))))
-    (delete-region beg end)))
+        (setq
+         beg (save-excursion (goto-char beg)
+                             (subed-backward-subtitle-end)
+                             (1+ (point)))
+         end (point-max)))
+    (when beg
+      (remove-overlays beg end)
+      (delete-region beg end))))
 
 (defun subed-parse-file (filename &optional mode-func)
   "Return the subtitles from FILENAME in a list.

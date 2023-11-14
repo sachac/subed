@@ -216,6 +216,75 @@ Baz.
          (expect (looking-at subed--regexp-timestamp) :to-be t)
          (expect (match-string 0) :to-equal "00:01:01.000")))
       )
+    (describe "to subtitle start pos"
+			(describe "in the current subtitle"
+				(it "returns nil in the header."
+					(with-temp-vtt-buffer
+					 (insert mock-vtt-data)
+					 (goto-char (point-min))
+					 (expect (subed-jump-to-subtitle-start-pos) :to-be nil)))
+				(it "goes to the ID if specified."
+					(with-temp-vtt-buffer
+					 (insert "WEBVTT
+
+1
+00:01:01.000 --> 00:01:05.123
+Foo.
+
+00:02:02.234 --> 00:02:10.345
+Bar.
+")
+					 (re-search-backward "Foo")
+					 (expect (subed-jump-to-subtitle-start-pos) :not :to-be nil)
+					 (expect (looking-at "1") :to-be t)))
+				(it "goes to the timestamp if there is no ID."
+					(with-temp-vtt-buffer
+					 (insert "WEBVTT
+
+1
+00:01:01.000 --> 00:01:05.123
+Foo.
+
+00:02:02.234 --> 00:02:10.345
+Bar.
+")
+					 (re-search-backward "Bar")
+					 (expect (subed-jump-to-subtitle-start-pos) :not :to-be nil)
+					 (expect (looking-at "00:02:02.234") :to-be t)))
+        (it "goes to the comment if there is one."
+					(with-temp-vtt-buffer
+					 (insert "WEBVTT
+
+NOTE This is a comment
+
+1
+00:01:01.000 --> 00:01:05.123
+Foo.
+
+00:02:02.234 --> 00:02:10.345
+Bar.
+")
+					 (re-search-backward "Foo")
+					 (expect (subed-jump-to-subtitle-start-pos) :not :to-be nil)
+					 (expect (looking-at "NOTE This is a comment") :to-be t)))
+				(describe "when called from a comment"
+					(it "goes to the start of the comment."
+						(with-temp-vtt-buffer
+						 (insert "WEBVTT
+
+NOTE
+This is a comment
+
+1
+00:01:01.000 --> 00:01:05.123
+Foo.
+
+00:02:02.234 --> 00:02:10.345
+Bar.
+")
+						 (re-search-backward "This is a comment")
+						 (expect (subed-jump-to-subtitle-start-pos) :not :to-be nil)
+						 (expect (looking-at "NOTE\nThis is a comment") :to-be t))))))
     (describe "to subtitle ID"
       (describe "in the current subtitle"
         (it "returns nil in the header."

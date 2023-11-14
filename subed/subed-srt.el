@@ -178,8 +178,12 @@ can be found.  Use the format-specific function for MAJOR-MODE."
   "Move point to next subtitle's ID.
 Return point or nil if there is no next subtitle.
 Use the format-specific function for MAJOR-MODE."
-  (when (re-search-forward (concat subed--regexp-separator "[0-9]+\n") nil t)
-    (subed-jump-to-subtitle-id)))
+  (let ((pos (point)))
+    (when (and (bolp) (> (point) (point-min))) (forward-char -1))
+    (if (re-search-forward (concat subed--regexp-separator "[0-9]+\n") nil t)
+        (subed-jump-to-subtitle-id)
+      (goto-char pos)
+      nil)))
 
 (cl-defmethod subed--backward-subtitle-id (&context (major-mode subed-srt-mode))
   "Move point to previous subtitle's ID.
