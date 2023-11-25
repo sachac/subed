@@ -215,6 +215,19 @@ Baz.
          (expect (subed-jump-to-subtitle-time-start) :to-equal 9)
          (expect (looking-at subed--regexp-timestamp) :to-be t)
          (expect (match-string 0) :to-equal "00:01:01.000")))
+      (it "works with short timestamps from a comment."
+        (with-temp-vtt-buffer
+         (insert "WEBVTT\n\nNOTE A comment goes here
+
+09:34.900 --> 00:09:37.659
+Subtitle 1
+
+00:10:34.900 --> 00:11:37.659
+Subtitle 2")
+         (re-search-backward "NOTE")
+         (goto-char (line-beginning-position))
+         (expect (subed-jump-to-subtitle-time-start) :to-equal 35)))
+
       )
     (describe "to subtitle start pos"
 			(describe "in the current subtitle"
@@ -351,10 +364,34 @@ This is a comment
 
 00:02:02.234 --> 00:02:10.345
 Bar.
+
+00:03:02.234 --> 00:03:10.345
+Baz.
 ")
 					   (re-search-backward "This is a comment")
 					   (expect (subed-jump-to-subtitle-id) :not :to-be nil)
-					   (expect (looking-at (regexp-quote "00:02:02.234")) :to-be t)))))
+					   (expect (looking-at (regexp-quote "00:02:02.234")) :to-be t)))
+          (it "goes to the timestamp of the subtitle after the comment even with a short timestamp."
+					  (with-temp-vtt-buffer
+					   (insert "WEBVTT
+
+1
+00:01:01.000 --> 00:01:05.123
+Foo.
+
+NOTE
+This is a comment
+
+02:02.234 --> 00:02:10.345
+Bar.
+
+00:03:02.234 --> 00:03:10.345
+Baz.
+")
+					   (re-search-backward "This is a comment")
+					   (expect (subed-jump-to-subtitle-id) :not :to-be nil)
+					   (expect (looking-at (regexp-quote "02:02.234")) :to-be t)))
+          ))
       (describe "when given an ID"
         (it "returns ID's point if wanted time exists."
           (with-temp-vtt-buffer
@@ -458,6 +495,18 @@ Bar.
       (it "returns nil if movement failed."
         (with-temp-vtt-buffer
          (expect (subed-jump-to-subtitle-time-stop) :to-equal nil)))
+      (it "works with short timestamps from a comment."
+        (with-temp-vtt-buffer
+         (insert "WEBVTT\n\nNOTE A comment goes here
+
+09:34.900 --> 00:09:37.659
+Subtitle 1
+
+00:10:34.900 --> 00:11:37.659
+Subtitle 2")
+         (re-search-backward "NOTE")
+         (goto-char (line-beginning-position))
+         (expect (subed-jump-to-subtitle-text) :to-equal 62)))
       )
     (describe "to end of subtitle text"
       (it "returns point if subtitle end can be found."
@@ -529,7 +578,18 @@ Bar.
          (backward-char)
          (expect (subed-jump-to-subtitle-end) :to-be 98)
          (expect (looking-at "^$") :to-be t)))
-      )
+      (it "works with short timestamps from a comment."
+        (with-temp-vtt-buffer
+         (insert "WEBVTT\n\nNOTE A comment goes here
+
+09:34.900 --> 00:09:37.659
+Subtitle 1
+
+00:10:34.900 --> 00:11:37.659
+Subtitle 2")
+         (re-search-backward "NOTE")
+         (goto-char (line-beginning-position))
+         (expect (subed-jump-to-subtitle-end) :to-equal 72))))
     (describe "to next subtitle ID"
       (it "returns point when there is a next subtitle."
         (with-temp-vtt-buffer

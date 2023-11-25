@@ -130,9 +130,9 @@ Use the format-specific function for MAJOR-MODE."
         (if (re-search-forward
              (concat
               subed--regexp-separator
-              (concat "\\(.*\n\\)?" subed-vtt--regexp-timestamp " *--> *" subed-vtt--regexp-timestamp " *\n")) nil t)
+              (concat "\\(.*\n\\)?\\(" subed-vtt--regexp-timestamp " *--> *" subed-vtt--regexp-timestamp "\\) *\n")) nil t)
             (progn
-              (goto-char (or (match-beginning 1) (match-beginning 2)))
+              (goto-char (or (match-beginning 1) (match-beginning 2) (point)))
               (point))
           (goto-char orig-point)
           nil))
