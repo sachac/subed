@@ -1489,8 +1489,8 @@ Subtitle 2")
                 "\n"
                 "00:12:01.000 --> 00:01:05.123\n"
                 "Foo.\n"))))
-    (describe "preserves point in the current subtitle"
-      (it "when subtitle text is non-empty."
+    (describe "point preservation"
+      (it "works when subtitle text is non-empty."
         (with-temp-vtt-buffer
          (insert mock-vtt-data)
          (goto-char (point-min))
@@ -1500,15 +1500,19 @@ Subtitle 2")
          (expect (current-word) :to-equal "Foo")
          (subed-sort)
          (expect (current-word) :to-equal "Foo")))
-      (it "when subtitle text is empty."
+      (it "works when subtitle text is empty."
         (with-temp-vtt-buffer
          (insert "WEBVTT\n\n00:12:01.000 --> 00:01:05.123\n")
          (let ((pos (point)))
            (subed-sort)
            (expect (buffer-string) :to-equal "WEBVTT\n\n00:12:01.000 --> 00:01:05.123\n\n")
            (expect (point) :to-equal pos))))
-      )
-    )
+      (it "works in the header."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (goto-char (point-min))
+         (subed-sort)
+         (expect (point) :to-equal (point-min))))))
   (describe "Converting msecs to timestamp"
     (it "uses the right format"
       (with-temp-vtt-buffer
