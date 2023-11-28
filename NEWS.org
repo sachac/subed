@@ -1,6 +1,24 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.8 - 2023-11-28 - Sacha Chua
+
+- subed-waveform:
+	- ~M-mouse-1~ (M-left click) and ~M-mouse-3~ (M-right-click) now set
+    the start or end timestamp and copy it to the previous or next
+    subtitle, respectively. This makes it easier to hold ~M-~ down to
+    change timestamps with the mouse or with ~M-[~, ~M-]~, ~M-{~, and
+    M-}, navigating between subtitles with ~M-n~ and ~M-p~.
+	- You can now show waveforms for all the subtitles using M-x
+    subed-waveform-show-all. Set subed-waveform-show-all to non-nil if
+    you want this to be the default behavior of ~M-x subed-waveform
+    minor-mode~.
+- Default to keeping MPV open at the end of the file.
+- New hooks: ~subed-subtitles-sorted-hook~,
+	~subed-subtitle-merged-hook~
+- New function ~subed-media-file~ for things like [[https://github.com/sachac/subed-record][subed-record]] which
+  can refer to multiple sources in one file.
+
 ** Version 1.2.7 - 2023-11-10 - Sacha Chua
 
 - subed-align: Use current media file even if it's a video, and
