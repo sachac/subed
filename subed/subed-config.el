@@ -238,7 +238,7 @@ Used when temporarily disabling point-to-player sync.")
   :type 'file
   :group 'subed)
 
-(defcustom subed-mpv-arguments '("--osd-level=2" "--osd-fractions")
+(defcustom subed-mpv-arguments '("--osd-level=2" "--osd-fractions" "--keep-open=yes")
   "Additional arguments for \"mpv\".
 The options --input-ipc-server=SRTEDIT-MPV-SOCKET and --idle are
 hardcoded."
