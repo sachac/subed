@@ -93,15 +93,19 @@ subtitles) as long the subtitle IDs don't change."
   (declare (debug t))
   (save-excursion
     `(let ((sub-id (subed-subtitle-id))
-           (sub-pos (subed-subtitle-relative-point)))
+           (sub-pos (subed-subtitle-relative-point))
+           (pos (point)))
        (progn ,@body)
-       (subed-jump-to-subtitle-id sub-id)
-       ;; Subtitle text may have changed and we may not be able to move to the
-       ;; exact original position
-       (condition-case nil
-           (forward-char sub-pos)
-         ('beginning-of-buffer nil)
-         ('end-of-buffer nil)))))
+       (if sub-id
+           (progn
+             (subed-jump-to-subtitle-id sub-id)
+             ;; Subtitle text may have changed and we may not be able to move to the
+             ;; exact original position
+             (condition-case nil
+                 (forward-char sub-pos)
+               ('beginning-of-buffer nil)
+               ('end-of-buffer nil)))
+         (goto-char pos)))))
 
 (defmacro subed-for-each-subtitle (beg end reverse &rest body)
   "Run BODY for each subtitle between the region specified by BEG and END.
