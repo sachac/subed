@@ -2236,7 +2236,8 @@ If LIST is nil, use the subtitles in the current buffer."
                     #'subed-jump-to-subtitle-end
                     ;; startkeyfun (return sort value of current record/subtitle)
                     #'subed-subtitle-msecs-start))
-        (subed-regenerate-ids)))))
+        (subed-regenerate-ids)
+        (run-hooks 'subed-subtitles-sorted-hook)))))
 
 ;;; Conversion
 

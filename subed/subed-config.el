@@ -308,6 +308,8 @@ The functions are called with the subtitle's start time."
 (defvar-local subed-subtitle-motion-hook nil
   "Functions to call after current subtitle changed.")
 
+(defvar-local subed-subtitles-sorted-hook nil
+  "Functions to call after subtitles are sorted.")
 
 (provide 'subed-config)
 ;;; subed-config.el ends here
