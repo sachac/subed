@@ -438,6 +438,7 @@ Use the format-specific function for MAJOR-MODE."
 
 ;;; Initialization
 
+;;;###autoload
 (define-derived-mode subed-tsv-mode subed-mode
   "Subed-TSV"
   "Tab-separated subtitles, such as from exporting text labels from Audacity."
