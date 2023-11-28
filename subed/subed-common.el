@@ -1869,6 +1869,18 @@ and therefore gets ARGS, which is ignored."
                              (setq subed--player-is-auto-paused nil)
                              (subed-mpv-playback-speed subed-playback-speed-while-not-typing))))))))
 
+(defvar subed-media-file-functions '(subed-media-file-from-cache subed-guess-media-file)
+  "Functions to use for getting the media file.")
+
+(defun subed-media-file ()
+  "Return the current media file.
+Uses the functions listed in `subed-media-file-functions'."
+  (run-hook-with-args-until-success 'subed-media-file-functions))
+
+(defun subed-media-file-from-cache ()
+  "Return the media file from the variable."
+  subed-mpv-media-file)
+
 (defun subed-guess-media-file (&optional extensions)
   "Find media file with same base name as the opened file in the buffer.
 

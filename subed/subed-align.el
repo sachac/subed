@@ -48,7 +48,7 @@ Return a buffer with FORMAT."
   (interactive
    (list
     (or
-     subed-mpv-media-file
+     (subed-media-file)
      (subed-guess-media-file subed-audio-extensions)
      (read-file-name "Audio file: "))
     (buffer-file-name)
