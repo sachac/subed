@@ -410,9 +410,10 @@ If SUB-ID is not given, set the text of the current subtitle."
   nil)
 
 (subed-define-generic-function set-subtitle-comment (comment &optional _)
-   "Set the current subtitle's comment to COMMENT.
+  "Set the current subtitle's comment to COMMENT.
 If COMMENT is nil or the empty string, remove the comment."
-  nil)
+  (interactive "MComment: ")
+  (error "Not implemented"))
 
 (subed-define-generic-function set-subtitle-time-start (msecs
                                                         &optional sub-id
