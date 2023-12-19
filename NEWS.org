@@ -1,6 +1,18 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.9 - 2023-12-19 - Sacha Chua
+
+- New ol-subed adds subed: links to Org Mode. To use it, add ~(require
+  'ol-subed)~ to your configuration. Then you can store links with
+  ~org-store-link~.
+- ~M-mouse-2~ (M-middle-click) on a subed waveform shifts subtitles.
+- VTT: msecs are now optional.
+- New command ~subed-wdiff-subtitle-text-with-file~ compares subtitle
+  text with a script or other subtitles. It uses the external wdiff
+  tool.
+- subed-subtitle-comment now returns nil when there's no comment.
+
 ** Version 1.2.8 - 2023-11-28 - Sacha Chua
 
 - subed-waveform:
