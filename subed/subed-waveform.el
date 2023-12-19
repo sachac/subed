@@ -412,6 +412,7 @@ times per second."
     (define-key subed-waveform-svg-map [S-mouse-1] #'subed-waveform-set-start-and-copy-to-previous)
     (define-key subed-waveform-svg-map [S-mouse-3] #'subed-waveform-set-stop-and-copy-to-next)
     (define-key subed-waveform-svg-map [M-mouse-1] #'subed-waveform-set-start-and-copy-to-previous)
+    (define-key subed-waveform-svg-map [M-mouse-2] #'subed-waveform-shift-subtitles)
     (define-key subed-waveform-svg-map [M-mouse-3] #'subed-waveform-set-stop-and-copy-to-next)
     (define-key subed-waveform-svg-map [C-mouse-3] #'ignore)
     (define-key subed-waveform-svg-map [S-down-mouse-1] #'ignore)
@@ -515,7 +516,9 @@ Controlled by `subed-waveform-show-all`."
   `(with-selected-window (caadr ,event)
      (save-excursion
        (goto-char (elt (elt event 1) 1))
-       ,@body)))
+       ,@body
+       (goto-char (elt (elt event 1) 1))
+       (subed-waveform-put-svg))))
 
 (defun subed-waveform--mouse-event-to-ms (event)
   "Return the millisecond position of EVENT."
@@ -613,6 +616,17 @@ by `subed-milliseconds-adjust' milliseconds."
 					(subed-adjust-subtitle-time-stop msecs)
 					(when (subed-loop-over-current-subtitle-p)
 						(subed--set-subtitle-loop)))))))
+
+(defun subed-waveform-shift-subtitles (event)
+  "Shift this and succeeding subtitles.
+The current subtitle will start at the selected time
+and other timestamps will be adjusted accordingly."
+  (interactive "e")
+  (subed-waveform--with-event-subtitle event
+    (subed-shift-subtitles (- (subed-waveform--mouse-event-to-ms event)
+                              (subed-subtitle-msecs-start)))
+		(when (subed-loop-over-current-subtitle-p)
+			(subed--set-subtitle-loop))))
 
 (defun subed-waveform-split (event)
   "Split the current subtitle at point.
