@@ -1014,8 +1014,9 @@ subtitles by the same offset, use `subed-move-subtitles' instead."
           (user-error "Can't scale when nonchronological subtitles exist"))
         (setq list (cdr list))))
     (unless (= msecs 0)
-      (subed-with-subtitle-replay-disabled
-        (cl-flet ((move-subtitle (subed--get-move-subtitle-func msecs)))
+      (atomic-change-group
+        (subed-with-subtitle-replay-disabled
+         (cl-flet ((move-subtitle (subed--get-move-subtitle-func msecs)))
           (let* ((new-end-start-msecs (+ old-end-start-msecs msecs))
                  (scale-factor (/ (float (- new-end-start-msecs beg-start-msecs))
                                   (float (- old-end-start-msecs beg-start-msecs))))
@@ -1048,42 +1049,43 @@ subtitles by the same offset, use `subed-move-subtitles' instead."
                     (user-error "Can't scale when contraction would eliminate region"))
                   (goto-char end)
                   (move-subtitle msecs :ignore-negative-duration)
-                  (funcall scale-subtitles))))))))))
+                  (funcall scale-subtitles)))))))))))
 
 (defun subed--move-subtitles-in-region (msecs beg end)
   "Move subtitles in region specified by BEG and END by MSECS milliseconds."
   (unless (= msecs 0)
-    (subed-with-subtitle-replay-disabled
-      (cl-flet ((move-subtitle (subed--get-move-subtitle-func msecs)))
-        ;; When moving subtitles forward, the first step is to move the last
-        ;; subtitle because:
-        ;;     a) We need to check if we can move at all and abort if not.
-        ;;     b) We may have to reduce MSECS if we can move but not by the full
-        ;;        amount. The goal is that all subtitles are moved by the same
-        ;;        amount and the spacing between subtitles doesn't change.
-        ;; All other subtitles must be moved without any checks because we only
-        ;; ensure that the active region as a whole can be moved, not it's
-        ;; individual parts, which may be too close together or even overlap.
-        ;; Moving subtitles backward is basically the same thing but vice versa.
-        (catch 'bumped-into-subtitle
-          (if (> msecs 0)
-              (save-excursion
-                ;; Moving forward - Start on last subtitle to see if/how far
-                ;; we can move forward.
-                (goto-char end)
-                (unless (setq msecs (move-subtitle msecs))
-                  (throw 'bumped-into-subtitle t))
-                (subed-backward-subtitle-id)
-                (subed-for-each-subtitle beg (point) :reverse
-                  (move-subtitle msecs :ignore-negative-duration)))
-            ;; Start on first subtitle to see if/how far we can move backward.
-            (save-excursion
-              (goto-char beg)
-              (unless (setq msecs (move-subtitle msecs))
-                (throw 'bumped-into-subtitle t))
-              (subed-forward-subtitle-id)
-              (subed-for-each-subtitle (point) end nil
-                (move-subtitle msecs :ignore-negative-duration)))))))))
+    (atomic-change-group
+      (subed-with-subtitle-replay-disabled
+        (cl-flet ((move-subtitle (subed--get-move-subtitle-func msecs)))
+					;; When moving subtitles forward, the first step is to move the last
+					;; subtitle because:
+					;;     a) We need to check if we can move at all and abort if not.
+					;;     b) We may have to reduce MSECS if we can move but not by the full
+					;;        amount. The goal is that all subtitles are moved by the same
+					;;        amount and the spacing between subtitles doesn't change.
+					;; All other subtitles must be moved without any checks because we only
+					;; ensure that the active region as a whole can be moved, not it's
+					;; individual parts, which may be too close together or even overlap.
+					;; Moving subtitles backward is basically the same thing but vice versa.
+					(catch 'bumped-into-subtitle
+						(if (> msecs 0)
+								(save-excursion
+									;; Moving forward - Start on last subtitle to see if/how far
+									;; we can move forward.
+									(goto-char end)
+									(unless (setq msecs (move-subtitle msecs))
+										(throw 'bumped-into-subtitle t))
+									(subed-backward-subtitle-id)
+									(subed-for-each-subtitle beg (point) :reverse
+										(move-subtitle msecs :ignore-negative-duration)))
+							;; Start on first subtitle to see if/how far we can move backward.
+							(save-excursion
+								(goto-char beg)
+								(unless (setq msecs (move-subtitle msecs))
+									(throw 'bumped-into-subtitle t))
+								(subed-forward-subtitle-id)
+								(subed-for-each-subtitle (point) end nil
+									(move-subtitle msecs :ignore-negative-duration))))))))))
 
 (defun subed-scale-subtitles (msecs &optional beg end)
   "Scale subtitles between BEG and END after moving END MSECS.
@@ -1171,7 +1173,11 @@ Use a negative MSECS value to move subtitles backward.
 If END is nil, move all subtitles from BEG to end of buffer.
 If BEG is nil, move only the current subtitle.
 After subtitles are moved, replay the first moved subtitle if
-replaying is enabled."
+replaying is enabled.
+
+To move the current subtitle and following subtitles by default,
+use `subed-shift-subtitles', `subed-shift-subtitle-forward',
+or `subed-shift-subtitle-backward'."
   (interactive (list (if current-prefix-arg
                          (prefix-numeric-value current-prefix-arg)
                        (read-number "Milliseconds: "))
@@ -1228,8 +1234,17 @@ See `subed-move-subtitle-forward' about ARG."
 ;;; Shifting subtitles
 ;;; (same as moving, but follow-up subtitles are also moved)
 
+(defun subed-shift-subtitles (&optional arg)
+  "Move this and following subtitles by ARG."
+  (interactive (list (if current-prefix-arg
+                         (prefix-numeric-value current-prefix-arg)
+                       (read-number "Milliseconds: "))))
+  (let ((deactivate-mark nil)
+        (msecs (subed-get-milliseconds-adjust arg)))
+    (subed-move-subtitles msecs (point))))
+
 (defun subed-shift-subtitle-forward (&optional arg)
-  "Shift subtitle `subed-milliseconds-adjust' backward.
+  "Shift subtitle `subed-milliseconds-adjust' forward.
 
 Shifting is like moving, but it always moves the subtitles
 between point and the end of the buffer.
