@@ -113,7 +113,7 @@ If END is nil, it defaults to `point-max'.
 If BEG and END are both nil, run BODY only on the subtitle at point.
 If REVERSE is non-nil, start on the subtitle at END and move backwards.
 Before BODY is run, point is placed on the subtitle's ID."
-  (declare (indent defun)
+  (declare (indent 3)
            (debug t))
   `(atomic-change-group
      (if (not ,beg)
