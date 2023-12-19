@@ -2310,5 +2310,47 @@ prefix argument, include comments in TXT output."
         (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub))) subtitles))
       (current-buffer))))
 
+;;; Wdiff
+;;;###autoload
+(defvar subed-wdiff-executable "wdiff" "Command for word-based diffs.")
+
+(defun subed-wdiff-subtitle-text-with-file (script-file)
+	"Use wdiff to compare the captions with SCRIPT-FILE by word.
+The wdiff program must be installed.  Set
+`subed-wdiff-executable' if needed."
+	(interactive (list (read-file-name "Script: ")))
+	(let ((subtitle-text (subed-subtitle-list-text (subed-subtitle-list)))
+				(subtitle-text-filename (make-temp-file "subed-wdiff-subtitles" nil ".txt"))
+				(one-line-script-filename (make-temp-file "subed-wdiff-script" nil ".txt"))
+				result)
+		(with-temp-file subtitle-text-filename
+			(insert (replace-regexp-in-string
+			         "[ \n]+" " "
+			         subtitle-text)))
+		(with-temp-file one-line-script-filename
+			(if (member (file-name-extension script-file) '("vtt" "srt" "tsv" "ass"))
+					(insert (mapconcat (lambda (o) (concat (elt o 3) " ")) (subed-parse-file script-file)))
+				(insert-file-contents script-file))
+			(goto-char (point-min))
+			(while (re-search-forward "[ \n]+" nil t)
+				(replace-match " ")))
+		(setq result
+					(shell-command-to-string (format "wdiff %s %s"
+																					 subtitle-text-filename
+																					 one-line-script-filename)))
+		(delete-file subtitle-text-filename)
+		(delete-file one-line-script-filename)
+		(with-current-buffer (get-buffer-create "*wdiff*")
+			(erase-buffer)
+			(insert result)
+			(goto-char (point-min))
+			(while (re-search-forward "\\(\\[-\\|{\\+\\)\\(.*?\\)\\(-\\]\\|\\+}\\)" nil t)
+				(add-text-properties (match-beginning 0) (match-end 0)
+														 (list 'face (if (string= (match-string 1) "[-")
+																						 'diff-removed
+																					 'diff-added))))
+			(display-buffer (current-buffer)))
+		result))
+
 (provide 'subed-common)
 ;;; subed-common.el ends here
