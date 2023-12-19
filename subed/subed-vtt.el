@@ -43,7 +43,7 @@
 
 ;;; Parsing
 
-(defconst subed-vtt--regexp-timestamp "\\(\\([0-9]+\\):\\)?\\([0-9]+\\):\\([0-9]+\\)\\.\\([0-9]+\\)")
+(defconst subed-vtt--regexp-timestamp "\\(\\([0-9]+\\):\\)?\\([0-9]+\\):\\([0-9]+\\)\\(?:\\.\\([0-9]+\\)\\)?")
 (defconst subed-vtt--regexp-separator "\\(?:[[:blank:]]*\n\\)+\\(?:NOTE[ \n]\\(?:.+?\n\\)+\n\\)*\n")
 (defconst subed-vtt--regexp-identifier
   ;; According to https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API
@@ -59,7 +59,7 @@ Use the format-specific function for MAJOR-MODE."
     (let ((hours (string-to-number (or (match-string 2 time-string) "0")))
           (mins  (string-to-number (match-string 3 time-string)))
           (secs  (string-to-number (match-string 4 time-string)))
-          (msecs (string-to-number (subed--right-pad (match-string 5 time-string) 3 ?0))))
+          (msecs (string-to-number (subed--right-pad (or (match-string 5 time-string) "0")  3 ?0))))
       (+ (* (truncate hours) 3600000)
          (* (truncate mins) 60000)
          (* (truncate secs) 1000)
