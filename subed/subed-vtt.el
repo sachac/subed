@@ -261,14 +261,16 @@ Use the format-specific function for MAJOR-MODE."
 
 (cl-defmethod subed--subtitle-comment (&context (major-mode subed-vtt-mode)
                                                 &optional sub-id)
-  "Return subtitle comment or an empty string.
+  "Return subtitle comment or nil if none.
 If SUB-ID is not given, use the subtitle on point.
 Use the format-specific function for MAJOR-MODE."
   (save-excursion
     (let ((comment-start (subed-jump-to-subtitle-comment sub-id)))
       (if comment-start
-          (buffer-substring comment-start (subed-jump-to-subtitle-id sub-id))
-        ""))))
+          (string-trim
+           (replace-regexp-in-string "^NOTE[ \n]+" ""
+                                     (buffer-substring comment-start (subed-jump-to-subtitle-id sub-id))))
+        nil))))
 
 (cl-defmethod subed--set-subtitle-comment (comment &context (major-mode subed-vtt-mode)
                                                    &optional sub-id)

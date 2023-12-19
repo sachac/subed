@@ -406,7 +406,7 @@ If SUB-ID is not given, set the text of the current subtitle."
       (- (point) start-point))))
 
 (subed-define-generic-function subtitle-comment (&optional _)
-  "Return subtitle comment or an empty string."
+  "Return subtitle comment or nil if none."
   nil)
 
 (subed-define-generic-function set-subtitle-comment (comment &optional _)
@@ -676,6 +676,7 @@ before including them."
                  (if (functionp include-comments)
                      (funcall include-comments (elt sub 4))
                    (elt sub 4))
+                 "\n"
                  (elt sub 3) "\n")
        (concat (elt sub 3) "\n")))
    subtitles

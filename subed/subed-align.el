@@ -43,8 +43,8 @@ will remove silence and other non-speech spans.")
 
 ;;;###autoload
 (defun subed-align (audio-file text-file format)
-  "Align AUDIO-FILE with TEXT-FILE to get timestamps.
-Return a buffer with FORMAT."
+  "Align AUDIO-FILE with TEXT-FILE to get timestamps in FORMAT.
+Return the new filename."
   (interactive
    (list
     (or
@@ -85,14 +85,17 @@ Return a buffer with FORMAT."
                              (if subed-align-options (concat "|" subed-align-options) ""))
                      new-file)))
       (when temp-file (delete-file temp-file))
-      (find-file new-file)
-      (when (derived-mode-p 'subed-mode)
-        (subed-trim-overlaps))
-      (when (derived-mode-p 'subed-vtt-mode)
-        (goto-char (point-min))
-        (flush-lines "^[0-9]+$")
-        ;; reinsert comments
-        (subed-align-reinsert-comments subtitles)))))
+      (with-temp-file new-file
+        (insert-file-contents new-file)
+        (subed-guess-format new-file)
+        (when (derived-mode-p 'subed-mode)
+          (subed-trim-overlaps))
+        (when (derived-mode-p 'subed-vtt-mode)
+          (goto-char (point-min))
+          (flush-lines "^[0-9]+$")
+          ;; reinsert comments
+          (subed-align-reinsert-comments subtitles)))
+      new-file)))
 
 (defun subed-align-reinsert-comments (subtitles)
   "Reinsert the comments from SUBTITLES.
@@ -102,7 +105,7 @@ Assume that the subtitles are still in the same sequence."
    (lambda (sub)
      (subed-forward-subtitle-time-start)
      (when (elt sub 4)
-       (insert (elt sub 4))))
+       (subed-set-subtitle-comment (elt sub 4))))
    subtitles))
 
 (provide 'subed-align)

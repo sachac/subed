@@ -882,30 +882,40 @@ Subtitle 2")
                                                      "Foo. bar\nbaz.\n"))
            (expect (point) :to-equal 31)))
         )
-      (describe "after"
-        (it "passing nothing."
+      (describe "when appending"
+        (it "creates a subtitle with default arguments."
           (with-temp-vtt-buffer
            (expect (subed-append-subtitle) :to-equal 31)
            (expect (buffer-string) :to-equal (concat "00:00:00.000 --> 00:00:01.000\n\n"))
            (expect (point) :to-equal 31)))
-        (it "passing start time."
+        (it "creates a subtitle with a start time."
           (with-temp-vtt-buffer
            (expect (subed-append-subtitle nil 60000) :to-equal 31)
            (expect (buffer-string) :to-equal (concat "00:01:00.000 --> 00:01:01.000\n\n"))
            (expect (point) :to-equal 31)))
-        (it "passing start time and stop time."
+        (it "creates a subtitle with a start time and stop time."
           (with-temp-vtt-buffer
            (expect (subed-append-subtitle nil 60000 65000) :to-equal 31)
            (expect (buffer-string) :to-equal (concat "00:01:00.000 --> 00:01:05.000\n\n"))
            (expect (point) :to-equal 31)))
-        (it "passing start time, stop time and text."
+        (it "creates a subtitle with a start time, stop time and text."
           (with-temp-vtt-buffer
            (expect (subed-append-subtitle nil 60000 65000 "Foo, bar\nbaz.") :to-equal 31)
            (expect (buffer-string) :to-equal (concat "00:01:00.000 --> 00:01:05.000\n"
                                                      "Foo, bar\nbaz.\n"))
            (expect (point) :to-equal 31)))
-        )
-      )
+        (it "creates a subtitle with a start time, stop time, text, and a single-line comment."
+          (with-temp-vtt-buffer
+           (subed-append-subtitle nil 60000 65000 "Foo, bar\nbaz." "Hello")
+           (expect (buffer-string) :to-equal (concat "NOTE Hello\n\n00:01:00.000 --> 00:01:05.000\n"
+                                                     "Foo, bar\nbaz.\n"))
+           (expect (looking-at "Foo") :to-be t)))
+        (it "creates a subtitle with a start time, stop time, text, and a multi-line comment."
+          (with-temp-vtt-buffer
+           (subed-append-subtitle nil 60000 65000 "Foo, bar\nbaz." "Hello\nworld")
+           (expect (buffer-string) :to-equal (concat "NOTE\nHello\nworld\n\n00:01:00.000 --> 00:01:05.000\n"
+                                                     "Foo, bar\nbaz.\n"))
+           (expect (looking-at "Foo") :to-be t)))))
     (describe "in a non-empty buffer"
       (describe "before the current subtitle"
         (describe "with point on the first subtitle"
@@ -1552,16 +1562,16 @@ This is another test here.
          (subed-jump-to-subtitle-comment)
          (expect (looking-at "NOTE A comment") :to-be t))))
     (describe "getting the comment"
-      (it "returns an empty string when there is no comment."
+      (it "returns nil when there is no comment."
         (with-temp-vtt-buffer
          (insert mock-vtt-comments-data)
          (re-search-backward "This is a test")
-         (expect (subed-subtitle-comment) :to-equal "")))
+         (expect (subed-subtitle-comment) :to-be nil)))
       (it "returns the comment."
         (with-temp-vtt-buffer
          (insert mock-vtt-comments-data)
          (goto-char (point-max))
-         (expect (subed-subtitle-comment) :to-equal "NOTE A comment can go here\nand have more text as needed.\n\n"))))
+         (expect (subed-subtitle-comment) :to-equal "A comment can go here\nand have more text as needed."))))
     (describe "setting the comment"
       (it "sets the comment when there isn't one yet."
         (with-temp-vtt-buffer
@@ -1732,7 +1742,7 @@ World
 00:01:21.058 --> 00:01:23.868
 Again")
        (with-current-buffer (subed-convert "TXT" t)
-         (expect (buffer-string) :to-equal "Hello\n\nNOTE Comment\n\nWorld\nAgain\n")))))
+         (expect (buffer-string) :to-equal "Hello\n\nComment\nWorld\nAgain\n")))))
   (describe "iterating over subtitles"
     (describe "forwards"
       (it "handles headers."
