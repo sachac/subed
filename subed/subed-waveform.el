@@ -86,6 +86,8 @@
 ;; (with-eval-after-load 'subed
 ;;   (add-hook 'subed-mode-hook (lambda () (setq-local max-image-size nil))))
 ;;
+;; The bar is positioned using a percentage, so it gets a little
+;; tricky for subtitles with short durations.
 
 ;;; Code:
 
@@ -454,15 +456,16 @@ times per second."
 Set the relevant variables if necessary.
 This function ignores arguments and can be used in hooks."
   (interactive)
-  (unless subed-waveform-show-all
-    (let ((min (or (subed-jump-to-subtitle-comment) (subed-jump-to-subtitle-id))))
-      (when min
-        (remove-overlays min (subed-jump-to-subtitle-end) 'subed-waveform t))))
   (save-excursion
-    (when (subed-jump-to-subtitle-text)
-      (let ((overlay (subed-waveform--get-current-overlay)))
-        (when overlay (delete-overlay overlay))
-        (setq overlay (subed-waveform--make-overlay))))))
+    (when subed-waveform-minor-mode
+      (unless subed-waveform-show-all
+        (let ((min (or (subed-jump-to-subtitle-comment) (subed-jump-to-subtitle-id))))
+          (when min
+            (remove-overlays min (subed-jump-to-subtitle-end) 'subed-waveform t))))
+      (when (subed-jump-to-subtitle-text)
+        (let ((overlay (subed-waveform--get-current-overlay)))
+          (when overlay (delete-overlay overlay))
+          (setq overlay (subed-waveform--make-overlay)))))))
 
 (defun subed-waveform-add-to-all ()
   "Update all subtitles with overlays."
