@@ -147,15 +147,16 @@ Key bindings:
 (declare-function subed-vtt-mode "subed-vtt" (&optional arg))
 (declare-function subed-srt-mode "subed-srt" (&optional arg))
 
-(defun subed-guess-format ()
+(defun subed-guess-format (&optional filename)
   "Set this buffer's format to a more specific subed mode format.
 This is a workaround for the transition to using format-specific
 modes such as `subed-srt-mode' while `auto-mode-alist' might
 still refer to `subed-mode'.  It will also switch to the
 format-specific mode if `subed-mode' is called directly."
-  (when (and (eq major-mode 'subed-mode)
-             (buffer-file-name))
-    (pcase (file-name-extension (buffer-file-name))
+  (when (or filename
+            (and (eq major-mode 'subed-mode)
+                 (buffer-file-name)))
+    (pcase (file-name-extension (or filename (buffer-file-name)))
       ("vtt" (subed-vtt-mode))
       ("srt" (subed-srt-mode))
       ("ass" (subed-ass-mode)))))
