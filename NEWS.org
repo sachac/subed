@@ -1,6 +1,11 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.10 - 2023-12-20 - Sacha Chua
+
+- Add extra line after comments in text output.
+- ~subed-guess-format~ can now take a filename.
+
 ** Version 1.2.9 - 2023-12-19 - Sacha Chua
 
 - New ol-subed adds subed: links to Org Mode. To use it, add ~(require
