@@ -1742,7 +1742,7 @@ World
 00:01:21.058 --> 00:01:23.868
 Again")
        (with-current-buffer (subed-convert "TXT" t)
-         (expect (buffer-string) :to-equal "Hello\n\nComment\nWorld\nAgain\n")))))
+         (expect (buffer-string) :to-equal "Hello\n\nComment\n\nWorld\nAgain\n")))))
   (describe "iterating over subtitles"
     (describe "forwards"
       (it "handles headers."

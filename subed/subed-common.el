@@ -676,7 +676,7 @@ before including them."
                  (if (functionp include-comments)
                      (funcall include-comments (elt sub 4))
                    (elt sub 4))
-                 "\n"
+                 "\n\n"
                  (elt sub 3) "\n")
        (concat (elt sub 3) "\n")))
    subtitles

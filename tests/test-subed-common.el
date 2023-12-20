@@ -3457,14 +3457,14 @@ This is another.
         '((nil 0 99 "Hello")
           (nil 100 199 "world" "Comment"))
         t)
-       :to-equal "Hello\n\nComment\nworld\n"))
+       :to-equal "Hello\n\nComment\n\nworld\n"))
     (it "includes comments transformed by a function."
       (let ((val
              (subed-subtitle-list-text
               '((nil 0 99 "Hello")
                 (nil 100 199 "world" "Comment"))
               #'upcase)))
-        (expect val :to-equal "Hello\n\nCOMMENT\nworld\n"))))
+        (expect val :to-equal "Hello\n\nCOMMENT\n\nworld\n"))))
   (describe "Copying region text"
     (it "works on the whole buffer"
       (with-temp-srt-buffer
