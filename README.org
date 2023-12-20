@@ -256,6 +256,84 @@ If you use [[https://github.com/radian-software/straight.el][straight.el]], you 
 ~subed-srt-mode~, ~subed-vtt-mode~, and ~subed-ass-mode~. When
 manually loading a mode, use those specific format modes instead of
 ~subed-mode~.
+** Some workflow ideas
+
+*** Reflowing subtitles into shorter or longer lines
+
+You may want to use ~set-fill-column~ and
+~display-fill-column-indicator-mode~ to show the target number of
+characters.
+
+Use ~subed-split-subtitle~ (~M-.~), ~subed-merge-dwim~ (~M-b~), and
+~subed-merge-with-previous~ (~M-M~) to split lines.
+
+Splitting will use the current MPV position if available. If not, it
+will guess where to split based on the the number of characters in the
+subtitle. You can use ~subed-mpv-jump-to-current-subtitle~ (~M-j~) to play the
+current subtitle manually and use ~subed-mpv-toggle-pause~ (~M-SPC~) to stop at
+the right time. Use ~subed-toggle-loop-over-current-subtitle~ (~C-c C-l~) if you
+want to keep looping. ~subed-waveform-show-current~ can help you
+fine-tune the split.
+
+*** Adjusting timestamps
+
+You can use ~subed-mpv-jump-to-current-subtitle~ (~M-j~) to play the
+current subtitle manually. Use
+~subed-mpv-jump-to-current-subtitle-near-end~ (~M-J~) to jump to near
+the end of the subtitle in order to test it. Use
+~subed-toggle-loop-over-current-subtitle~ (~C-c C-l~) if you want to
+keep looping automatically. Use ~subed-mpv-toggle-pause~ (~M-SPC~) to stop at the
+right time.
+
+~subed-waveform-show-current~ or ~subed-waveform-show-all~ can be
+useful for adjusting start and end timestamps. Use
+~subed-waveform-set-start~ (~mouse-1~, which is left click) or ~subed-waveform-set-stop~ (~mouse-3~, which is right-click) to adjust only
+the current subtitle's timestamps, or use
+~subed-waveform-set-start-and-copy-to-previous~ (~S-mouse-1~ or ~M-mouse-1~) or
+~subed-waveform-set-stop-and-copy-to-next~ (~S-mouse-3~ or ~M-mouse-3~) to adjust adjacent
+subtitles as well.
+
+You can also manually adjust
+
+- subtitle start: ~M-[~  / ~M-]~
+- subtitle stop: (~M-{~ / ~M-}~)
+
+A prefix argument sets the number of milliseconds (e.g. ~C-u 1000 M-[ M-[ M-[~ decreases start time by 3 seconds).
+
+*** Editing subtitles
+
+You can use ~subed-mpv-jump-to-current-subtitle~ (~M-j~) to play the current
+subtitle and use ~subed-mpv-toggle-pause~ (~M-SPC~) to stop at the right time.
+Use ~subed-toggle-loop-over-current-subtitle~ (~C-c C-l~) if you want to keep
+looping automatically.
+
+If you have wdiff installed, you can use
+~subed-wdiff-subtitle-text-with-file~ to compare the subtitle text
+with a script or another subtitle file.
+
+*** Writing subtitles from scratch
+
+One way is to start with one big subtitle that covers the whole media
+file, and then split it using ~subed-split-subtitle~ (~M-.~).
+
+Another way is to type as much of the text as you can without worrying
+about timestamps, putting each caption on a separate line. Then you
+can use ~subed-align~ to convert it into timestamped captions.
+
+*** Resynchronizing subtitles
+
+If you're using ~subed-waveform-show-current~ or ~subed-waveform-show-all~, you can use ~M-mouse-2~ (Meta-middle-click, ~subed-waveform-shift-subtitles~) to shift the current subtitle and succeeding subtitles so that they start at the position you clicked on.
+
+To do this with the keyboard, you can use
+~subed-shift-subtitles-to-start-at-timestamp~ if you want to specify a
+timestamp or ~subed-shift-subtitles~ to specify a millisecond offset.
+
+*** Exporting text for review
+
+You can use ~subed-copy-region-text~ to copy the text of the subtitles
+for pasting into another buffer. Call it with the universal prefix
+~C-u~ to copy comments as well.
+
 ** Troubleshooting
 *** subed-mpv: Service name too long
 

@@ -1,6 +1,13 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.11 - 2022-12-20 - Sacha Chua
+
+- New commands ~subed-shift-subtitles-to-start-at-timestamp~ and
+  ~subed-move-subtitles-to-start-at-timestamp~ should make it easier
+  to adjust timestamps without doing msec math.
+- Add workflow notes to README.org.
+
 ** Version 1.2.10 - 2023-12-20 - Sacha Chua
 
 - Add extra line after comments in text output.

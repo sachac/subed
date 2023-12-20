@@ -1,6 +1,6 @@
 ;;; subed.el --- A major mode for editing subtitles  -*- lexical-binding: t; -*-
 
-;; Version: 1.2.10
+;; Version: 1.2.11
 ;; Maintainer: Sacha Chua <sacha@sachachua.com>
 ;; Author: Random User
 ;; Keywords: convenience, files, hypermedia, multimedia
@@ -152,7 +152,9 @@ Key bindings:
 This is a workaround for the transition to using format-specific
 modes such as `subed-srt-mode' while `auto-mode-alist' might
 still refer to `subed-mode'.  It will also switch to the
-format-specific mode if `subed-mode' is called directly."
+format-specific mode if `subed-mode' is called directly.
+
+If FILENAME is specified, use that."
   (when (or filename
             (and (eq major-mode 'subed-mode)
                  (buffer-file-name)))

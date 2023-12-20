@@ -1176,6 +1176,9 @@ If BEG is nil, move only the current subtitle.
 After subtitles are moved, replay the first moved subtitle if
 replaying is enabled.
 
+To move to a specific timestamp, use
+`subed-move-subtitles-to-start-at-timestamp'.
+
 To move the current subtitle and following subtitles by default,
 use `subed-shift-subtitles', `subed-shift-subtitle-forward',
 or `subed-shift-subtitle-backward'."
@@ -1191,6 +1194,22 @@ or `subed-shift-subtitle-backward'."
     (save-excursion
       (when beg (goto-char beg))
       (subed-mpv-jump (subed-subtitle-msecs-start)))))
+
+(defun subed-move-subtitles-to-start-at-timestamp (timestamp &optional beg end)
+  "Move subtitles between BEG and END so that the current subtitle starts at TIMESTAMP.
+If END is nil, move all subtitles from BEG to end of buffer.
+If BEG is nil, move only the current subtitle.
+After subtitles are moved, replay the first moved subtitle if
+replaying is enabled.
+
+To move the current subtitle and following subtitles by default,
+use `subed-shift-subtitles', `subed-shift-subtitles-to-start-at-timestamp',
+`subed-shift-subtitle-forward', or `subed-shift-subtitle-backward'."
+  (interactive (list (read-string "New start: ")
+                     (when (region-active-p) (point))
+                     (when (region-active-p) (mark))))
+  (subed-move-subtitles (- (subed-timestamp-to-msecs timestamp) (subed-subtitle-msecs-start))
+                        beg end))
 
 (defun subed-move-subtitle-forward (&optional arg)
   "Move subtitle `subed-milliseconds-adjust' forward.
@@ -1236,13 +1255,20 @@ See `subed-move-subtitle-forward' about ARG."
 ;;; (same as moving, but follow-up subtitles are also moved)
 
 (defun subed-shift-subtitles (&optional arg)
-  "Move this and following subtitles by ARG."
+  "Move this and following subtitles by ARG milliseconds.
+To shift to a specific timestamp, use `subed-shift-subtitles-to-start-at-timestamp'."
   (interactive (list (if current-prefix-arg
                          (prefix-numeric-value current-prefix-arg)
                        (read-number "Milliseconds: "))))
   (let ((deactivate-mark nil)
         (msecs (subed-get-milliseconds-adjust arg)))
     (subed-move-subtitles msecs (point))))
+
+(defun subed-shift-subtitles-to-start-at-timestamp (timestamp)
+  "Move this and following subtitles so that the current one starts at TIMESTAMP.
+To shift by a millisecond offset, use `subed-shift-subtitles'."
+  (interactive (list (read-string "New start: ")))
+  (subed-shift-subtitles (- (subed-timestamp-to-msecs timestamp) (subed-subtitle-msecs-start))))
 
 (defun subed-shift-subtitle-forward (&optional arg)
   "Shift subtitle `subed-milliseconds-adjust' forward.
