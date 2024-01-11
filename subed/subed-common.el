@@ -2098,7 +2098,7 @@ if PRINT-MESSAGE is non-nil, display a message."
 
 (defun subed-wpm (&optional subtitles)
   "Display words per minute.
-Use SUBTITILES if specified."
+Use SUBTITLES if specified."
   (interactive)
   (setq subtitles (or subtitles (subed-subtitle-list)))
   (let (word-count
@@ -2118,7 +2118,8 @@ Use SUBTITILES if specified."
          (/ (* 1.0 word-count) minutes)
          word-count
          minutes)
-      (/ (* 1.0 word-count) minutes))))
+      (list (/ (* 1.0 word-count) minutes)
+            word-count minutes))))
 
 ;;; Trimming overlaps
 
@@ -2295,11 +2296,11 @@ If INIT-FUNC is non-nil, call that function to initialize."
   (when (and (file-exists-p filename) (not ok-if-exists))
     (error "File %s already exists" filename))
   (let ((subed-auto-play-media nil))
-    (find-file filename)
-    (erase-buffer)
-    (if init-func (funcall init-func))
-    (subed-auto-insert)
-    (subed-append-subtitle-list subtitles)))
+    (with-temp-file filename
+      (subed-guess-format filename)
+      (if init-func (funcall init-func))
+      (subed-auto-insert)
+      (subed-append-subtitle-list subtitles))))
 
 (defun subed-convert (format &optional include-comments)
   "Create a buffer with the current subtitles converted to FORMAT.
