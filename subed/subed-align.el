@@ -28,7 +28,7 @@
 ;;
 ;;; Code:
 
-(require 'subed-common)
+(require 'subed)
 
 (defvar subed-align-command '("python3" "-m" "aeneas.tools.execute_task")
   "Command to run aeneas.")
@@ -95,6 +95,8 @@ Return the new filename."
           (flush-lines "^[0-9]+$")
           ;; reinsert comments
           (subed-align-reinsert-comments subtitles)))
+      (when (called-interactively-p 'any)
+        (find-file new-file))
       new-file)))
 
 (defun subed-align-reinsert-comments (subtitles)
