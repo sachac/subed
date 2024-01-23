@@ -166,7 +166,14 @@ Baz.
          (expect (subed-subtitle-relative-point) :to-equal nil)))
       )
     )
-
+  (describe "Converting to msecs"
+    (it "works with numbers."
+      (expect (with-temp-vtt-buffer (subed-to-msecs 5123)) :to-equal 5123))
+    (it "works with numbers as strings."
+      (expect (with-temp-vtt-buffer (subed-to-msecs "5123")) :to-equal 5123))
+    (it "works with timestamps."
+      (expect (with-temp-vtt-buffer
+               (subed-to-msecs "00:00:05.124")) :to-equal 5124)))
   (describe "Jumping"
     (describe "to current subtitle timestamp"
       (it "returns timestamp's point when point is already on the timestamp."

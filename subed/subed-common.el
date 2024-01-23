@@ -185,6 +185,13 @@ Return nil if TIME-STRING doesn't match the pattern.")
 (subed-define-generic-function msecs-to-timestamp (msecs)
   "Convert MSECS to string in the subtitle's timestamp format.")
 
+(defun subed-to-msecs (time-string)
+  "Convert TIME-STRING to milliseconds."
+  (or (and (stringp time-string) (subed-timestamp-to-msecs time-string))
+      (cond
+       ((numberp time-string) time-string)
+       ((string-match "^[0-9\\.]+$" time-string) (string-to-number time-string)))))
+
 (subed-define-generic-function subtitle-id ()
   "Return the ID of the subtitle at point or nil if there is no ID.")
 
@@ -1266,9 +1273,10 @@ To shift to a specific timestamp, use `subed-shift-subtitles-to-start-at-timesta
 
 (defun subed-shift-subtitles-to-start-at-timestamp (timestamp)
   "Move this and following subtitles so that the current one starts at TIMESTAMP.
-To shift by a millisecond offset, use `subed-shift-subtitles'."
+To shift by a millisecond offset, use `subed-shift-subtitles'.
+If TIMESTAMP is a number or a numeric string, treat it as the time in milliseconds."
   (interactive (list (read-string "New start: ")))
-  (subed-shift-subtitles (- (subed-timestamp-to-msecs timestamp) (subed-subtitle-msecs-start))))
+  (subed-shift-subtitles (- (subed-to-msecs timestamp) (subed-subtitle-msecs-start))))
 
 (defun subed-shift-subtitle-forward (&optional arg)
   "Shift subtitle `subed-milliseconds-adjust' forward.

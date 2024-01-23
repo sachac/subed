@@ -196,7 +196,14 @@ Baz.
          (expect (subed-subtitle-relative-point) :to-equal nil)))
       )
     )
-
+  (describe "Converting to msecs"
+    (it "works with numbers."
+      (expect (with-temp-srt-buffer (subed-to-msecs 5123)) :to-equal 5123))
+    (it "works with numbers as strings."
+      (expect (with-temp-srt-buffer (subed-to-msecs "5123")) :to-equal 5123))
+    (it "works with timestamps."
+      (with-temp-srt-buffer
+       (expect (subed-to-msecs "00:00:05,124") :to-equal 5124))))
   (describe "Jumping"
     (describe "to current subtitle ID"
       (it "returns ID's point when point is already on the ID."

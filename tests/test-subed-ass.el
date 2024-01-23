@@ -57,6 +57,14 @@ Dialogue: 0,0:00:17.00,0:00:19.80,Default,,0,0,0,,I hope it works.
          (insert mock-ass-data)
          (subed-jump-to-subtitle-text "0:00:14.00")
          (expect (subed-subtitle-text) :to-equal "This is a test.")))))
+  (describe "Converting to msecs"
+    (it "works with numbers."
+      (expect (with-temp-ass-buffer (subed-to-msecs 5123)) :to-equal 5123))
+    (it "works with numbers as strings."
+      (expect (with-temp-ass-buffer (subed-to-msecs "5123")) :to-equal 5123))
+    (it "works with timestamps."
+      (expect (with-temp-ass-buffer
+               (subed-to-msecs "00:00:05.12")) :to-equal 5120)))
   (describe "Jumping"
     (describe "to current subtitle timestamp"
       (it "can handle different formats of timestamps."

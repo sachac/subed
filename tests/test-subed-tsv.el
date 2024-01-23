@@ -44,6 +44,12 @@
          (insert mock-tsv-data)
          (subed-jump-to-subtitle-text "14.000000")
          (expect (subed-subtitle-text) :to-equal "This is a test.")))))
+  (describe "Converting to msecs"
+    (it "works with numbers, although these use seconds because that's what TSV uses."
+      (expect (with-temp-tsv-buffer
+               (floor (subed-to-msecs "5.123"))) :to-equal 5123))
+    (it "works with numbers."
+      (expect (subed-to-msecs 5123) :to-equal 5123)))
   (describe "Jumping"
     (describe "to current subtitle timestamp"
       (it "can handle different formats of timestamps."
