@@ -1,6 +1,6 @@
 ;;; subed-waveform.el --- display waveforms in subed buffers  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2023 Sacha Chua, Marcin Borkowski
+;; Copyright (C) 2023-2024 Sacha Chua, Marcin Borkowski
 
 ;; Author: Sacha Chua <sacha@sachachua.com>, Marcin Borkowski <mbork@mbork.pl>
 ;; Keywords: multimedia
@@ -140,6 +140,11 @@ SVG parameters of the displayed bars.  Every bar must have a unique
     :value-type (plist :key-type symbol :value-type string))
   :group 'subed-waveform)
 
+(defcustom subed-waveform-ffprobe-executable "ffprobe"
+  "Path to the FFprobe executable used for measuring file duration."
+  :type 'file
+  :group 'subed-waveform)
+
 (defcustom subed-waveform-preview-msecs-before 2000
   "Prelude in milliseconds displaying subtitle waveform."
   :type 'integer
@@ -244,6 +249,38 @@ WIDTH and HEIGHT are given in pixels."
            width height)
    "[bg][fg]overlay=format=auto,drawbox=x=(iw-w)/2:y=(ih-h)/2:w=iw:h=1:color=#9cf42f"))
 
+(defvar-local subed-waveform-file-duration-ms-cache nil "If non-nil, duration of current file in milliseconds.")
+
+(defun subed-waveform-file-duration-ms (&optional filename)
+  "Return the duration of FILENAME in milliseconds."
+  (cond
+   (subed-waveform-file-duration-ms-cache
+    (when (> subed-waveform-file-duration-ms-cache 0)
+      subed-waveform-file-duration-ms-cache))
+   (subed-waveform-ffprobe-executable
+    (setq subed-waveform-file-duration-ms-cache
+          (* 1000
+             (string-to-number
+              (with-temp-buffer
+                (call-process
+                 subed-waveform-ffprobe-executable nil t nil "-v" "error" "-show_entries" "format=duration"
+                 "-of" "default=noprint_wrappers=1:nokey=1"
+                 (or filename (subed-media-file)))
+                (buffer-string)))))
+    (if (> subed-waveform-file-duration-ms-cache 0)
+        subed-waveform-file-duration-ms-cache
+      ;; mark as invalid
+      (setq subed-waveform-file-duration-ms-cache -1)
+      nil))))
+
+(defun subed-waveform-clear-file-duration-ms-cache (&rest _)
+  "Clear `subed-waveform-file-duration-ms-cache'."
+  (setq subed-waveform-file-duration-ms-cache nil))
+
+;; This should eventually be replaced with a hook.
+(with-eval-after-load 'subed-mpv
+  (advice-add 'subed-mpv-play-from-file :after 'subed-waveform-clear-file-duration-ms-cache))
+
 (defun subed-waveform--from-file (filename from to width height)
   "Returns a string representing the image data in PNG format.
 FILENAME is the input file, FROM and TO are time positions, WIDTH
@@ -284,34 +321,60 @@ and HEIGHT are dimensions in pixels."
   (when pos
     (format "%.2f%%" (/ (* 100.0 (- pos start)) (- stop start)))))
 
+(defun subed-waveform--image-parameters (&optional width height)
+  "Return a plist of media-file, start, stop, width, height.
+Use WIDTH and HEIGHT if specified."
+  (let* ((duration (subed-waveform-file-duration-ms (subed-media-file)))
+         (start (floor (max 0 (- (subed-subtitle-msecs-start) subed-waveform-preview-msecs-before))))
+         (stop
+          (min
+           (floor (+ (subed-subtitle-msecs-stop) subed-waveform-preview-msecs-after))
+           (or duration most-positive-fixnum)))
+         (width-ratio
+          (/
+           (* 100.0 (- stop start))
+           (- (+ (subed-subtitle-msecs-stop) subed-waveform-preview-msecs-after) start)))
+         (width (or width (/ (* width-ratio (string-pixel-width (make-string fill-column ?*)))
+                             (face-attribute 'default :height))))
+         (height (or height (save-excursion
+                              ;; don't count the current waveform towards the
+                              ;; line height
+                              (forward-line -1)
+                              (* 2 (line-pixel-height))))))
+    (list
+     :file
+     (or (subed-media-file)
+         (error "No media file found"))
+     :start
+     start
+     :stop
+     stop
+     :width
+     width
+     :height
+     height)))
+
 (defun subed-waveform--make-overlay (&optional width height)
   "Make an overlay at point for the current subtitle."
   (let* ((overlay (make-overlay (point) (point)))
-         (start (floor (max 0 (- (subed-subtitle-msecs-start) subed-waveform-preview-msecs-before))))
-         (stop (floor (+ (subed-subtitle-msecs-stop) subed-waveform-preview-msecs-after)))
-         (width (/ (* 100.0 (string-pixel-width (make-string fill-column ?*)))
-                   (face-attribute 'default :height)))
-         (height (save-excursion
-                   ;; don't count the current waveform towards the
-                   ;; line height
-                   (forward-line -1)
-                   (* 2 (line-pixel-height))))
+         (params (subed-waveform--image-parameters width height))
          (image (subed-waveform--from-file
-                 (or (subed-media-file)
-                     (error "No media file found"))
-                 (subed-waveform--msecs-to-ffmpeg start)
-                 (subed-waveform--msecs-to-ffmpeg stop)
-                 width
-                 height))
-         (svg (svg-create width height)))
+                 (plist-get params :file)
+                 (subed-waveform--msecs-to-ffmpeg (plist-get params :start))
+                 (subed-waveform--msecs-to-ffmpeg (plist-get params :stop))
+                 (plist-get params :width)
+                 (plist-get params :height)))
+         (svg (svg-create
+               (plist-get params :width)
+               (plist-get params :height))))
     (svg-embed svg image "image/png" t
                :x 0 :y 0
                :width "100%" :height "100%"
                :preserveAspectRatio "none")
     (overlay-put overlay 'subed-waveform t)
     (overlay-put overlay 'after-string "\n")
-    (overlay-put overlay 'waveform-start start)
-    (overlay-put overlay 'waveform-stop stop)
+    (overlay-put overlay 'waveform-start (plist-get params :start))
+    (overlay-put overlay 'waveform-stop (plist-get params :stop))
     (overlay-put overlay 'before-string
                  (propertize
                   " "
@@ -319,9 +382,11 @@ and HEIGHT are dimensions in pixels."
                   'svg svg
                   'pointer 'arrow
                   'keymap subed-waveform-svg-map
-                  'waveform-start start
-                  'waveform-stop stop
-                  'waveform-pixels-per-second (/ width (* 0.001 (- stop start)))))
+                  'waveform-start (plist-get params :start)
+                  'waveform-stop (plist-get params :stop)
+                  'waveform-pixels-per-second (/ (plist-get params :width)
+                                                 (* 0.001 (- (plist-get params :stop)
+                                                             (plist-get params :start))))))
     (unless subed-waveform-show-all
       (setq subed-waveform--overlay overlay)
       (setq subed-waveform--svg svg))
@@ -365,7 +430,8 @@ If POSITION is nil, remove the bar."
   "Update the bars in OVERLAY."
   (setq overlay (or overlay (subed-waveform--get-current-overlay)))
   (let* ((start (subed-subtitle-msecs-start))
-         (stop (subed-subtitle-msecs-stop))
+         (stop (min (subed-subtitle-msecs-stop)
+                    (or (subed-waveform-file-duration-ms) most-positive-fixnum)))
          (start-pos (subed-waveform--position-to-percent
                      start
                      (overlay-get overlay 'waveform-start)
