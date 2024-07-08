@@ -251,6 +251,20 @@ WIDTH and HEIGHT are given in pixels."
 
 (defvar-local subed-waveform-file-duration-ms-cache nil "If non-nil, duration of current file in milliseconds.")
 
+(defun subed-waveform-ffprobe-duration-ms (filename)
+  "Use ffprobe to get duration in milliseconds of FILENAME."
+  (* 1000
+     (string-to-number
+      (with-temp-buffer
+        (call-process
+         subed-waveform-ffprobe-executable nil t nil
+         "-v" "error"
+         "-show_entries"
+         "format=duration"
+         "-of" "default=noprint_wrappers=1:nokey=1"
+         filename)
+        (buffer-string)))))
+
 (defun subed-waveform-file-duration-ms (&optional filename)
   "Return the duration of FILENAME in milliseconds."
   (cond
@@ -259,14 +273,8 @@ WIDTH and HEIGHT are given in pixels."
       subed-waveform-file-duration-ms-cache))
    (subed-waveform-ffprobe-executable
     (setq subed-waveform-file-duration-ms-cache
-          (* 1000
-             (string-to-number
-              (with-temp-buffer
-                (call-process
-                 subed-waveform-ffprobe-executable nil t nil "-v" "error" "-show_entries" "format=duration"
-                 "-of" "default=noprint_wrappers=1:nokey=1"
-                 (or filename (subed-media-file)))
-                (buffer-string)))))
+          (subed-waveform-ffprobe-duration-ms
+           (or filename (subed-media-file))))
     (if (> subed-waveform-file-duration-ms-cache 0)
         subed-waveform-file-duration-ms-cache
       ;; mark as invalid
