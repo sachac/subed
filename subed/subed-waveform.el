@@ -251,19 +251,96 @@ WIDTH and HEIGHT are given in pixels."
 
 (defvar-local subed-waveform-file-duration-ms-cache nil "If non-nil, duration of current file in milliseconds.")
 
+(defun subed-waveform-convert-ffprobe-tags-duration-to-ms (duration)
+  "Return milliseconds as an integer for DURATION.
+
+DURATION must be a string of the format HH:MM:SS.MMMM.
+
+Example:
+
+00:00:03.003000000 -> 3003
+00:00:03.00370000 -> 3004"
+  (unless (string-match "\\([0-9]\\{2\\}\\):\\([0-9]\\{2\\}\\):\\([0-9]\\{2\\}\\)\\.\\([0-9]+\\)" duration)
+    (error "The duration is not well formatted."))
+  (let ((hour (match-string 1 duration))
+        (minute (match-string 2 duration))
+        (seconds (match-string 3 duration))
+        (milliseconds (match-string 4 duration)))
+    (+
+     (* (string-to-number hour) 3600000)
+     (* (string-to-number minute) 60000)
+     (* (string-to-number seconds) 1000)
+     (* (string-to-number (concat "0." milliseconds)) 1000))))
+
 (defun subed-waveform-ffprobe-duration-ms (filename)
-  "Use ffprobe to get duration in milliseconds of FILENAME."
-  (* 1000
-     (string-to-number
-      (with-temp-buffer
-        (call-process
-         subed-waveform-ffprobe-executable nil t nil
-         "-v" "error"
-         "-show_entries"
-         "format=duration"
-         "-of" "default=noprint_wrappers=1:nokey=1"
-         filename)
-        (buffer-string)))))
+  "Use ffprobe to get duration of audio stream in milliseconds of FILENAME."
+  (let ((json
+         (json-read-from-string
+          (with-temp-buffer
+            (call-process
+             subed-waveform-ffprobe-executable nil t nil
+             "-v" "error"
+             "-print_format" "json"
+             "-show_streams"
+             "-show_format"
+             filename)
+            (buffer-string)))))
+    ;; Check that the file has at least one audio stream.
+    (when (eq (seq-find
+               (lambda (stream)
+                 (equal (alist-get 'codec_type stream) "audio"))
+               (alist-get 'streams json))
+              0)
+      (error "The provided file doesn't have an audio stream."))
+    (cond
+     ;; If the file has one stream and it is an audio stream, we can
+     ;; get the duration from format=duration
+     ;;
+     ;; nb_streams equals the number of streams in the media file.
+     ((and (eq (alist-get 'nb_streams (alist-get 'format json)) 1)
+           (equal (alist-get
+                   'codec_type
+                   (seq-first (alist-get 'streams json)))
+                  "audio"))
+      (* 1000 (string-to-number
+               (alist-get 'duration (alist-get 'format json)))))
+     ;; If the file has more than one stream and only one audio
+     ;; stream, return the duration of the audio stream.
+     ((and (> (alist-get 'nb_streams (alist-get 'format json)) 1)
+           (eq (length (seq-filter
+                        (lambda (stream)
+                          (equal (alist-get 'codec_type stream) "audio"))
+                        (alist-get 'streams json)))
+               1))
+      (cond
+       ((or
+         (string-match "\\.mkv\\'" filename)
+         (string-match "\\.webm\\'" filename))
+        (subed-waveform-convert-ffprobe-tags-duration-to-ms
+         (alist-get
+          'DURATION
+          (alist-get
+           'tags
+           (seq-find
+            (lambda (stream)
+              (equal (alist-get 'codec_type stream) "audio"))
+            (alist-get 'streams json))))))
+       (t
+        (* 1000
+           (string-to-number
+            (alist-get
+             'duration
+             (seq-find
+              (lambda (stream)
+                (equal (alist-get 'codec_type stream) "audio"))
+              (alist-get 'streams json))))))))
+     ;; TODO: Some media files might have multiple audio streams
+     ;; (e.g. multiple languages). When the media file has multiple
+     ;; audio streams, prompt the user for the audio stream. The audio
+     ;; stream selected by the user must be stored in a buffer-local
+     ;; variable so that ffmpeg knows the audio stream from which the
+     ;; waveforms are created.
+     )))
 
 (defun subed-waveform-file-duration-ms (&optional filename)
   "Return the duration of FILENAME in milliseconds."
