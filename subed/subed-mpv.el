@@ -425,6 +425,7 @@ by frames until any other key is pressed."
   "Take a screenshot without subtitles.
 Save to FILE if specified.
 Use \\[universal-argument] to save to a specific file.
+Passes FLAGS to MPV for taking the screenshot.
 Returns the filename."
   (setq flags (or flags 'video))
   (interactive (list (if current-prefix-arg (read-file-name "Filename: "))))
