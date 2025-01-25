@@ -78,8 +78,47 @@ Return a list of ((start . ?), (end . ?) (text . ?))."
                    rec))
                text-elements))))
 
+(defun subed-word-data--extract-words-from-youtube-vtt (file &optional from-string)
+  "Extract the timing from FILE which is a VTT from YouTube.
+Return a list of ((start . ?), (end . ?) (text . ?)).
+If FROM-STRING is non-nil, treat FILE as the data itself."
+  (with-temp-buffer
+    (subed-vtt-mode)
+    (if from-string
+        (insert file)
+      (insert-file-contents file))
+    (let ((list (subed-subtitle-list))
+          results
+          s
+          start
+          stop
+          i)
+      (dolist (sub list)
+        (when (string-match "<c>" (elt sub 3))
+          (setq s (elt sub 3))
+          (setq i 0)
+          (setq start (elt sub 1))
+          (while (and (< i (length s))
+                      (string-match "\\(.+?\\)<\\([0-9]+:[0-9]+:[0-9]+\\.[0-9]+\\)>" s i))
+            (setq stop (1- (save-match-data (subed-timestamp-to-msecs (match-string 2 s)))))
+            (push `((text . ,(save-match-data
+                               (string-trim (replace-regexp-in-string "</?c>" "" (match-string 1 s)))))
+                    (start . ,start)
+                    (end . ,stop))
+                  results)
+            (setq i (match-end 0)
+                  start (1+ stop)))
+          (if (and (< i (length s))
+                   (not (string= "" (string-trim (substring s i)))))
+              (push `((text . ,(string-trim
+                              (save-match-data (replace-regexp-in-string "</?c>" "" (substring s i)))))
+                      (start . ,start)
+                      (end . ,(elt sub 2)))
+                    results))))
+      (nreverse results))))
+
 (defun subed-word-data--extract-words-from-whisperx-json (file &optional from-string)
-  "Extract the timing from file in WhisperX's JSON format.
+  "Extract the timing from FILE in WhisperX's JSON format.
 Return a list of ((start . ?), (end . ?) (text . ?) (score . ?)).
 If FROM-STRING is non-nil, treat FILE as the data itself."
   (let* ((json-object-type 'alist)
@@ -113,16 +152,18 @@ If FROM-STRING is non-nil, treat FILE as the data itself."
 
 (defun subed-word-data--load (data)
   "Load word-level timing from DATA.
-For now, only SRV2 files are supported."
-  (setq-local subed-word-data--cache data)
-  (add-hook 'subed-split-subtitle-timestamp-functions #'subed-word-data-split-at-word-timestamp -5 t)
-  (subed-word-data-refresh-text-properties))
+Supports WhisperX JSON, YouTube VTT, and Youtube SRV2 files."
+  (when data
+    (setq-local subed-word-data--cache data)
+    (add-hook 'subed-split-subtitle-timestamp-functions #'subed-word-data-split-at-word-timestamp -5 t)
+    (subed-word-data-refresh-text-properties)
+    data))
 
 ;;;###autoload
 (defun subed-word-data-load-from-file (file)
   "Load word-level timing from FILE.
-For now, only SRV2 and JSON files are supported."
-  (interactive (list (read-file-name "JSON or srv2: "
+Supports WhisperX JSON, YouTube VTT, and Youtube SRV2 files."
+  (interactive (list (read-file-name "JSON, VTT, or srv2: "
                                      nil
                                      nil
                                      nil
@@ -130,21 +171,26 @@ For now, only SRV2 and JSON files are supported."
                                      (lambda (f)
                                        (or (file-directory-p f)
                                            (string-match
-                                            "\\.json\\'\\|\\.srv2\\'"
+                                            "\\.\\(json\\|srv2\\|vtt\\)\\'"
                                             f))))))
   (subed-word-data--load
-   (if (and (stringp file) (string-match "\\.json\\'" file))
-       (subed-word-data--extract-words-from-whisperx-json file)
-     (subed-word-data--extract-words-from-srv2 (xml-parse-file file)))))
+   (pcase (file-name-extension file)
+     ("json" (subed-word-data--extract-words-from-whisperx-json file))
+     ("srv2" (subed-word-data--extract-words-from-srv2 (xml-parse-file file)))
+     ("vtt" (subed-word-data--extract-words-from-youtube-vtt file)))))
 
 (defun subed-word-data-load-from-string (string)
   "Load word-level timing from STRING.
 For now, only JSON or SRV2 files are supported."
-  (subed-word-data--load (if (string-match "^{" string)
-              (subed-word-data--extract-words-from-whisperx-json string t)
-              (subed-word-data--extract-words-from-srv2 string))))
+  (subed-word-data--load (cond
+           ((string-match "^{" string)
+            (subed-word-data--extract-words-from-whisperx-json string t))
+           ((string-match "^WEBVTT" string)
+            (subed-word-data--extract-words-from-youtube-vtt string t))
+           (t
+            (subed-word-data--extract-words-from-srv2 string)))))
 
-(defvar subed-word-data-extensions '(".en.srv2" ".srv2") "Extensions to search for word data.")
+(defvar subed-word-data-extensions '(".en.srv2" ".srv2" ".json" ".vtt") "Extensions to search for word data.")
 
 ;;;###autoload
 (defun subed-word-data-load-maybe ()
@@ -157,8 +203,7 @@ For now, only JSON or SRV2 files are supported."
                   (setq file (concat (file-name-sans-extension (buffer-file-name)) ext))
                   (throw 'found)))
               subed-word-data-extensions))
-      (when file
-        (subed-word-data-load-from-file file)
+      (when (and file (subed-word-data-load-from-file file))
         (message "Word data loaded.")))))
 
 (defvar subed-word-data-normalizing-functions '(subed-word-data-normalize-word-default)
