@@ -273,11 +273,19 @@ See also `subed-subtitle-id-at-msecs'."
       (subed-jump-to-subtitle-id target-sub-id))))
 
 (subed-define-generic-function jump-to-subtitle-text-at-msecs (msecs)
-  "Move point to the text of the subtitle that is playing at MSECS.
+	"Move point to the text of the subtitle that is playing at MSECS.
 Return point or nil if point is still on the same subtitle.
 See also `subed-vtt--subtitle-id-at-msecs'."
-  (when (subed-jump-to-subtitle-id-at-msecs msecs)
-    (subed-jump-to-subtitle-text)))
+	(when (subed-jump-to-subtitle-id-at-msecs msecs)
+		(subed-jump-to-subtitle-text)))
+
+(subed-define-generic-function in-header-p ()
+  "Return non-nil if the point is in the file header."
+  nil)
+
+(subed-define-generic-function in-comment-p ()
+  "Return non-nil if the point is in a comment."
+  nil)
 
 (subed-define-generic-function forward-subtitle-start-pos ()
   "Move point to the beginning of the next subtitle.

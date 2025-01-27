@@ -5,6 +5,30 @@
 (require 'subed-word-data)
 
 (describe "subed-word-data"
+  (it "gets word data from YouTube VTTs."
+    (let ((words (subed-word-data--extract-words-from-youtube-vtt
+                  "WEBVTT
+Kind: captions
+Language: en
+
+00:00:02.459 --> 00:00:05.610 align:start position:0%
+
+hi<00:00:03.459><c> welcome</c><00:00:03.850><c> to</c><00:00:03.999><c> another</c><00:00:04.149><c> episode</c><00:00:04.509><c> of</c><00:00:05.020><c> Emacs</c>
+
+00:00:05.610 --> 00:00:05.620 align:start position:0%
+hi welcome to another episode of Emacs
+
+
+00:00:05.620 --> 00:00:07.860 align:start position:0%
+hi welcome to another episode of Emacs
+chat<00:00:05.950><c> i'm</c><00:00:06.160><c> sasha</c><00:00:06.520><c> schewe</c><00:00:06.939><c> and</c><00:00:07.149><c> today</c><00:00:07.450><c> we</c><00:00:07.660><c> have</c>
+
+00:00:07.860 --> 00:00:07.870 align:start position:0%
+chat i'm sasha schewe and today we have
+
+
+" t)))
+words))
   (describe "Finding approximate matches"
     (it "handles early oopses."
       (let ((result (subed-word-data-find-approximate-match
@@ -49,6 +73,6 @@
         (expect (car result) :to-be-less-than 0.001)
         (expect (string-join (cdr result) " ") :to-equal "We're lucky if we can get an exact match.")))
 
-)
+    )
 
   )
