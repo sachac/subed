@@ -4,6 +4,8 @@ SPDX-FileCopyrightText: 2019-2021 The subed Authors
 SPDX-License-Identifier: GPL-3.0-or-later
 #+END_COMMENT
 
+#+TOC: headlines 2
+
 * subed
 :PROPERTIES:
 :CUSTOM_ID: subed
