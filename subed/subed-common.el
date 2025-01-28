@@ -798,30 +798,31 @@ scheduled call is canceled and another call is scheduled in
   "Detect point motion and user entering text and signal hooks."
   ;; Check for point motion first to avoid expensive calls to subed-subtitle-id
   ;; as often as possible.
-  (let ((new-point (point))
-        (new-buffer-chars-modified-tick (buffer-chars-modified-tick)))
-    (when (and
-           new-point subed--current-point
-           (not (and (= new-point subed--current-point)
-                     (= new-buffer-chars-modified-tick subed--buffer-chars-modified-tick))))
+  (save-match-data
+    (let ((new-point (point))
+          (new-buffer-chars-modified-tick (buffer-chars-modified-tick)))
+      (when (and
+             new-point subed--current-point
+             (not (and (= new-point subed--current-point)
+                       (= new-buffer-chars-modified-tick subed--buffer-chars-modified-tick))))
 
-      ;; If point is synced to playback position, temporarily disable that so
-      ;; that manual moves aren't cancelled immediately by automated moves.
-      (subed-disable-sync-point-to-player-temporarily)
+        ;; If point is synced to playback position, temporarily disable that so
+        ;; that manual moves aren't cancelled immediately by automated moves.
+        (subed-disable-sync-point-to-player-temporarily)
 
-      ;; Store new point and fire signal.
-      (setq subed--current-point new-point
-            subed--buffer-chars-modified-tick new-buffer-chars-modified-tick)
-      (run-hooks 'subed-point-motion-hook)
+        ;; Store new point and fire signal.
+        (setq subed--current-point new-point
+              subed--buffer-chars-modified-tick new-buffer-chars-modified-tick)
+        (run-hooks 'subed-point-motion-hook)
 
-      ;; Check if point moved across subtitle boundaries.
-      (let ((new-sub-id (subed-subtitle-id)))
-        (when (and new-sub-id subed--current-subtitle-id
-                   (not (funcall (if (stringp subed--current-subtitle-id) 'string= 'equal)
-                                 new-sub-id subed--current-subtitle-id)))
-          ;; Store new ID and fire signal.
-          (setq subed--current-subtitle-id new-sub-id)
-          (run-hooks 'subed-subtitle-motion-hook))))))
+        ;; Check if point moved across subtitle boundaries.
+        (let ((new-sub-id (subed-subtitle-id)))
+          (when (and new-sub-id subed--current-subtitle-id
+                     (not (funcall (if (stringp subed--current-subtitle-id) 'string= 'equal)
+                                   new-sub-id subed--current-subtitle-id)))
+            ;; Store new ID and fire signal.
+            (setq subed--current-subtitle-id new-sub-id)
+            (run-hooks 'subed-subtitle-motion-hook)))))))
 
 
 ;;; Adjusting start/stop time individually

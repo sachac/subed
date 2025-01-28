@@ -43,18 +43,19 @@
 
 ;;; Parsing
 
-(defconst subed-vtt--regexp-timestamp "\\(?:\\(?:[0-9]+\\):\\)?\\(?:[0-9]+\\):\\(?:[0-9]+\\)\\(?:\\.\\([0-9]+\\)\\)?")
+(defconst subed-vtt--regexp-timestamp "\\(?:\\(?:[0-9]+\\):\\)?\\(?:[0-9]+\\):\\(?:[0-9]+\\)\\(?:\\.\\(?:[0-9]+\\)\\)?")
 (defconst subed-vtt--regexp-separator "\\(?:\\(?:[ \t]*\n\\)+\\(?:NOTE[ \t\n]*[ \t]*\n[ \t]*\n\\)?\\)"
   "Blank lines and possibly a comment.")
-(defconst subed-vtt--regexp-blank-separator "[ \t]*\n\\(?:[ \t]*\n\\)+")
-(defconst subed-vtt--regexp-note "\\(NOTE[ \s\t\n]\\)")
+(defconst subed-vtt--regexp-blank-separator "\\(?:[ \t]*\n[ \t]*\n\\|\\`\\(?:[ \t\n]*\\)\\)")
+(defconst subed-vtt--regexp-note "\\(NOTE[ \t\n]\\)")
 (defconst subed-vtt--regexp-identifier
   ;; According to https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API
   ;; Cues can start with an identifier which is a non empty line that does
   ;; not contain "-->".
-  "^[ \t]*[^ \t\n-]\\(?:[^\n-]\\|-[^\n-]\\|--[^\n>]\\)*[ \t]*\n")
+  "[ \t]*[^ \t\n-]\\(?:[^\n-]\\|-[^\n-]\\|--[^\n>]\\)*[ \t]*")
+(defconst subed-vtt--regexp-start-of-line "\\(?:\\`\\|\n\\)")
 (defconst subed-vtt--regexp-timing
-  (concat subed-vtt--regexp-timestamp "[ \t]*-->[ \t]*" subed-vtt--regexp-timestamp))
+  (concat "[ \t]*" subed-vtt--regexp-timestamp "[ \t]*-->[ \t]*" subed-vtt--regexp-timestamp))
 (defconst subed-vtt--regexp-maybe-identifier-and-timing
   (format "%s\\(%s%s\\|%s\\)"
           subed-vtt--regexp-blank-separator
@@ -115,59 +116,54 @@ format-specific function for MAJOR-MODE."
 ;;; Traversing
 
 (cl-defmethod subed--in-header-p (&context (major-mode subed-vtt-mode))
-  "Return non-nil if the point is in the file header."
+  "Return non-nil if the point is in the file header.
+Use the format-specific function for MAJOR-MODE."
   (save-excursion
     (let ((orig-point (point)))
-      (goto-char (point-min))
-      (if (looking-at (format "[ \t\n]*\\(%s%s\\|%s\\|%s\\)"
-                              subed-vtt--regexp-note
-                              subed-vtt--regexp-identifier
-                              subed-vtt--regexp-timing
-                              subed-vtt--regexp-timing))
-          (< orig-point (match-beginning 1))
-        (if (re-search-forward (format "%s\\(%s\\|%s%s\\|%s\\)"
-                                       subed-vtt--regexp-blank-separator
-                                       subed-vtt--regexp-note
-                                       subed-vtt--regexp-identifier
-                                       subed-vtt--regexp-timing
-                                       subed-vtt--regexp-timing)
-                               nil t)
-            (< orig-point (match-beginning 1))
-          t)))))
+      (goto-char (line-beginning-position))
+      (cond
+       ((and (looking-at subed-vtt--regexp-timing)
+             (looking-back subed-vtt--regexp-start-of-line))
+        nil)
+       ;; not looking right at a timestamp; check the previous line to see if it's blank
+       ((and
+         (looking-back subed-vtt--regexp-blank-separator)
+         (looking-at (format "[ \t]*\\(%s\n%s\\|%s\\)"
+                             subed-vtt--regexp-identifier
+                             subed-vtt--regexp-timing
+                             subed-vtt--regexp-note)))
+        nil)
+       ((re-search-backward (concat "^" subed-vtt--regexp-timing) nil t) nil)
+       ((re-search-backward (concat subed-vtt--regexp-blank-separator subed-vtt--regexp-note) nil t) nil)
+       (t t)))))
 
 (cl-defmethod subed--in-comment-p (&context (major-mode subed-vtt-mode))
-  "Return non-nil if the point is in a comment."
-  (let* ((orig-point (point))
-         (previous-comment
-          (save-excursion
-            (forward-line 1)
-            (when (re-search-backward
-                   (format "%s\\(%s\\)"
-                           subed-vtt--regexp-blank-separator
-                           subed-vtt--regexp-note)
-                   nil t)
-              (match-beginning 1))))
-         (previous-timestamp
-          (save-excursion
-            (or (re-search-forward subed-vtt--regexp-blank-separator nil t)
-                (goto-char (point-max)))
-            (when (re-search-backward subed-vtt--regexp-maybe-identifier-and-timing nil t)
-              (match-beginning 1)))))
-    (save-excursion
-      (cond
-       ((null previous-comment) nil)
-       ((null previous-timestamp)
-        (>= orig-point previous-comment))
-       ((and
-         (< previous-comment previous-timestamp)
-         (>= orig-point previous-timestamp))
-        nil)
-       ;; there's a previous comment after a previous timestamp
-       ((< previous-timestamp previous-comment) t)
-       ((and (> previous-timestamp previous-comment)
-             (<= previous-timestamp orig-point))
-        nil)
-       (t t)))))
+  "Return non-nil if the point is in a comment.
+Use the format-specific function for MAJOR-MODE."
+  (save-excursion
+    (goto-char (line-beginning-position))
+    (cond
+     ((looking-at subed-vtt--regexp-timing)
+      nil)
+     ((and (looking-at (format "%s\n%s"
+                               subed-vtt--regexp-identifier
+                               subed-vtt--regexp-timing))
+           (looking-back subed-vtt--regexp-blank-separator))
+      nil)
+     ;; looking at a comment
+     ((and
+       (looking-back "^[ \t]*\n\\|\\`\\(?:[ \t\n]*\\)")
+       (looking-at (concat "[ \t]*" subed-vtt--regexp-note)))
+      t)
+     ((re-search-backward (format "\\(%s%s\\)\\|%s%s"
+                                  subed-vtt--regexp-blank-separator
+                                  subed-vtt--regexp-note
+                                  subed-vtt--regexp-start-of-line
+                                  subed-vtt--regexp-timing)
+                          nil t)
+      ;;  found the note instead of the timestamp
+      (when (match-string 1)
+        t)))))
 
 (cl-defmethod subed--jump-to-subtitle-id (&context (major-mode subed-vtt-mode) &optional sub-id)
   "Move to the ID of a subtitle and return point.
@@ -178,7 +174,7 @@ Use the format-specific function for MAJOR-MODE."
   (let ((orig-point (point))
         found
         (timestamp-line
-         (format "\\(?:\\`\\|\n[ \t]*\n+\\)\\(\\(%s\\)%s\\|\\(%s\\)\\)"
+         (format "\\(?:\\`\\|\n[ \t]*\n+\\)\\(\\(%s\\)\n%s\\|\\(%s\\)\\)"
                  subed-vtt--regexp-identifier
                  subed-vtt--regexp-timing
                  subed-vtt--regexp-timing)))
@@ -193,46 +189,42 @@ Use the format-specific function for MAJOR-MODE."
               (goto-char (match-beginning 2))
             (goto-char orig-point)
             nil))
-      ;; are we in a comment?
-      (cond
-       ((subed-in-header-p) nil)
-       ((subed-in-comment-p)
-        (re-search-backward subed-vtt--regexp-blank-separator nil t)
-        (when (re-search-forward subed-vtt--regexp-maybe-identifier-and-timing nil t)
-          (goto-char (match-beginning 1))
-          (point)))
-       (t
-        ;; we could be looking at a subtitle ID
+      (catch 'done
         (goto-char (line-beginning-position))
-        (or
-         (re-search-backward (format "\\(\\`[ \t\n]*\\|%s\\)"
-                                     subed-vtt--regexp-blank-separator)
-                             nil t)
-         (goto-char (point-min)))
         (cond
-         ((looking-at subed-vtt--regexp-maybe-identifier-and-timing)
-          (if (< orig-point (match-beginning 1))
-              ;; we are at a subtitle boundary, but before the next ID
-              ;; go backwards to find the ID
-              (when (re-search-backward subed-vtt--regexp-maybe-identifier-and-timing nil t)
-                (goto-char (match-beginning 1))
-                (point))
-            (goto-char (match-beginning 1))
-            (point)))
-         ((and (bobp)
-               (looking-at (format "[ \t\n]*\\(%s%s\\|%s\\)"
-                                   subed-vtt--regexp-identifier
-                                   subed-vtt--regexp-timing
-                                   subed-vtt--regexp-timing)))
-          ;; at the beginning of the buffer, looking at an ID
-          (goto-char (match-beginning 1))
-          (point))
+         ((subed-in-header-p) (throw 'done nil))
+         ;; are we looking at a timestamp? Stay here, check for ID later
+         ((looking-at subed-vtt--regexp-timing) (point))
+         ;; are we at an ID? return that
+         ((and (or (looking-back subed-vtt--regexp-blank-separator) (bobp))
+               (not (looking-at "[ \t]*\n"))
+               (not (save-excursion (re-search-forward "-->" (line-end-position) t)))
+               (save-excursion
+                 (forward-line)
+                 (looking-at subed-vtt--regexp-timing)))
+          (throw 'done (point)))
+         ;; are we in a comment? Search forward
+         ((subed-in-comment-p)
+          (if (re-search-forward (concat subed-vtt--regexp-start-of-line "\\(" subed-vtt--regexp-timing "\\)") nil t)
+              (goto-char (match-beginning 1))
+            (throw 'done nil)))
+         ;; scan backwards for a timestamp
+         ((re-search-backward (concat subed-vtt--regexp-start-of-line "\\(" subed-vtt--regexp-timing "\\)") nil t)
+          (goto-char (match-beginning 1))))
+        ;; We are at a timestamp; check backwards for an ID
+        (cond
+         ((bobp) (throw 'done (point)))
+         ((progn
+            (previous-line)
+            (goto-char (line-beginning-position))
+            (and (or (looking-back subed-vtt--regexp-blank-separator) (bobp))
+                 (not (looking-at "[ \t]*\n"))
+                 (save-excursion (not (re-search-forward "-->" (line-end-position) t)))))
+          (throw 'done (point)))
          (t
-          (or (re-search-forward subed-vtt--regexp-blank-separator nil t)
-              (goto-char (point-max)))
-          (when (re-search-backward  subed-vtt--regexp-maybe-identifier-and-timing nil t)
-            (goto-char (match-beginning 1))
-            (point)))))))))
+          ;; go back
+          (forward-line 1)
+          (point)))))))
 
 (cl-defmethod subed--jump-to-subtitle-time-start (&context (major-mode subed-vtt-mode) &optional sub-id)
   "Move point to subtitle's start time.
@@ -271,41 +263,49 @@ If SUB-ID is not given, use subtitle on point.
 Return point or nil if point did not change or if no subtitle end
 can be found.  Use the format-specific function for MAJOR-MODE."
   (let* ((orig-point (point))
-				 (case-fold-search nil))
-    ;; go back to the text
-    (subed-jump-to-subtitle-text sub-id)
-    (skip-chars-backward " \t\n")
-    (cond
-     ((looking-at (format "%s\\(NOTE[ \t\n]\\|%s%s\\|%s\\)"
-                          subed-vtt--regexp-blank-separator
-                          subed-vtt--regexp-identifier
-                          subed-vtt--regexp-timing
-                          subed-vtt--regexp-timing))
-      ;; empty subtitle
-      (forward-line 1)
-      (point))
-     ;; end of buffer
-     ((save-excursion (skip-chars-forward " \t\n")
-                      (eobp))
-      (forward-line 1)
-      (point))
-     (t
-      ;; scan forward each separator
-      (catch 'done
-        (while (re-search-forward subed-vtt--regexp-blank-separator nil t)
-          (goto-char (match-beginning 0))
-          (if (looking-at
-               (format "%s\\(NOTE[ \t\n]\\|%s%s\\|%s\\)"
-                       subed-vtt--regexp-blank-separator
-                       subed-vtt--regexp-identifier
-                       subed-vtt--regexp-timing
-                       subed-vtt--regexp-timing))
-              (throw 'done (point))
-            (skip-chars-forward " \t\n")))
-        (goto-char (point-max))
-        (skip-chars-backward " \t\n"))))
-    (unless (= (point) orig-point)
-      (point))))
+				 (case-fold-search nil)
+         text-point)
+    (catch 'done
+      ;; go back to the text
+      (if (subed-in-comment-p)
+          (if (re-search-forward (concat subed-vtt--regexp-start-of-line subed-vtt--regexp-timing) nil t)
+              (progn
+                (unless (eobp) (forward-line 1) (goto-char (line-beginning-position)))
+                (setq text-point (point)))
+            (throw 'done nil))
+        (setq text-point
+              (or (subed-jump-to-subtitle-text sub-id)
+                  (point))))
+      (goto-char (line-beginning-position))
+
+      (cond
+       ;; are we in the header?
+       ((subed-in-header-p)
+        (goto-char orig-point)
+        (throw 'done nil))
+       ;; are we looking at the next timing?
+       ((looking-at (concat "[ \t\n]*" subed-vtt--regexp-timing)) (point))
+       ;; are we looking at an ID and then the next timing?
+       ((looking-at (format "\\(?:[ \t]*\n\\)+%s\n%s"
+                            subed-vtt--regexp-identifier
+                            subed-vtt--regexp-timing))
+        (point))
+       ((re-search-forward (format "\\(%s%s\\)\\|\\(%s%s\n%s\\)\\|\\(%s%s\\)\\|%s.*-->"
+                                   subed-vtt--regexp-blank-separator
+                                   subed-vtt--regexp-note
+                                   subed-vtt--regexp-blank-separator
+                                   subed-vtt--regexp-identifier
+                                   subed-vtt--regexp-timing
+                                   subed-vtt--regexp-start-of-line
+                                   subed-vtt--regexp-timing
+                                   subed-vtt--regexp-start-of-line)
+                           nil t)
+        (goto-char (max text-point (match-beginning 0))))
+       (t (goto-char (point-max))))
+      (skip-chars-backward " \t\n")
+      (goto-char (max (point) text-point))
+      (unless (= (point) orig-point)
+        (point)))))
 
 (cl-defmethod subed--forward-subtitle-id (&context (major-mode subed-vtt-mode))
   "Move point to next subtitle's ID.
@@ -314,21 +314,15 @@ format-specific function for MAJOR-MODE."
   (let ((orig-point (point)))
     (when (subed-subtitle-id)
       (subed-jump-to-subtitle-end))
-    (unless (looking-at (format "\\(%s%s\\|%s\\)"
-                                   subed-vtt--regexp-identifier
-                                   subed-vtt--regexp-timing
-                                   subed-vtt--regexp-timing))
-      (skip-chars-backward " \n\t"))
-    (if (re-search-forward (format "%s\\(%s%s\\|%s\\)"
+    (if (re-search-forward (format "\\(?:%s\\(%s\n%s\\)\\|%s\\(%s\\)\\)"
                                    subed-vtt--regexp-blank-separator
                                    subed-vtt--regexp-identifier
                                    subed-vtt--regexp-timing
+                                   subed-vtt--regexp-start-of-line
                                    subed-vtt--regexp-timing)
                            nil t)
-        (or (subed-jump-to-subtitle-id)
-            (progn
-              (goto-char orig-point)
-              nil))
+        (goto-char (or (match-beginning 1)
+                       (match-beginning 2)))
       (goto-char orig-point)
       nil)))
 

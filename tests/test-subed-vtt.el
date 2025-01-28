@@ -281,6 +281,31 @@ with multiple lines.
 This is another subtitle")
          (re-search-backward "multiple")
          (expect (subed-in-comment-p) :to-be t)))
+      (it "handles multiple blocks in a cue."
+        (with-temp-vtt-buffer
+         (insert "WEBVTT
+
+1
+00:01:01.000 --> 00:01:05.123
+Foo.
+
+NOTE
+
+This is a comment
+
+2
+00:02:02.234 --> 00:02:10.345
+
+Apparently a subtitle can have multiple comements.
+
+Bar.
+
+00:04:02.234 --> 00:04:10.345
+Baz.
+
+")
+         (re-search-backward "Bar")
+         (expect (subed-in-comment-p) :to-be nil)))
       (it "returns nil if there's a cue between the cursor and the previous comment."
         (with-temp-vtt-buffer
 				 (insert "WEBVTT
@@ -708,8 +733,6 @@ Bar.
 						 (re-search-backward "OTE")
 						 (expect (subed-jump-to-subtitle-start-pos) :not :to-be nil)
 						 (expect (looking-at "NOTE\nThis is a comment") :to-be t))))))
-
-
     (describe "to subtitle start time"
       (it "returns start time's point if movement was successful."
         (with-temp-vtt-buffer
@@ -730,7 +753,95 @@ Bar.
       (it "returns nil if movement failed."
         (with-temp-vtt-buffer
          (expect (subed-jump-to-subtitle-time-start) :to-equal nil)))
-      )
+      (describe "when timing info doesn't have a blank line before it"
+        :var ((test-data "WEBVTT
+
+00:00:01.000 --> 00:00:01.999
+This is a test
+00:00:02.000 --> 00:00:02.999
+This is another test
+
+NOTE
+This is a comment
+with a second line.
+00:00:03.000 --> 00:00:03.999
+This is a third test.
+"))
+        (it "returns nil from the header."
+          (with-temp-vtt-buffer
+           (insert test-data)
+           (goto-char (point-min))
+           (expect (subed-jump-to-subtitle-time-start) :to-be nil)
+           (expect (point) :to-equal 1)))
+        (it "jumps to the first timing from the start of the timestamp."
+          (with-temp-vtt-buffer
+           (insert test-data)
+           (re-search-backward "00:00:01\\.000")
+           (subed-jump-to-subtitle-time-start)
+           (expect (looking-at "00:00:01") :to-be t)))
+        (it "jumps to the first timing line from the middle of the timestamp."
+          (with-temp-vtt-buffer
+           (insert test-data)
+           (goto-char (point-min))
+           (re-search-forward "--")
+           (subed-jump-to-subtitle-time-start)
+           (expect (looking-at "00:00:01") :to-be t)))
+        (it "jumps to the first timing line from the text."
+          (with-temp-vtt-buffer
+           (insert test-data)
+           (re-search-backward "This is a test")
+           (subed-jump-to-subtitle-time-start)
+           (expect (looking-at "00:00:01") :to-be t)))
+        (it "jumps to the middle timing line from the start of the timestamp."
+          (with-temp-vtt-buffer
+           (insert test-data)
+           (re-search-backward "00:00:02\\.000")
+           (subed-jump-to-subtitle-time-start)
+           (expect (looking-at "00:00:02") :to-be t)))
+        (it "jumps to the middle timing line from the middle of the timestamp."
+          (with-temp-vtt-buffer
+           (insert test-data)
+           (re-search-backward "00:00:02\\.000 --")
+           (goto-char (match-end 0))
+           (subed-jump-to-subtitle-time-start)
+           (expect (looking-at "00:00:02") :to-be t)))
+        (it "jumps to the middle timing line from the text."
+          (with-temp-vtt-buffer
+           (insert test-data)
+           (re-search-backward "another")
+           (subed-jump-to-subtitle-time-start)
+           (expect (looking-at "00:00:02") :to-be t)))
+        (it "jumps to the last timing line from the start of the comment."
+          (with-temp-vtt-buffer
+           (insert test-data)
+           (re-search-backward "NOTE")
+           (subed-jump-to-subtitle-time-start)
+           (expect (looking-at "00:00:03") :to-be t))
+          )
+        (it "jumps to the last timing line from the middle of the comment."
+          (with-temp-vtt-buffer
+           (insert test-data)
+           (re-search-backward "comment")
+           (subed-jump-to-subtitle-time-start)
+           (expect (looking-at "00:00:03") :to-be t)))
+        (it "jumps to the last timing line from the end of the comment."
+          (with-temp-vtt-buffer
+           (insert test-data)
+           (re-search-backward "second line.")
+           (goto-char (match-end 0))
+           (subed-jump-to-subtitle-time-start)
+           (expect (looking-at "00:00:03") :to-be t)))
+        (it "jumps to the last timing line from the start of the timestamp."
+          (with-temp-vtt-buffer
+           (insert test-data)
+           (re-search-backward "00:00:03\\.000")
+           (subed-jump-to-subtitle-time-start)
+           (expect (looking-at "00:00:03") :to-be t)))
+        (it "jumps to the closest timing line from the end of the file."
+          (with-temp-vtt-buffer
+           (insert test-data)
+           (subed-jump-to-subtitle-time-start)
+           (expect (looking-at "00:00:03") :to-be t)))))
     (describe "to subtitle stop time"
       (it "returns stop time's point if movement was successful."
         (with-temp-vtt-buffer
@@ -1016,7 +1127,17 @@ of multiple blocks
 
 ")
          (re-search-backward "A subtitle can")
-         (expect (subed-jump-to-subtitle-end) :to-be 82))))
+         (expect (subed-jump-to-subtitle-end) :to-be 82)))
+      (it "stops before lines that have -->."
+        (with-temp-vtt-buffer
+         (insert "WEBVTT
+
+00:00:00.000 --> 00:00:01.000
+This is a test
+a-->
+")
+         (re-search-backward "This is a test")
+         (expect (subed-jump-to-subtitle-end) :to-be 53))))
     (describe "to next subtitle ID"
       (it "returns point when there is a next subtitle."
         (with-temp-vtt-buffer
@@ -1057,7 +1178,26 @@ of multiple blocks
          (subed-jump-to-subtitle-time-stop "00:03:03.45")
          (expect (thing-at-point 'word) :to-equal "00")
          (expect (subed-forward-subtitle-id) :to-be nil)
-         (expect (thing-at-point 'word) :to-equal "00"))))
+         (expect (thing-at-point 'word) :to-equal "00")))
+      (it "finds the next subtitle timing even when there's no blank line before it."
+        (with-temp-vtt-buffer
+         (insert "WEBVTT
+
+00:00:01.000 --> 00:00:01.999
+This is a test
+00:00:02.000 --> 00:00:02.999
+This is another test
+
+NOTE
+This is a comment
+with a second line.
+00:00:03.000 --> 00:00:03.999
+This is a third test.
+")
+         (re-search-backward "This is a test")
+         (subed-forward-subtitle-id)
+         (expect (looking-at "00:00:02") :to-be t)
+         )))
     (describe "to previous subtitle ID"
       (it "returns point when there is a previous subtitle."
         (with-temp-vtt-buffer
@@ -2177,6 +2317,43 @@ Hello world
       (with-temp-vtt-buffer
        (expect (subed-msecs-to-timestamp 1401) :to-equal "00:00:01.401"))))
   (describe "Getting the list of subtitles"
+    (it "handles arrows and the lack of blank lines between cues."
+      (with-temp-vtt-buffer
+       ;; https://github.com/web-platform-tests/wpt/blob/master/webvtt/parsing/file-parsing/tests/support/arrows.vtt
+       (insert "WEBVTT
+
+-->
+00:00:00.000 --> 00:00:01.000
+text0
+foo-->
+00:00:00.000 --> 00:00:01.000
+text1
+-->foo
+00:00:00.000 --> 00:00:01.000
+text2
+--->
+00:00:00.000 --> 00:00:01.000
+text3
+-->-->
+00:00:00.000 --> 00:00:01.000
+text4
+00:00:00.000 --> 00:00:01.000
+text5
+
+00:00:00.000 -a -->
+
+00:00:00.000 --a -->
+
+00:00:00.000 - -->
+
+00:00:00.000 -- -->")
+       (let ((list (subed-subtitle-list)))
+         (expect (length list) :to-equal 6)
+         (seq-map-indexed
+          (lambda (cue i)
+            (expect (elt cue 0) :to-equal "00:00:00.000")
+            (expect (elt cue 3) :to-equal (format "text%d" i)))
+          list))))
     (it "ignores things that look like comments in cue text."
       (with-temp-vtt-buffer
        (insert "WEBVTT
