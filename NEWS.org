@@ -2,6 +2,20 @@
 
 * subed news
 
+** Version 1.2.25 - 2025-01-28 - Sacha Chua
+
+- subed-vtt: Don't require blank lines before timestamps. Support multiple components in a cue.
+- Document YouTube workflow.
+
+** Version 1.2.24 - 2025-01-24 - Sacha Chua
+
+- New command subed-section-comments-as-chapters.
+- subed-word-data.el: Load word data from Youtube VTT files.
+- Approximately match word data.
+- Move CPS overlay more often.
+- subed-sum-time can take a list of subtitles.
+- subed-vtt merges comments as well.
+
 ** Version 1.2.23 - 2024-12-19 - Sacha Chua
 
 - New menu.
