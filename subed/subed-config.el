@@ -247,7 +247,7 @@ Used when temporarily disabling point-to-player sync.")
   :type 'number
   :group 'subed)
 
-(defcustom subed-mpv-small-step-seconds 1 "Number of seconds to move for a large step."
+(defcustom subed-mpv-small-step-seconds 1 "Number of seconds to move for a small step."
   :type 'number
   :group 'subed)
 
