@@ -167,6 +167,18 @@ rounded to the nearest multiple of this number."
   :type 'integer
   :group 'subed-waveform)
 
+(defcustom subed-waveform-image-width nil
+  "Width for images that display the waveforms of one subtitle.
+
+If nil, the width for waveforms is computed in
+`subed-waveform--image-parameters'.")
+
+(defcustom subed-waveform-image-height nil
+  "Height for images that display the waveforms of one subtitle.
+
+If it is nil, the height for waveforms is computed in
+`subed-waveform--image-parameters'.")
+
 (defvar subed-waveform--overlay nil "Overlay if only a single waveform is displayed.")
 (defvar subed-waveform--svg nil "SVG if only a single waveform is displayed.")
 
@@ -503,7 +515,9 @@ This function ignores arguments and can be used in hooks."
       (when (subed-jump-to-subtitle-text)
         (let ((overlay (subed-waveform--get-current-overlay)))
           (when overlay (delete-overlay overlay))
-          (setq overlay (subed-waveform--make-overlay)))))))
+          (setq overlay (subed-waveform--make-overlay
+                         subed-waveform-image-width
+                         subed-waveform-image-height)))))))
 
 (defun subed-waveform-add-to-all (&optional beg end)
   "Update subtitles from BEG to END."
@@ -514,7 +528,9 @@ This function ignores arguments and can be used in hooks."
   (remove-overlays beg end 'subed-waveform t)
   (subed-for-each-subtitle beg end nil
     (subed-jump-to-subtitle-text)
-    (subed-waveform--make-overlay)))
+    (subed-waveform--make-overlay
+     subed-waveform-image-width
+     subed-waveform-image-height)))
 
 (defun subed-waveform-refresh-region (beg end)
   "Refresh waveforms after modifying region."
