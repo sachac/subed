@@ -643,7 +643,9 @@ Copy it to the start time of the next subtitle, leaving a gap of
 							 (x2 (car (elt (elt event 1) 2)))
 							 (msecs
 								(floor (* 1000 (/ (- x1 x2) ; pixels moved
-                                  (get-text-property 0 'waveform-pixels-per-second obj))))))
+                                  (get-text-property 0 'waveform-pixels-per-second obj)))))
+               (subed-milliseconds-adjust
+                subed-milliseconds-adjust)) ; don't save this change
 					(subed-adjust-subtitle-time-start msecs))))))
 
 (defun subed-waveform-increase-stop-time (event)
@@ -659,7 +661,9 @@ by `subed-milliseconds-adjust' milliseconds."
 			(when pixels-per-second
 				(let* ((x1 (car (elt (elt event 2) 2)))
 							 (x2 (car (elt (elt event 1) 2)))
-							 (msecs
+							 (subed-milliseconds-adjust
+                subed-milliseconds-adjust) ; don't save this change
+               (msecs
 								(floor (* 1000 (/ (- x1 x2) ; pixels moved
 																	pixels-per-second)))))
 					(subed-adjust-subtitle-time-stop msecs)
