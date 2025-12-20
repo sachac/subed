@@ -156,11 +156,12 @@ Supports WhisperX JSON, YouTube VTT, and Youtube SRV2 files."
   (when data
     (setq-local subed-word-data--cache data)
     (add-hook 'subed-split-subtitle-timestamp-functions #'subed-word-data-split-at-word-timestamp -5 t)
+    (add-hook 'subed-region-adjusted-hook #'subed-word-data-refresh-region)
     (subed-word-data-refresh-text-properties)
     data))
 
 ;;;###autoload
-(defun subed-word-data-load-from-file (file)
+(defun subed-word-data-load-from-file (file &optional offset)
   "Load word-level timing from FILE.
 Supports WhisperX JSON, YouTube VTT, and Youtube SRV2 files."
   (interactive (list (read-file-name "JSON, VTT, or srv2: "
@@ -172,12 +173,15 @@ Supports WhisperX JSON, YouTube VTT, and Youtube SRV2 files."
                                        (or (file-directory-p f)
                                            (string-match
                                             "\\.\\(json\\|srv2\\|vtt\\)\\'"
-                                            f))))))
-  (subed-word-data--load
-   (pcase (file-name-extension file)
-     ("json" (subed-word-data--extract-words-from-whisperx-json file))
-     ("srv2" (subed-word-data--extract-words-from-srv2 (xml-parse-file file)))
-     ("vtt" (subed-word-data--extract-words-from-youtube-vtt file)))))
+                                            f))))
+                     (when current-prefix-arg
+                       (read-string "Start offset: "))))
+  (let ((data (pcase (file-name-extension file)
+                ("json" (subed-word-data--extract-words-from-whisperx-json file))
+                ("srv2" (subed-word-data--extract-words-from-srv2 (xml-parse-file file)))
+                ("vtt" (subed-word-data--extract-words-from-youtube-vtt file)))))
+    (when offset (setq data (subed-word-data-adjust-times data offset)))
+    (subed-word-data--load data)))
 
 (defun subed-word-data-load-from-string (string)
   "Load word-level timing from STRING.
@@ -647,8 +651,19 @@ When called with `\\[universal-argument]', don't correct current transcript word
 		 t)
 		(find-file output-file)))
 
-(with-eval-after-load 'subed
-  (add-hook 'subed-region-adjusted-hook #'subed-word-data-refresh-region))
+(defun subed-word-data-adjust-times (list start-msecs)
+  "Shifts times in LIST so that START-MSECS is now equivalent to 0.
+Discard previous word data."
+  (when (stringp start-msecs) (setq start-msecs (subed-timestamp-to-msecs start-msecs)))
+  (seq-keep
+   (lambda (row)
+     (when (and (alist-get 'start row) (>= (alist-get 'start row) start-msecs))
+       (when (alist-get 'start row)
+         (setcdr (assoc 'start row) (- (alist-get 'start row) start-msecs)))
+       (when (alist-get 'end row)
+         (setcdr (assoc 'end row) (- (alist-get 'end row) start-msecs)))
+       row))
+   list))
 
 
 (provide 'subed-word-data)
