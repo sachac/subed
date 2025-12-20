@@ -85,7 +85,7 @@
   :type 'hook
   :group 'subed)
 
-(defcustom subed-video-extensions '("mkv" "mp4" "webm" "avi" "ts" "ogv" "mov")
+(defcustom subed-video-extensions '("mkv" "mp4" "webm" "avi" "ts" "ogv" "mov" "m4v")
   "Video file name extensions."
   :type '(repeat string)
   :group 'subed)
