@@ -107,6 +107,8 @@
       (progn
         (define-key subed-mode-map (kbd "C-M-[") #'subed-decrease-start-time)
         (define-key subed-mode-map (kbd "C-M-]") #'subed-increase-start-time)))
+    (define-key subed-mode-map (kbd "C-{") #'subed-copy-player-pos-to-start-time-and-copy-to-previous)
+    (define-key subed-mode-map (kbd "C-}") #'subed-copy-player-pos-to-stop-time-and-copy-to-next)
     (define-key subed-mode-map (kbd "M-{") #'subed-decrease-stop-time)
     (define-key subed-mode-map (kbd "M-}") #'subed-increase-stop-time)
     (define-key subed-mode-map (kbd "C-M-n") #'subed-move-subtitle-forward)
