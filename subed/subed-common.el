@@ -2402,7 +2402,11 @@ prefix argument, include comments in TXT output."
                      current-prefix-arg))
   (let* ((subtitles
           (mapcar (lambda (sub) (cons nil (cdr sub))) ; remove ID
-                  (subed-subtitle-list)))
+                  (if (derived-mode-p 'subed-mode)
+                      (subed-subtitle-list)
+                    (mapcar (lambda (o)
+                              (list nil 0 0 o nil))
+                            (split-string (buffer-string) "\n\n")))))
          (new-filename (concat (file-name-base (or (buffer-file-name) (buffer-name))) "."
                                (downcase format)))
          (mode-func (pcase format
