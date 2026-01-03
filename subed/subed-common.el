@@ -2439,25 +2439,27 @@ prefix argument, include comments in TXT output."
 ;;;###autoload
 (defvar subed-wdiff-executable "wdiff" "Command for word-based diffs.")
 
-(defun subed-wdiff-subtitle-text-with-file (script-file)
+(defun subed-wdiff-subtitle-text-with-file (script-file &optional ignore-regexp)
 	"Use wdiff to compare the captions with SCRIPT-FILE by word.
 The wdiff program must be installed.  Set
 `subed-wdiff-executable' if needed."
-	(interactive (list (read-file-name "Script: ")))
+	(interactive (list (read-file-name "Script: ")
+                     (when current-prefix-arg "[ ,\n]+")))
 	(let ((subtitle-text (subed-subtitle-list-text (subed-subtitle-list)))
 				(subtitle-text-filename (make-temp-file "subed-wdiff-subtitles" nil ".txt"))
 				(one-line-script-filename (make-temp-file "subed-wdiff-script" nil ".txt"))
+        (ignore-regexp (or ignore-regexp "[ \n]+"))
 				result)
 		(with-temp-file subtitle-text-filename
 			(insert (replace-regexp-in-string
-			         "[ \n]+" " "
+			         ignore-regexp" "
 			         subtitle-text)))
 		(with-temp-file one-line-script-filename
 			(if (member (file-name-extension script-file) '("vtt" "srt" "tsv" "ass"))
 					(insert (mapconcat (lambda (o) (concat (elt o 3) " ")) (subed-parse-file script-file)))
 				(insert-file-contents script-file))
 			(goto-char (point-min))
-			(while (re-search-forward "[ \n]+" nil t)
+			(while (re-search-forward ignore-regexp nil t)
 				(replace-match " ")))
 		(setq result
 					(shell-command-to-string (format "wdiff %s %s"
