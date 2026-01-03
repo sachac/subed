@@ -46,7 +46,7 @@
 (defconst subed-vtt--regexp-timestamp "\\(?:\\(?:[0-9]+\\):\\)?\\(?:[0-9]+\\):\\(?:[0-9]+\\)\\(?:\\.\\(?:[0-9]+\\)\\)?")
 (defconst subed-vtt--regexp-separator "\\(?:\\(?:[ \t]*\n\\)+\\(?:NOTE[ \t\n]*[ \t]*\n[ \t]*\n\\)?\\)"
   "Blank lines and possibly a comment.")
-(defconst subed-vtt--regexp-blank-separator "\\(?:[ \t]*\n[ \t]*\n\\|\\`\\(?:[ \t\n]*\\)\\)")
+(defconst subed-vtt--regexp-blank-separator "[ \t]*\n[ \t]*\n")
 (defconst subed-vtt--regexp-note "\\(NOTE[ \t\n]\\)")
 (defconst subed-vtt--regexp-identifier
   ;; According to https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API
