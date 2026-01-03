@@ -651,7 +651,8 @@ If MODE-FUNC is non-nil, use that function to initialize the mode.
 Otherwise, initialize the mode based on the filename."
   (when (and filename (file-exists-p filename))
     (with-temp-buffer
-      (let ((subed-auto-play-media nil))
+      (let ((subed-auto-play-media nil)
+            (subed-mode-hook nil))
         (insert-file-contents filename)
         (if mode-func
             (funcall mode-func)

@@ -551,6 +551,12 @@ using generic functions such as ~subed-jump-to-subtitle-id~.
 
 You'll need to install the =buttercup= and =package-lint= Emacs packages. You'll also need =GNU Make= so that you can work with Makefiles. To run the tests, use the command =make test=.
 
+To re-run tests automatically when files change, something like nodemon might be helpful.
+
+#+begin_src sh :eval no
+nodemon -w tests/*.el -w subed/*.el -x "make test"
+#+end_src
+
 ** Contributions
 :PROPERTIES:
 :CUSTOM_ID: subed-contributions

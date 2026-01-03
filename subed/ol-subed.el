@@ -37,7 +37,11 @@
      :text       (subed-subtitle-text)
      :description (or (subed-subtitle-comment) (subed-subtitle-text)))
     (org-link-add-props
-		 :link (concat "subed:" (buffer-file-name) "::" (number-to-string (subed-subtitle-msecs-start))))
+		 :link (concat "subed:" (buffer-file-name)
+                   (if (subed-subtitle-msecs-start)
+                       (concat
+                        "::" (number-to-string (subed-subtitle-msecs-start)))
+                     "")))
     org-store-link-plist))
 
 ;;;###autoload

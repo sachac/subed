@@ -1,6 +1,9 @@
 ;; -*- lexical-binding: t; eval: (buttercup-minor-mode) -*-
 
-(load-file "./tests/undercover-init.el")
+(dolist (file '("undercover-init.el" "./tests/undercover-init.el"))
+  (when (file-exists-p file)
+    (load-file file)))
+
 (require 'subed-srt)
 (require 'subed-mpv)
 
@@ -3485,13 +3488,13 @@ This is another.
 				 (expect (subed-subtitle-msecs-start 1) :to-equal 1000)
 				 (expect (subed-subtitle-msecs-stop 1) :to-equal 2000))))
     (describe "when configured to trim on save,"
-      (it "trims overlaps after sorting."
+      (it "trims overlaps."
         (with-temp-srt-buffer
 				 (let ((subed-trim-overlap-on-save t)
 							 (subed-subtitle-spacing 200))
 					 (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
-									 "2\n00:00:04,000 --> 00:00:06,000\nA\n\n"
-									 "3\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+									 "2\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+                   "3\n00:00:04,000 --> 00:00:06,000\nA\n\n"
 									 "4\n00:00:05,000 --> 00:00:06,000\nA\n\n")
 					 (subed-prepare-to-save)
 					 (expect (subed-subtitle-msecs-stop 1) :to-equal 2000)

@@ -178,7 +178,6 @@ Other values aside from the ones specified above will be treated as nil."
 
 (defcustom subed-sanitize-functions
   '(subed-sanitize-format
-    subed-sort
     subed-trim-overlap-maybe-sanitize)
   "Functions to call when sanitizing subtitles."
   :type '(repeat function)

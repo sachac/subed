@@ -394,7 +394,7 @@ Use the format-specific function for MAJOR-MODE."
 If COMMENT is nil or the empty string, remove the comment.
 If SUB-ID is not given, use the subtitle on point.
 Use the format-specific function for MAJOR-MODE."
-  (setq comment (string-trim comment))
+  (setq comment (and comment (string-trim comment)))
   (let ((comment-start (subed-jump-to-subtitle-comment sub-id)))
     ;; remove previous comment
     (if comment-start

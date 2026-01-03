@@ -2263,31 +2263,6 @@ Hello world
                 "\n"
                 "00:12:01.000 --> 00:01:05.123\n"
                 "Foo.\n"))))
-    (it "runs before saving."
-      (with-temp-vtt-buffer
-       (insert mock-vtt-data)
-       (goto-char (point-min))
-       (re-search-forward "01:01")
-       (replace-match "12:01")
-       (goto-char (point-min))
-       (re-search-forward "02:02")
-       (replace-match "10:02")
-       (goto-char (point-min))
-       (re-search-forward "03:03")
-       (replace-match "11:03")
-       (subed-prepare-to-save)
-       (expect (buffer-string) :to-equal
-               (concat
-                "WEBVTT\n"
-                "\n"
-                "00:10:02.234 --> 00:02:10.345\n"
-                "Bar.\n"
-                "\n"
-                "00:11:03.45 --> 00:03:15.5\n"
-                "Baz.\n"
-                "\n"
-                "00:12:01.000 --> 00:01:05.123\n"
-                "Foo.\n"))))
     (describe "point preservation"
       (it "works when subtitle text is non-empty."
         (with-temp-vtt-buffer
