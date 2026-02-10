@@ -1,6 +1,12 @@
 #+OPTIONS: toc:nil
 
 * subed news
+
+** Version 1.4.0 - 2026-02-10 - Sacha Chua
+
+- subed-word-data.el can now load word timing from TextGrid files produced by the Montreal Forced Aligner.
+- New functions: ~subed-word-data-add-word-timestamps~, ~subed-word-data-remove-word-timestamps~
+
 ** Version 1.3.1 - 2026-01-03 - Sacha Chua
 
 - ~subed-convert~ can convert from plain text files now. Each line is turned into a subtitle.

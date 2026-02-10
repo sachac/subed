@@ -22,16 +22,23 @@
 
 ;;; Commentary:
 
-;; This file parses timing data such as the ones you get from YouTube
-;; .srv2 or WhisperX JSON and tries to match the timing data with the remaining text in
-;; the current subtitle in order to determine the word timestamp for
-;; splitting the subtitle.
+;; This file parses timing data such as the ones
+;; you get from YouTube .srv2, WhisperX JSON, or
+;; the Montreal Forced Aligner and tries to match
+;; the timing data with the remaining text in the
+;; current subtitle in order to determine the word
+;; timestamp for splitting the subtitle.
 
 ;; To try to automatically load word data from a similarly-named file
 ;; in the buffer, add this to your configuration:
 
 ;; (with-eval-after-load 'subed
 ;;   (add-hook 'subed-mode-hook 'subed-word-data-load-maybe))
+;;
+;; After loading word data, you can add word-level
+;; timestamps to VTT files with
+;; subed-word-data-add-word-timestamps and remove them with
+;; subed-word-data-remove-word-timestamps .
 
 ;;; Code:
 
@@ -150,6 +157,26 @@ If FROM-STRING is non-nil, treat FILE as the data itself."
 			 current (cdr current)))
     base))
 
+(defun subed-word-data--extract-words-from-textgrid (filename &optional from-string)
+  "Parse a Praat TextGrid file and return a list of intervals.
+Return a list of ((start . ?), (end . ?) (text . ?)).
+If FROM-STRING is non-nil, treat FILE as the data itself."
+  (interactive "fFile: ")
+  (with-temp-buffer
+    (if from-string (insert filename) (insert-file-contents filename))
+    (let (intervals)
+      (goto-char (point-min))
+      (let ((limit (or (save-excursion (re-search-forward "name *= *\"phones\"" nil t))
+                       (point-max))))
+        (while (re-search-forward
+                "intervals *\\[\\([0-9]+\\)\\]:[ \n\t\r]*xmin = \\([0-9.]+\\)[ \n\t\r]*xmax = \\([0-9.]+\\)[ \n\t\r]*text = \"\\([^\"]+\\)\""
+                limit t)
+          (push `((start . ,(* 1000 (string-to-number (match-string 2))))
+                  (end . ,(* 1000 (string-to-number (match-string 3))))
+                  (text . ,(match-string 4)))
+                intervals)))
+      (reverse intervals))))
+
 (defun subed-word-data--load (data)
   "Load word-level timing from DATA.
 Supports WhisperX JSON, YouTube VTT, and Youtube SRV2 files."
@@ -163,8 +190,8 @@ Supports WhisperX JSON, YouTube VTT, and Youtube SRV2 files."
 ;;;###autoload
 (defun subed-word-data-load-from-file (file &optional offset)
   "Load word-level timing from FILE.
-Supports WhisperX JSON, YouTube VTT, and Youtube SRV2 files."
-  (interactive (list (read-file-name "JSON, VTT, or srv2: "
+Supports WhisperX JSON, YouTube VTT, Youtube SRV2, and TextGrid files."
+  (interactive (list (read-file-name "JSON, VTT, srv2, or TextGrid: "
                                      nil
                                      nil
                                      nil
@@ -172,14 +199,15 @@ Supports WhisperX JSON, YouTube VTT, and Youtube SRV2 files."
                                      (lambda (f)
                                        (or (file-directory-p f)
                                            (string-match
-                                            "\\.\\(json\\|srv2\\|vtt\\)\\'"
+                                            "\\.\\(json\\|srv2\\|vtt\\|TextGrid\\)\\'"
                                             f))))
                      (when current-prefix-arg
                        (read-string "Start offset: "))))
   (let ((data (pcase (file-name-extension file)
                 ("json" (subed-word-data--extract-words-from-whisperx-json file))
                 ("srv2" (subed-word-data--extract-words-from-srv2 (xml-parse-file file)))
-                ("vtt" (subed-word-data--extract-words-from-youtube-vtt file)))))
+                ("vtt" (subed-word-data--extract-words-from-youtube-vtt file))
+                ("TextGrid" (subed-word-data--extract-words-from-textgrid file)))))
     (when offset (setq data (subed-word-data-adjust-times data offset)))
     (subed-word-data--load data)))
 
@@ -278,10 +306,10 @@ Return non-nil if they are the same after normalization."
     (let ((time (assoc-default 'start (subed-word-data--look-up-word))))
       (when time (- time subed-subtitle-spacing))))))
 
-(defun subed-word-data-subtitle-entries ()
+(defun subed-word-data-subtitle-entries (&optional fuzz-factor)
   "Return the entries that start and end within the current subtitle."
-  (let ((start (subed-subtitle-msecs-start))
-        (stop (+ (subed-subtitle-msecs-stop) subed-subtitle-spacing)))
+  (let ((start (- (subed-subtitle-msecs-start) (or fuzz-factor subed-subtitle-spacing)))
+        (stop (+ (subed-subtitle-msecs-stop) (or fuzz-factor subed-subtitle-spacing))))
     (seq-filter
      (lambda (o)
        (and (<= (or (alist-get 'end o) most-positive-fixnum) stop)
@@ -298,7 +326,7 @@ Return non-nil if they are the same after normalization."
                           '(subed-word-data-start subed-word-data-end font-lock-face))
   (let* ((text-start (progn (subed-jump-to-subtitle-text) (point)))
          pos
-         (word-data (reverse (subed-word-data-subtitle-entries)))
+         (word-data (reverse (subed-word-data-subtitle-entries 200)))
          candidate
          cand-count)
     (subed-jump-to-subtitle-end)
@@ -322,6 +350,30 @@ Return non-nil if they are the same after normalization."
                                        (alist-get 'text candidate)))
           (subed-word-data--add-word-properties (point) pos candidate)
           (setq word-data try-list))))))
+
+(defun subed-word-data-add-word-timestamps ()
+  "Add word timestamps.
+It uses the text properties to determine the start of each word.
+This only works for VTTs."
+  (interactive)
+  (save-excursion
+    (subed-word-data-remove-word-timestamps)
+    (subed-for-each-subtitle (point-min) (point-max) t
+      (let ((start (save-excursion (subed-jump-to-subtitle-text) (point))))
+        (subed-jump-to-subtitle-end)
+        (while (> (point) start)
+          (backward-word)
+          (when (get-text-property (point) 'subed-word-data-start)
+            (save-excursion
+              (insert (format "<%s>" (subed-msecs-to-timestamp (get-text-property (point) 'subed-word-data-start)))))))))))
+
+(defun subed-word-data-remove-word-timestamps ()
+  "Remove all word timestamps."
+  (interactive)
+  (goto-char (point-min))
+  (while (re-search-forward "<[0-9]+:[0-9]+:[0-9]+\\.[0-9]+>" nil t)
+    (replace-match "")))
+
 
 (defun subed-word-data-refresh-region (beg end)
   "Refresh text properties in region."
@@ -361,7 +413,7 @@ Return non-nil if they are the same after normalization."
       (while (not (eobp))
         (let* ((text-start (progn (subed-jump-to-subtitle-text) (point)))
                pos
-               (word-data (reverse (subed-word-data-subtitle-entries)))
+               (word-data (reverse (subed-word-data-subtitle-entries 200)))
                candidate)
           (subed-jump-to-subtitle-end)
           (while (> (point) text-start)
