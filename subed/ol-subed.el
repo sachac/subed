@@ -24,6 +24,9 @@
 
 ;;; Code:
 
+(require 'subed)
+(require 'ol)
+
 ;;;###autoload
 (defun org-subed-store-link ()
   "Store a link to a subtitle."
