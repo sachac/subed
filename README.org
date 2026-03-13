@@ -557,6 +557,11 @@ To re-run tests automatically when files change, something like nodemon might be
 nodemon -w tests/*.el -w subed/*.el -x "make test"
 #+end_src
 
+To run only matching tests, use:
+
+#+begin_src sh :eval no
+PATTERN=regexp make test-some
+#+end_src
 ** Contributions
 :PROPERTIES:
 :CUSTOM_ID: subed-contributions

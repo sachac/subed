@@ -125,7 +125,7 @@ Use the format-specific function for MAJOR-MODE."
       nil)
      ;; not looking right at a timestamp; check the previous line to see if it's blank
      ((and
-       (looking-back subed-vtt--regexp-blank-separator (save-excursion (forward-line -3) (point)))
+       (looking-back subed-vtt--regexp-blank-separator (save-excursion (forward-line -4) (point)))
        (looking-at (format "[ \t]*\\(%s\n%s\\|%s\\)"
                            subed-vtt--regexp-identifier
                            subed-vtt--regexp-timing
@@ -147,11 +147,11 @@ Use the format-specific function for MAJOR-MODE."
                                subed-vtt--regexp-identifier
                                subed-vtt--regexp-timing))
            (looking-back subed-vtt--regexp-blank-separator
-                         (save-excursion (forward-line -2) (point))))
+                         (save-excursion (forward-line -4) (point))))
       nil)
      ;; looking at a comment
      ((and
-       (looking-back "^[ \t]*\n\\|\\`\\(?:[ \t\n]*\\)" (save-excursion (forward-line -2) (point)))
+       (looking-back "^[ \t]*\n\\|\\`\\(?:[ \t\n]*\\)" (save-excursion (forward-line -4) (point)))
        (looking-at (concat "[ \t]*" subed-vtt--regexp-note)))
       t)
      ((re-search-backward (format "\\(%s%s\\)\\|%s%s"
@@ -190,7 +190,7 @@ Use the format-specific function for MAJOR-MODE."
          ;; are we looking at a timestamp? Stay here, check for ID later
          ((looking-at subed-vtt--regexp-timing) (point))
          ;; are we at an ID? return that
-         ((and (or (looking-back subed-vtt--regexp-blank-separator (save-excursion (forward-line -2) (point))) (bobp))
+         ((and (or (looking-back subed-vtt--regexp-blank-separator (save-excursion (forward-line -4) (point))) (bobp))
                (not (looking-at "[ \t]*\n"))
                (not (save-excursion (re-search-forward "-->" (line-end-position) t)))
                (save-excursion
@@ -212,7 +212,7 @@ Use the format-specific function for MAJOR-MODE."
             (forward-line -1)
             (goto-char (line-beginning-position))
             (and (not (looking-at "[ \t]*\n"))
-                 (looking-back subed-vtt--regexp-blank-separator (save-excursion (forward-line -2) (point)))
+                 (looking-back subed-vtt--regexp-blank-separator (save-excursion (forward-line -4) (point)))
                  (save-excursion (not (re-search-forward "-->" (line-end-position) t)))))
           (throw 'done (point)))
          (t
@@ -547,7 +547,7 @@ Use the format-specific function for MAJOR-MODE."
     (atomic-change-group
       (let ((orig-point (point)))
         (goto-char (point-min))
-        (while (subed-forward-subtitle-id)
+        (while (subed-forward-subtitle-time-start)
           ;; This regex is stricter than `subed--regexp-timestamp'
           (unless (looking-at "^\\([0-9]\\{2\\}:\\)?[0-9]\\{2\\}:[0-9]\\{2\\}\\(\\.[0-9]\\{0,3\\}\\)")
             (error "Found invalid start time: %S"  (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
@@ -564,8 +564,10 @@ Use the format-specific function for MAJOR-MODE."
           (goto-char (line-beginning-position))
           (unless (or (bobp)
                       (looking-back
-                       (format "%s\\(%s\\)?" subed-vtt--regexp-blank-separator subed-vtt--regexp-identifier)
-                       (save-excursion (forward-line -2) (point))))
+                       (format "%s\\(%s\n\\)?"
+                               subed-vtt--regexp-blank-separator
+                               subed-vtt--regexp-identifier)
+                       (save-excursion (forward-line -4) (point))))
             (goto-char (line-beginning-position))
             (error "Found timing line without blank line before it: %s"
                    (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1))))

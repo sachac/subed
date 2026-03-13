@@ -715,6 +715,23 @@ Bar.
 ")
 						 (re-search-backward "This is a comment")
 						 (expect (subed-jump-to-subtitle-start-pos) :not :to-be nil)
+						 (expect (looking-at "NOTE\nThis is a comment") :to-be t)))
+          (it "goes to the start of the comment from a comment."
+						(with-temp-vtt-buffer
+						 (insert "WEBVTT
+
+NOTE
+This is a comment
+
+1
+00:01:01.000 --> 00:01:05.123
+Foo.
+
+00:02:02.234 --> 00:02:10.345
+Bar.
+")
+						 (re-search-backward "OTE")
+						 (expect (subed-jump-to-subtitle-start-pos) :not :to-be nil)
 						 (expect (looking-at "NOTE\nThis is a comment") :to-be t))))))
     (describe "to subtitle start time"
       (it "returns start time's point if movement was successful."
@@ -2100,7 +2117,19 @@ text5
 ")
        (expect (subed-validate) :to-throw
                'error '("Found timing line without blank line before it: 00:00:00.000 --> 00:00:01.000"))
-       (expect (point) :to-equal 13))))
+       (expect (point) :to-equal 13)))
+    (it "is fine if there's a blank line before an ID and a timing line."
+      (with-temp-vtt-buffer
+       (insert "WEBVTT
+
+00:00:00.000 --> 00:00:01.000
+text1
+
+5
+00:00:00.000 --> 00:00:01.000
+Test
+")
+       (expect (subed-validate) :to-be nil))))
   (describe "Sanitizing"
     (it "removes trailing tabs and spaces from all lines."
       (with-temp-vtt-buffer

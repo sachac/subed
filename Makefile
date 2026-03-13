@@ -36,8 +36,7 @@ checkdoc:
 	emacs --quick --batch --eval "(checkdoc-file \"subed/subed-ass.el\")"
 
 autoloads:
-	emacs --quick --batch --eval "(progn (setq generated-autoload-file (expand-file-name \"subed-autoloads.el\" \"subed\") backup-inhibited t) \
-	(update-directory-autoloads \"./subed\"))"
+	emacs --batch --eval "(loaddefs-generate \"./subed\" \"subed-autoloads.el\")"
 
 compile:
 	emacs --quick --batch --eval "(progn (add-to-list 'load-path (expand-file-name \"subed\" default-directory)) \
