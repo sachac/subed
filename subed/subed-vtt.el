@@ -119,23 +119,21 @@ format-specific function for MAJOR-MODE."
   "Return non-nil if the point is in the file header.
 Use the format-specific function for MAJOR-MODE."
   (save-excursion
-    (let ((orig-point (point)))
-      (goto-char (line-beginning-position))
-      (cond
-       ((and (looking-at subed-vtt--regexp-timing)
-             (looking-back subed-vtt--regexp-start-of-line))
-        nil)
-       ;; not looking right at a timestamp; check the previous line to see if it's blank
-       ((and
-         (looking-back subed-vtt--regexp-blank-separator)
-         (looking-at (format "[ \t]*\\(%s\n%s\\|%s\\)"
-                             subed-vtt--regexp-identifier
-                             subed-vtt--regexp-timing
-                             subed-vtt--regexp-note)))
-        nil)
-       ((re-search-backward (concat "^" subed-vtt--regexp-timing) nil t) nil)
-       ((re-search-backward (concat subed-vtt--regexp-blank-separator subed-vtt--regexp-note) nil t) nil)
-       (t t)))))
+    (goto-char (line-beginning-position))
+    (cond
+     ((and (looking-at subed-vtt--regexp-timing) (bolp))
+      nil)
+     ;; not looking right at a timestamp; check the previous line to see if it's blank
+     ((and
+       (looking-back subed-vtt--regexp-blank-separator (save-excursion (forward-line -3) (point)))
+       (looking-at (format "[ \t]*\\(%s\n%s\\|%s\\)"
+                           subed-vtt--regexp-identifier
+                           subed-vtt--regexp-timing
+                           subed-vtt--regexp-note)))
+      nil)
+     ((re-search-backward (concat "^" subed-vtt--regexp-timing) nil t) nil)
+     ((re-search-backward (concat subed-vtt--regexp-blank-separator subed-vtt--regexp-note) nil t) nil)
+     (t t))))
 
 (cl-defmethod subed--in-comment-p (&context (major-mode subed-vtt-mode))
   "Return non-nil if the point is in a comment.
@@ -380,8 +378,10 @@ Use the format-specific function for MAJOR-MODE."
     (let ((comment-start (subed-jump-to-subtitle-comment sub-id)))
       (if comment-start
           (string-trim
-           (replace-regexp-in-string "^NOTE[ \n]+" ""
-                                     (buffer-substring comment-start (subed-jump-to-subtitle-id sub-id))))
+           (replace-regexp-in-string
+            "^NOTE[ \n]+" ""
+            (buffer-substring comment-start
+                              (subed-jump-to-subtitle-id sub-id))))
         nil))))
 
 (cl-defmethod subed--set-subtitle-comment (comment &context (major-mode subed-vtt-mode)
@@ -560,7 +560,15 @@ Use the format-specific function for MAJOR-MODE."
               (forward-char 5)
             (error nil))
           (unless (looking-at "\\([0-9]\\{2\\}:\\)?[0-9]\\{2\\}:[0-9]\\{2\\}\\(\\.[0-9]\\{0,3\\}\\)$")
-            (error "Found invalid stop time: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1))))
+            (error "Found invalid stop time: %S" (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
+          (goto-char (line-beginning-position))
+          (unless (or (bobp)
+                      (looking-back
+                       (format "%s\\(%s\\)?" subed-vtt--regexp-blank-separator subed-vtt--regexp-identifier)
+                       (save-excursion (forward-line -2) (point))))
+            (goto-char (line-beginning-position))
+            (error "Found timing line without blank line before it: %s"
+                   (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1))))
         (goto-char orig-point)))))
 
 (cl-defmethod subed--auto-insert (&context (major-mode subed-vtt-mode))

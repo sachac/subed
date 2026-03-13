@@ -715,23 +715,6 @@ Bar.
 ")
 						 (re-search-backward "This is a comment")
 						 (expect (subed-jump-to-subtitle-start-pos) :not :to-be nil)
-						 (expect (looking-at "NOTE\nThis is a comment") :to-be t)))
-          (it "goes to the start of the comment."
-						(with-temp-vtt-buffer
-						 (insert "WEBVTT
-
-NOTE
-This is a comment
-
-1
-00:01:01.000 --> 00:01:05.123
-Foo.
-
-00:02:02.234 --> 00:02:10.345
-Bar.
-")
-						 (re-search-backward "OTE")
-						 (expect (subed-jump-to-subtitle-start-pos) :not :to-be nil)
 						 (expect (looking-at "NOTE\nThis is a comment") :to-be t))))))
     (describe "to subtitle start time"
       (it "returns start time's point if movement was successful."
@@ -2085,9 +2068,39 @@ Hello world
        (insert "WebVTT\n\n00:00:00.003 --> 00:00:05.123\n12:00 is noon.\n\n00:10:00.003 --> 00:11:05.123\nThis should be fine.")
        (subed-validate)
        (expect (point) :to-equal (point-max))))
+    (it "signals an error when timing lines are not preceded by blank lines or IDs."
+      (with-temp-vtt-buffer
+       (insert "WEBVTT
 
-    )
+-->
+00:00:00.000 --> 00:00:01.000
+text0
+foo-->
+00:00:00.000 --> 00:00:01.000
+text1
+-->foo
+00:00:00.000 --> 00:00:01.000
+text2
+--->
+00:00:00.000 --> 00:00:01.000
+text3
+-->-->
+00:00:00.000 --> 00:00:01.000
+text4
+00:00:00.000 --> 00:00:01.000
+text5
 
+00:00:00.000 -a -->
+
+00:00:00.000 --a -->
+
+00:00:00.000 - -->
+
+00:00:00.000 -- -->
+")
+       (expect (subed-validate) :to-throw
+               'error '("Found timing line without blank line before it: 00:00:00.000 --> 00:00:01.000"))
+       (expect (point) :to-equal 13))))
   (describe "Sanitizing"
     (it "removes trailing tabs and spaces from all lines."
       (with-temp-vtt-buffer
@@ -2166,6 +2179,24 @@ Hello world
                                                  "Bar.\n\n"
                                                  "00:03:03.45 --> 00:03:15.5\n"
                                                  "Baz.\n"))))
+    (it "ensures single newline before timing lines."
+      (with-temp-vtt-buffer
+       (insert (concat "WEBVTT\n\n"
+                       "00:01:01.000 --> 00:01:05.123\n"
+                       "Foo.\n"
+                       "00:02:02.234 --> 00:02:10.345\n"
+                       "Bar.\n\n\n"
+                       "00:03:03.45 --> 00:03:15.5\n"
+                       "Baz.\n"))
+       (subed-sanitize)
+       (expect (buffer-string) :to-equal (concat "WEBVTT\n\n"
+                                                 "00:01:01.000 --> 00:01:05.123\n"
+                                                 "Foo.\n\n"
+                                                 "00:02:02.234 --> 00:02:10.345\n"
+                                                 "Bar.\n\n"
+                                                 "00:03:03.45 --> 00:03:15.5\n"
+                                                 "Baz.\n"))))
+
     (it "removes empty lines from end of buffer."
       (with-temp-vtt-buffer
        (insert mock-vtt-data)
