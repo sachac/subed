@@ -336,6 +336,16 @@ See \"List of events\" in mpv(1)."
       (subed-debug "Seeking player to focused subtitle: %S" cur-sub-start)
       (subed-mpv-jump cur-sub-start))))
 
+(defun subed-mpv-jump-to-timestamp-or-current-subtitle ()
+  "Jump to the timestamp at point, or the start of the currently focused subtitle otherwise."
+  (interactive)
+  (let ((ts (subed-timestamp-at-point)))
+    (if ts
+        (progn
+          (subed-debug "Seeking player to timestamp: %S" ts)
+          (subed-mpv-jump (subed-timestamp-to-msecs ts)))
+      (subed-jump-to-current-subtitle))))
+
 (defun subed-mpv-jump-to-current-subtitle-near-end ()
   "Move playback position to near the end of the current subtitle."
   (interactive)
