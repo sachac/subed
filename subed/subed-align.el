@@ -237,61 +237,123 @@ This uses the Aeneas forced aligner."
           (concat "CONDA_PREFIX=" (expand-file-name subed-align-mfa-conda-env))
           (concat "CONDA_DEFAULT_ENV=aligner"))))
 
+(defvar subed-align-mfa-beam-size nil)
+(defvar subed-align-mfa-retry-beam nil)
+
 ;;;###autoload
-(defun subed-align-mfa-set-word-data (audio-file)
+(defun subed-align-mfa-set-word-data (audio-file &optional beg end callback)
   "Set the word data using Montreal Forced Aligner."
   (interactive
    (list
     (or
      (subed-media-file)
      (subed-guess-media-file subed-audio-extensions)
-     (read-file-name "Audio file: "))))
+     (read-file-name "Audio file: "))
+    (when (region-active-p) (region-beginning))
+    (when (region-active-p) (region-end))))
   ;; MFA expects audio and text
   (let* ((temp-input (make-temp-file "subed-align-mfa-input" t))
          (temp-output (make-temp-file "subed-align-mfa-output" t))
-         (input-wav (expand-file-name "input.wav" temp-input)))
+         (input-wav (expand-file-name "input.wav" temp-input))
+         (start-ms (and beg (save-excursion (goto-char beg) (subed-subtitle-msecs-start))))
+         (stop-ms (and end (save-excursion (goto-char end) (subed-subtitle-msecs-stop)))))
     ;; Set up input.wav
     (if (string= (downcase (file-name-extension audio-file)) "wav")
         (copy-file audio-file input-wav)
-      (call-process
-       subed-ffmpeg-executable
-       nil (get-buffer-create "*mfa*") nil
-       "-i"
-       audio-file
-       "-ar"
-       "16000"
-       input-wav))
-    ;; Set up input.txt
-    (write-region
-     (if (derived-mode-p 'subed-mode)
-         (mapconcat
-          (lambda (o) (elt o 3)) (subed-subtitle-list)
-          "\n\n")
-       (buffer-string))
-     nil (expand-file-name "input.txt" temp-input))
-    (let ((process-environment (append
-                                (and subed-align-mfa-conda-env (subed-align-mfa-process-environment))
-                                process-environment)))
       (apply #'call-process
-             (if subed-align-mfa-conda-env
-                 (expand-file-name
-                  (car subed-align-mfa-command)
-                  (expand-file-name
-                   "bin"
-                   subed-align-mfa-conda-env))
-               (car subed-align-mfa-command))
+             subed-ffmpeg-executable
              nil (get-buffer-create "*mfa*") nil
              (append
-              (cdr subed-align-mfa-command)
+              (when start-ms
+                (list "-ss"
+                      (number-to-string (/ start-ms 1000.0))))
+              (list "-i" audio-file)
+              (when stop-ms
+                (list "-t"
+                      (number-to-string (/ (- stop-ms start-ms) 1000.0))))
               (list
-               temp-input
-               subed-align-mfa-dictionary
-               subed-align-mfa-acoustic-model
-               temp-output))))
-    (subed-word-data-load-from-file (expand-file-name "input.TextGrid"
-                                                      temp-output))
-    (delete-directory temp-input t)
-    (delete-directory temp-output t)))
+               "-ar"
+               "16000"
+               input-wav))))
+    ;; Set up input.txt
+    (write-region
+     (subed-align-mfa-prepare-text (if (derived-mode-p 'subed-mode)
+                            (mapconcat
+                             (lambda (o) (elt o 3)) (subed-subtitle-list beg end)
+                             "\n\n")
+                          (buffer-string)))
+     nil (expand-file-name "input.txt" temp-input))
+    (let* ((process-environment (append
+                                 (and subed-align-mfa-conda-env (subed-align-mfa-process-environment))
+                                 process-environment))
+           (default-directory temporary-file-directory)
+           (subtitle-buffer (current-buffer))
+           (command (append
+                     (list
+                      (if subed-align-mfa-conda-env
+                          (expand-file-name
+                           (car subed-align-mfa-command)
+                           (expand-file-name
+                            "bin"
+                            subed-align-mfa-conda-env))
+                        (car subed-align-mfa-command)))
+                     (cdr subed-align-mfa-command)
+                     (list
+                      (file-name-base temp-input)
+                      subed-align-mfa-dictionary
+                      subed-align-mfa-acoustic-model
+                      (file-name-base temp-output))
+                     (when subed-align-mfa-beam-size
+                       (list
+                        "--beam"
+                        (number-to-string subed-align-mfa-beam-size)))
+                     (when subed-align-mfa-retry-beam
+                       (list
+                        "--retry_beam"
+                        (number-to-string subed-align-mfa-retry-beam))))))
+      (message "Starting alignment...")
+      (make-process
+       :name "mfa"
+       :buffer (get-buffer-create "*mfa*")
+       :command command
+       :sentinel
+       (lambda (process event)
+         (when (string-match "finished" event)
+           (when (file-exists-p (expand-file-name "input.TextGrid" temp-output))
+             (when (and (buffer-file-name) (not beg))
+               (copy-file (expand-file-name "input.TextGrid" temp-output)
+                          (concat (file-name-sans-extension (buffer-file-name)) ".TextGrid")
+                          t))
+             (with-current-buffer subtitle-buffer
+               (if beg
+                   (let ((data (subed-word-data--extract-words-from-textgrid
+                                (expand-file-name "input.TextGrid"
+                                                  temp-output))))
+                     (setq subed-word-data--cache
+                           (append
+                            (seq-filter
+                             (lambda (o) (< (alist-get 'start o) start-ms))
+                             subed-word-data--cache)
+                            (mapcar (lambda (o)
+                                      (setf (alist-get 'start o)
+                                            (+ (alist-get 'start o) start-ms))
+                                      (setf (alist-get 'end o)
+                                            (+ (alist-get 'end o) start-ms))
+                                      o)
+                                    data)
+                            (seq-filter
+                             (lambda (o) (>= (alist-get 'start o) stop-ms))
+                             subed-word-data--cache)))
+                     (subed-word-data-refresh-region beg end))
+                 (subed-word-data-load-from-file (expand-file-name "input.TextGrid"
+                                                                   temp-output)))
+               (when callback
+                 (funcall callback))))
+           (delete-directory temp-input t)
+           (delete-directory temp-output t)))))))
+
+(defun subed-align-mfa-prepare-text (text)
+  (replace-regexp-in-string "[()]" "" text))
 
 (defun subed-align-reinsert-comments (subtitles)
   "Reinsert the comments from SUBTITLES.
