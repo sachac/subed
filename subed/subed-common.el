@@ -2038,7 +2038,7 @@ Uses the functions listed in `subed-media-file-functions'."
   "Return the media file from the variable."
   subed-mpv-media-file)
 
-(defun subed-guess-media-file (&optional extensions)
+(defun subed-guess-media-file (&optional extensions filename)
   "Find media file with same base name as the opened file in the buffer.
 
 The optional EXTENSIONS argument can be a list of extensions to
@@ -2052,10 +2052,12 @@ Language codes are also handled; e.g. \"foo.en.srt\" or
 simply removes the extension from the extension-stripped file
 name).
 
-Return nil if function `buffer-file-name' returns nil."
-  (when (buffer-file-name)
+Return nil if function `buffer-file-name' returns nil.
+
+If FILENAME is specified, use that instead of the buffer file name."
+  (when (or filename (buffer-file-name))
     (catch 'found-file
-      (let* ((file-base (file-name-sans-extension (buffer-file-name)))
+      (let* ((file-base (file-name-sans-extension (or filename (buffer-file-name))))
              (file-stem (file-name-sans-extension file-base)))
         (dolist (extension
                  (or extensions (append subed-video-extensions subed-audio-extensions)))
