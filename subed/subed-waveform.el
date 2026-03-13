@@ -706,7 +706,11 @@ Use the selected timestamp as the start time of the next subtitle, leaving a gap
     (subed-waveform--with-event-subtitle event
       (let ((ms (subed-waveform--mouse-event-to-ms event)))
         (goto-char pos)
-        (subed-split-subtitle (- ms (subed-subtitle-msecs-start)))))))
+        (subed-split-subtitle (- ms (subed-subtitle-msecs-start)))
+        (save-excursion
+          (subed-waveform-refresh-current-subtitle)
+          (subed-forward-subtitle-text)
+          (subed-waveform-refresh-current-subtitle))))))
 
 ;;; Hooks
 
