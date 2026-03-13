@@ -187,6 +187,18 @@ Supports WhisperX JSON, YouTube VTT, and Youtube SRV2 files."
     (subed-word-data-refresh-text-properties)
     data))
 
+(defun subed-word-data-parse-file (file &optional offset-ms)
+  "Parse FILE for word data.
+Return a list of ((start . ?), (end . ?) (text . ?)).
+If OFFSET-MS is provided, add it to the times."
+  (let ((data (pcase (file-name-extension file)
+                ("json" (subed-word-data--extract-words-from-whisperx-json file))
+                ("srv2" (subed-word-data--extract-words-from-srv2 (xml-parse-file file)))
+                ("vtt" (subed-word-data--extract-words-from-youtube-vtt file))
+                ("TextGrid" (subed-word-data--extract-words-from-textgrid file)))))
+    (when offset-ms (setq data (subed-word-data-adjust-times data offset-ms)))
+    data))
+
 ;;;###autoload
 (defun subed-word-data-load-from-file (file &optional offset)
   "Load word-level timing from FILE.
@@ -203,13 +215,7 @@ Supports WhisperX JSON, YouTube VTT, Youtube SRV2, and TextGrid files."
                                             f))))
                      (when current-prefix-arg
                        (read-string "Start offset: "))))
-  (let ((data (pcase (file-name-extension file)
-                ("json" (subed-word-data--extract-words-from-whisperx-json file))
-                ("srv2" (subed-word-data--extract-words-from-srv2 (xml-parse-file file)))
-                ("vtt" (subed-word-data--extract-words-from-youtube-vtt file))
-                ("TextGrid" (subed-word-data--extract-words-from-textgrid file)))))
-    (when offset (setq data (subed-word-data-adjust-times data offset)))
-    (subed-word-data--load data)))
+  (subed-word-data--load (subed-word-data-parse-file file offset)))
 
 (defun subed-word-data-load-from-string (string)
   "Load word-level timing from STRING.
@@ -367,14 +373,17 @@ Return non-nil if they are the same after normalization."
           (subed-word-data--add-word-properties (point) pos candidate)
           (setq word-data try-list))))))
 
-(defun subed-word-data-add-word-timestamps ()
+(defun subed-word-data-add-word-timestamps (&optional beg end)
   "Add word timestamps.
 It uses the text properties to determine the start of each word.
 This only works for VTTs."
-  (interactive)
+  (interactive (if (region-active-p)
+                   (list (region-beginning)
+                         (region-end))
+                 (list (point-min) (point-max))))
   (save-excursion
-    (subed-word-data-remove-word-timestamps)
-    (subed-for-each-subtitle (point-min) (point-max) t
+    (subed-word-data-remove-word-timestamps beg end)
+    (subed-for-each-subtitle beg end t
       (let ((start (save-excursion (subed-jump-to-subtitle-text) (point))))
         (subed-jump-to-subtitle-end)
         (while (> (point) start)
@@ -383,11 +392,14 @@ This only works for VTTs."
             (save-excursion
               (insert (format "<%s>" (subed-msecs-to-timestamp (get-text-property (point) 'subed-word-data-start)))))))))))
 
-(defun subed-word-data-remove-word-timestamps ()
+(defun subed-word-data-remove-word-timestamps (&optional beg end)
   "Remove all word timestamps."
-  (interactive)
-  (goto-char (point-min))
-  (while (re-search-forward "<[0-9]+:[0-9]+:[0-9]+\\.[0-9]+>" nil t)
+  (interactive (if (region-active-p)
+                   (list (region-beginning)
+                         (region-end))
+                 (list (point-min) (point-max))))
+  (goto-char (or end (point-max)))
+  (while (re-search-backward "<[0-9]+:[0-9]+:[0-9]+\\.[0-9]+>" beg t)
     (replace-match "")))
 
 (defun subed-word-data-refresh-region (beg end)
@@ -542,6 +554,8 @@ distance is expressed as a ratio of number of edits / maximum length of phrase o
 ;; (subed-word-data-find-approximate-match "Go into the room." (split-string "Go in to the room. There you will" " "))
 ;; (subed-word-data-find-approximate-match "The quick brown fox jumps over the lazy dog" (split-string "The quick, oops, the quick brown fox jumps over the lazy dog and goes all sorts of places" " ") "\\<oops\\>")
 ;; (subed-word-data-find-approximate-match "I already talk pretty quickly," (split-string "I already talk pretty quickly. Oops. I already talk pretty quickly, so I'm not going" " ") "\\<oops\\>")
+;; (subed-word-data-find-approximate-match "The quick brown fox" (split-string "Well, let's get started. The quick, I mean, the quick brown fox jumps over the lazy dog." " ") "\\<oops\\>") ; hmm, the processing of this one could be improved.
+
 (defun subed-word-data-fix-subtitle-timing (beg end)
   "Sets subtitle starts and stops based on the word data.
 Assumes words haven't been edited."
