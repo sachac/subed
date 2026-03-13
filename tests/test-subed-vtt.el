@@ -2618,4 +2618,27 @@ hi<00:00:03.459><c> welcome</c><00:00:03.850><c> to</c><00:00:03.999><c> another
          (let (result)
            (subed-for-each-subtitle (point-min) (point-max) t
              (add-to-list 'result (point)))
-           (expect (length result) :to-equal 3)))))))
+           (expect (length result) :to-equal 3))))))
+  (describe "timestamp at point"
+    (it "returns nil if not at a timestamp."
+      (with-temp-vtt-buffer
+       (insert mock-vtt-data "\n\n")
+       (subed-jump-to-subtitle-text)
+       (expect (subed-timestamp-at-point) :to-be nil)))
+    (it "returns a timestamp when at the start of a timestamp."
+      (with-temp-vtt-buffer
+       (insert mock-vtt-data "\n\n")
+       (subed-jump-to-subtitle-time-start)
+       (expect (subed-timestamp-at-point) :to-equal "00:03:03.45")))
+    (it "returns a timestamp when in the middle of a timestamp."
+      (with-temp-vtt-buffer
+       (insert mock-vtt-data "\n\n")
+       (subed-jump-to-subtitle-time-start)
+       (forward-char 2)
+       (expect (subed-timestamp-at-point) :to-equal "00:03:03.45")))
+    (it "returns a timestamp when in a word timestamp."
+      (with-temp-vtt-buffer
+       (insert "WebVTT\n\n00:00:00.003 --> 00:00:05.123\nThis is <00:00:01.000>is a test\n\n")
+       (re-search-backward "01\\.000")
+       (forward-char 2)
+       (expect (subed-timestamp-at-point) :to-equal "00:00:01.000")))))
