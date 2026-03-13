@@ -2696,22 +2696,28 @@ Example:
 (defun subed-file-duration-ms (&optional filename refresh-cache)
   "Return the duration of FILENAME in milliseconds."
   (setq filename (or filename (subed-media-file)))
-  (if refresh-cache (setq subed-file-duration-ms-cache nil))
-  (cond
-   ((numberp subed-file-duration-ms-cache)
-    (when (> subed-file-duration-ms-cache 0)
-      subed-file-duration-ms-cache))
-   (subed-ffprobe-executable
-    (setq subed-file-duration-ms-cache
-          (subed-ffprobe-duration-ms
-           filename))
-    (if (and (numberp subed-file-duration-ms-cache)
+  ;; This used to be an integer, but we're shifting to make it an alist instead.
+  (when (and (numberp subed-file-duration-ms-cache)
              (> subed-file-duration-ms-cache 0))
-        subed-file-duration-ms-cache
-      ;; mark as invalid
-      (warn "Could not get file duration for %s" filename)
-      (setq subed-file-duration-ms-cache -1)
-      nil))))
+    (setq subed-file-duration-ms-cache nil))
+  (cond
+   ((and (not refresh-cache)
+         (listp subed-file-duration-ms-cache)
+         (> (or (assoc-default filename subed-file-duration-ms-cache #'string=) 0) 0))
+    (or (assoc-default filename subed-file-duration-ms-cache #'string=) 0))
+   (subed-ffprobe-executable
+    (let ((duration (subed-ffprobe-duration-ms filename)))
+      (if duration
+          (prog1 duration
+            ;; Cache only if subed-file-duration-ms-cache is not 'never
+            (unless (eq subed-file-duration-ms-cache 'never)
+              (if (assoc filename subed-file-duration-ms-cache #'string=)
+                  (setcdr (assoc filename subed-file-duration-ms-cache #'string=)
+                          duration)
+                (push (cons filename duration)
+                      subed-file-duration-ms-cache))))
+        (warn "Could not get file duration for %s" filename) ;; mark as invalid
+        nil)))))
 
 (defun subed-insert-subtitle-for-whole-file ()
   "Insert a subtitle that starts at 0 until the end of the current file.
