@@ -734,6 +734,7 @@ you can use it in `subed-split-subtitle' and other commands."
            (obj (car (elt (cadr event) 4)))
            (stop (get-text-property 0 'waveform-stop obj)))
 			(subed-mpv-jump ms)
+      (kill-new ts)
 			(message "%s" ts)
 			(if (> (or subed-waveform-sample-msecs 0) 0)
 					(subed-waveform-play-sample
