@@ -225,6 +225,14 @@ If SUB-ID is not given, use the current subtitle."
      (subed-jump-to-subtitle-id sub-id))
     (point)))
 
+(subed-define-generic-function subtitle-end-pos (&optional sub-id)
+  "Return the position of the end of the subtitle.
+If SUB-ID is not given, use the current subtitle."
+  (interactive)
+  (save-excursion
+    (subed-jump-to-subtitle-end sub-id)
+    (point)))
+
 (subed-define-generic-function jump-to-subtitle-start-pos (&optional sub-id)
   "Move to the beginning of a subtitle and return point.
 If SUB-ID is not given, focus the current subtitle.
