@@ -603,6 +603,11 @@ Use the format-specific function for MAJOR-MODE."
                                    "\\|")
                         "\\)"))))
 
+(defun subed-vtt-insert-word-timestamp ()
+  "Insert current playback position as a word timestamp."
+  (interactive)
+  (insert "<" (subed-msecs-to-timestamp subed-mpv-playback-position) ">"))
+
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.vtt\\'" . subed-vtt-mode))
 
