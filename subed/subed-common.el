@@ -185,6 +185,16 @@ Return nil if TIME-STRING doesn't match the pattern.")
 (subed-define-generic-function msecs-to-timestamp (msecs)
   "Convert MSECS to string in the subtitle's timestamp format.")
 
+(subed-define-generic-function timestamp-at-point ()
+  "Return the timestamp at point as a string, or nil if none."
+  (if (and subed--regexp-timestamp (looking-at subed--regexp-timestamp))
+      (match-string 0)
+    (save-excursion
+      (when (looking-back "[0-9:\\.,]+" nil t)
+        (goto-char (match-beginning 0))
+        (when (looking-at subed--regexp-timestamp)
+          (match-string 0))))))
+
 (defun subed-to-msecs (time-string)
   "Convert TIME-STRING to milliseconds."
   (or (and (stringp time-string) (subed-timestamp-to-msecs time-string))
@@ -943,11 +953,21 @@ See `subed-increase-start-time' about ARG."
   (when (subed-loop-over-current-subtitle-p)
     (subed--set-subtitle-loop)))
 
+(defun subed-copy-player-pos ()
+  "Copy current playback time to kill ring."
+  (interactive)
+  (kill-new (subed-msecs-to-timestamp subed-mpv-playback-position)))
+
+(defun subed-insert-player-pos ()
+  "Insert current playback time."
+  (interactive)
+  (insert (subed-msecs-to-timestamp subed-mpv-playback-position)))
+
 (defun subed-copy-player-pos-to-start-time ()
   "Replace current subtitle's start time with current playback time."
   (interactive)
   (when (and subed-mpv-playback-position
-           (subed-subtitle-msecs-start))
+             (subed-subtitle-msecs-start))
     (subed-set-subtitle-time-start subed-mpv-playback-position)
     (subed--run-subtitle-time-adjusted-hook)
     subed-mpv-playback-position))
