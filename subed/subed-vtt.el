@@ -148,11 +148,12 @@ Use the format-specific function for MAJOR-MODE."
      ((and (looking-at (format "%s\n%s"
                                subed-vtt--regexp-identifier
                                subed-vtt--regexp-timing))
-           (looking-back subed-vtt--regexp-blank-separator))
+           (looking-back subed-vtt--regexp-blank-separator
+                         (save-excursion (forward-line -2) (point))))
       nil)
      ;; looking at a comment
      ((and
-       (looking-back "^[ \t]*\n\\|\\`\\(?:[ \t\n]*\\)")
+       (looking-back "^[ \t]*\n\\|\\`\\(?:[ \t\n]*\\)" (save-excursion (forward-line -2) (point)))
        (looking-at (concat "[ \t]*" subed-vtt--regexp-note)))
       t)
      ((re-search-backward (format "\\(%s%s\\)\\|%s%s"
@@ -172,12 +173,7 @@ Return point or nil if no subtitle ID could be found.
 WebVTT IDs are optional.  If an ID is not specified, use the timestamp instead.
 Use the format-specific function for MAJOR-MODE."
   (let ((orig-point (point))
-        found
-        (timestamp-line
-         (format "\\(?:\\`\\|\n[ \t]*\n+\\)\\(\\(%s\\)\n%s\\|\\(%s\\)\\)"
-                 subed-vtt--regexp-identifier
-                 subed-vtt--regexp-timing
-                 subed-vtt--regexp-timing)))
+        found)
     (if (stringp sub-id)
         ;; Look for a line that contains the timestamp, preceded by one or more
         ;; blank lines or the beginning of the buffer.
@@ -196,7 +192,7 @@ Use the format-specific function for MAJOR-MODE."
          ;; are we looking at a timestamp? Stay here, check for ID later
          ((looking-at subed-vtt--regexp-timing) (point))
          ;; are we at an ID? return that
-         ((and (or (looking-back subed-vtt--regexp-blank-separator) (bobp))
+         ((and (or (looking-back subed-vtt--regexp-blank-separator (save-excursion (forward-line -2) (point))) (bobp))
                (not (looking-at "[ \t]*\n"))
                (not (save-excursion (re-search-forward "-->" (line-end-position) t)))
                (save-excursion
@@ -215,10 +211,10 @@ Use the format-specific function for MAJOR-MODE."
         (cond
          ((bobp) (throw 'done (point)))
          ((progn
-            (previous-line)
+            (forward-line -1)
             (goto-char (line-beginning-position))
-            (and (or (looking-back subed-vtt--regexp-blank-separator) (bobp))
-                 (not (looking-at "[ \t]*\n"))
+            (and (not (looking-at "[ \t]*\n"))
+                 (looking-back subed-vtt--regexp-blank-separator (save-excursion (forward-line -2) (point)))
                  (save-excursion (not (re-search-forward "-->" (line-end-position) t)))))
           (throw 'done (point)))
          (t

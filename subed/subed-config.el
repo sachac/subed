@@ -46,15 +46,15 @@
 ;; Syntax highlighting
 
 (defface subed-id-face
-  '((t (:inherit 'font-lock-constant-face)))
+  '((t (:inherit font-lock-constant-face)))
   "Each subtitle's consecutive number.")
 
 (defface subed-time-face
-  '((t (:inherit 'font-lock-string-face)))
+  '((t (:inherit font-lock-string-face)))
   "Start and stop times of subtitles.")
 
 (defface subed-time-separator-face
-  '((t (:inherit 'font-lock-comment-face)))
+  '((t (:inherit font-lock-comment-face)))
   "Separator between the start and stop time (\" --> \").")
 
 (define-obsolete-face-alias 'subed-srt-id-face 'subed-id-face "2022-09-14")

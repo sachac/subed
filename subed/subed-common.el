@@ -2535,16 +2535,17 @@ BEG can also be a subtitle list."
   (interactive "^p")
   (setq arg (or arg 1))
   (let ((end (or (save-excursion (subed-jump-to-subtitle-end)) (point))))
-    (loop while (> arg 0)
-          do
-          (forward-word 1)
-          (skip-syntax-forward "^\s")
-          (setq arg (1- arg))
-          (when (> (point) end)
-            (subed-jump-to-subtitle-text)
-            (forward-word 1)
-            (skip-syntax-forward "^\s")
-            (setq end (or (save-excursion (subed-jump-to-subtitle-end)) (point)))))))
+    (cl-loop
+     while (> arg 0)
+     do
+     (forward-word 1)
+     (skip-syntax-forward "^\s")
+     (setq arg (1- arg))
+     (when (> (point) end)
+       (subed-jump-to-subtitle-text)
+       (forward-word 1)
+       (skip-syntax-forward "^\s")
+       (setq end (or (save-excursion (subed-jump-to-subtitle-end)) (point)))))))
 
 ;;; Experimental retiming workflow
 

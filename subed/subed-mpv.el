@@ -33,7 +33,16 @@
 (declare-function subed-subtitle-id "subed-common" ())
 (declare-function subed-subtitle-msecs-start "subed-common" (&optional id))
 (declare-function subed-subtitle-msecs-stop "subed-common" (&optional id))
+(declare-function subed-msecs-to-timestamp "subed-common" (&optional msecs))
+(declare-function subed-forward-subtitle-text "subed-common")
+(declare-function subed-backward-subtitle-text "subed-common")
+(declare-function subed-timestamp-to-msecs "subed-common")
+(declare-function subed-timestamp-at-point "subed-common")
+(declare-function subed-to-msecs "subed-common")
+(declare-function subed-clear-file-duration-ms-cache "subed-common")
+(declare-function subed-jump-to-current-subtitle "subed-common")
 
+(defvar subed-mpv-control-map)                      ; Defined in subed.el
 (defvar subed-mpv-frame-step-map)
 
 (defvar-local subed-mpv-is-playing nil
@@ -337,7 +346,9 @@ See \"List of events\" in mpv(1)."
       (subed-mpv-jump cur-sub-start))))
 
 (defun subed-mpv-jump-to-timestamp-or-current-subtitle ()
-  "Jump to the timestamp at point, or the start of the currently focused subtitle otherwise."
+  "Jump to the timestamp at point.
+If there is no timestamp at point, jump to the start of the currently
+focused subtitle."
   (interactive)
   (let ((ts (subed-timestamp-at-point)))
     (if ts
@@ -437,8 +448,8 @@ Save to FILE if specified.
 Use \\[universal-argument] to save to a specific file.
 Passes FLAGS to MPV for taking the screenshot.
 Returns the filename."
-  (setq flags (or flags 'video))
   (interactive (list (if current-prefix-arg (read-file-name "Filename: "))))
+  (setq flags (or flags 'video))
   (if file
       (subed-mpv--client-send `(screenshot-to-file ,file ,flags))
     (let ((old-latest

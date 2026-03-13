@@ -2133,7 +2133,7 @@ Hello world
        (expect (buffer-string) :not :to-equal mock-vtt-data)
        (subed-sanitize)
        (expect (buffer-string) :to-equal mock-vtt-data)))
-    (it "retains comments"
+    (it "retains comments."
       (with-temp-vtt-buffer
        (insert (concat "WEBVTT\n\n"
                        "00:01:01.000 --> 00:01:05.123\n"
