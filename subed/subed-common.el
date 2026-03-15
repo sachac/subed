@@ -662,6 +662,16 @@ Return new point."
       (remove-overlays beg end)
       (kill-region beg end))))
 
+(subed-define-generic-function duplicate-subtitle ()
+  "Duplicate the current subtitle."
+  (interactive)
+  (subed-append-subtitle
+   nil
+   (subed-subtitle-msecs-start)
+   (subed-subtitle-msecs-stop)
+   (subed-subtitle-text)
+   (subed-subtitle-comment)))
+
 ;;;###autoload
 (defun subed-parse-file (filename &optional mode-func)
   "Return the subtitles from FILENAME in a list.
