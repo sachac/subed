@@ -335,6 +335,9 @@ Use WIDTH and HEIGHT if specified."
      :height
      height)))
 
+(defvar subed-waveform-make-overlay-hook nil "Functions to run after preparing the overlay.
+Each function should take one argument, the overlay.")
+
 (defun subed-waveform--make-overlay (&optional width height)
   "Make an overlay at point for the current subtitle."
   (let* ((overlay (make-overlay (point) (point)))
@@ -372,6 +375,7 @@ Use WIDTH and HEIGHT if specified."
       (setq subed-waveform--overlay overlay)
       (setq subed-waveform--svg svg))
     (subed-waveform--update-bars overlay)
+    (run-hook-with-args 'subed-waveform-make-overlay-hook overlay)
     (subed-waveform--update-overlay-svg overlay)
     overlay))
 
