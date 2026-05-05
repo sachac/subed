@@ -95,27 +95,6 @@ Use the format-specific function for MAJOR-MODE."
        ((looking-at subed-vtt--regexp-identifier)
         (string-trim (match-string 0)))))))
 
-(cl-defmethod subed--subtitle-id-at-msecs (msecs &context (major-mode subed-vtt-mode))
-  "Return the ID of the subtitle at MSECS milliseconds.
-Return nil if there is no subtitle at MSECS.  Use the
-format-specific function for MAJOR-MODE."
-  (save-excursion
-    (goto-char (point-min))
-    (unless (subed-subtitle-id)
-      (subed-forward-subtitle-time-start))
-    ;; Move to first subtitle that starts at or after MSECS
-    (catch 'subtitle-id
-      (while (not (eobp))
-        (if (<= (or (subed-subtitle-msecs-start) -1) msecs)
-            ;; If stop time is >= MSECS, we found a match
-            (let ((cur-sub-end (subed-subtitle-msecs-stop)))
-              (if (and cur-sub-end (>= cur-sub-end msecs))
-                  (throw 'subtitle-id (subed-subtitle-id))
-                (unless (subed-forward-subtitle-id)
-                  (throw 'subtitle-id nil))))
-          (unless (subed-forward-subtitle-id)
-            (throw 'subtitle-id nil)))))))
-
 ;;; Traversing
 
 (cl-defmethod subed--in-header-p (&context (major-mode subed-vtt-mode))

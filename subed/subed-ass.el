@@ -75,9 +75,11 @@ Use the format-specific function for MAJOR-MODE."
                (looking-at subed--regexp-timestamp))
       (match-string 0))))
 
-(cl-defmethod subed--subtitle-id-at-msecs (msecs &context (major-mode subed-ass-mode))
+(cl-defmethod subed--subtitle-id-at-msecs (msecs &context (major-mode subed-ass-mode) &optional when-not-found)
   "Return the ID of the subtitle at MSECS milliseconds.
 Return nil if there is no subtitle at MSECS.
+If there is no subtitle that contains that time and WHEN-NOT-FOUND is `after',
+go to the subtitle after that time.
 Use the format-specific function for MAJOR-MODE."
   (save-excursion
     (goto-char (point-min))
@@ -97,7 +99,9 @@ Use the format-specific function for MAJOR-MODE."
           (when (and cur-sub-end (>= cur-sub-end msecs))
             (throw 'subtitle-id (subed-subtitle-id))))
         (unless (subed--forward-subtitle-id)
-          (throw 'subtitle-id nil))))))
+          (throw 'subtitle-id nil)))
+      (when (eq when-not-found 'after)
+        (subed-subtitle-id)))))
 
 ;;; Traversing
 

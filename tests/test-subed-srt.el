@@ -295,7 +295,7 @@ Baz.
          (spy-on 'subed-subtitle-id-at-msecs :and-return-value (point-min))
          (expect (subed-jump-to-subtitle-id-at-msecs 123450) :to-equal (point-min))
          (expect (point) :to-equal (point-min))
-         (expect 'subed-subtitle-id-at-msecs :to-have-been-called-with 123450)
+         (expect 'subed-subtitle-id-at-msecs :to-have-been-called-with 123450 nil)
          (expect 'subed-subtitle-id-at-msecs :to-have-been-called-times 1)))
       (it "returns nil if point didn't change."
         (with-temp-srt-buffer
@@ -304,7 +304,7 @@ Baz.
          (spy-on 'subed-subtitle-id-at-msecs :and-return-value 75)
          (expect (subed-jump-to-subtitle-id-at-msecs 123450) :to-equal nil)
          (expect (point) :to-equal 75)
-         (expect 'subed-subtitle-id-at-msecs :to-have-been-called-with 123450)
+         (expect 'subed-subtitle-id-at-msecs :to-have-been-called-with 123450 nil)
          (expect 'subed-subtitle-id-at-msecs :to-have-been-called-times 1)))
       )
     (describe "to subtitle start time"

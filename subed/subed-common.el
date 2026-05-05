@@ -211,9 +211,26 @@ Return nil if TIME-STRING doesn't match the pattern.")
     (goto-char (point-max))
     (subed-subtitle-id)))
 
-(subed-define-generic-function subtitle-id-at-msecs (msecs)
+(subed-define-generic-function subtitle-id-at-msecs (msecs &optional when-not-found)
   "Return the ID of the subtitle at MSECS milliseconds.
-Return nil if there is no subtitle at MSECS.")
+Return nil if there is no subtitle at MSECS.
+If there is no subtitle that contains that time and WHEN-NOT-FOUND is `after',
+return the subtitle after that time."
+  (save-excursion
+    (goto-char (point-min))
+    (unless (subed-subtitle-id)
+      (subed-forward-subtitle-time-start))
+    ;; Move to first subtitle that starts at or after MSECS
+    (catch 'subtitle-id
+      (while (<= (or (subed-subtitle-msecs-start) -1) msecs)
+        ;; If stop time is >= MSECS, we found a match
+        (let ((cur-sub-end (subed-subtitle-msecs-stop)))
+          (when (and cur-sub-end (>= cur-sub-end msecs))
+            (throw 'subtitle-id (subed-subtitle-id))))
+        (unless (subed-forward-subtitle-id)
+          (throw 'subtitle-id nil)))
+      (when (eq when-not-found 'after)
+        (subed-subtitle-id)))))
 
 (subed-define-generic-function subtitle-start-pos (&optional sub-id)
   "Return the position of the start of the subtitle.
@@ -281,20 +298,24 @@ Return point or nil if point did not change or if no subtitle end
 can be found."
   (interactive))
 
-(subed-define-generic-function jump-to-subtitle-id-at-msecs (msecs)
+(subed-define-generic-function jump-to-subtitle-id-at-msecs (msecs &optional when-not-found)
   "Move point to the ID of the subtitle that is playing at MSECS.
 Return point or nil if point is still on the same subtitle.
+If there is no subtitle that contains that time and WHEN-NOT-FOUND is `after',
+go to the subtitle after that time.
 See also `subed-subtitle-id-at-msecs'."
   (let ((current-sub-id (subed-subtitle-id))
-        (target-sub-id (subed-subtitle-id-at-msecs msecs)))
+        (target-sub-id (subed-subtitle-id-at-msecs msecs when-not-found)))
     (when (and target-sub-id (not (equal target-sub-id current-sub-id)))
       (subed-jump-to-subtitle-id target-sub-id))))
 
-(subed-define-generic-function jump-to-subtitle-text-at-msecs (msecs)
+(subed-define-generic-function jump-to-subtitle-text-at-msecs (msecs &optional when-not-found)
 	"Move point to the text of the subtitle that is playing at MSECS.
 Return point or nil if point is still on the same subtitle.
+If there is no subtitle that contains that time and WHEN-NOT-FOUND is `after',
+go to the subtitle after that time.
 See also `subed-vtt--subtitle-id-at-msecs'."
-	(when (subed-jump-to-subtitle-id-at-msecs msecs)
+	(when (subed-jump-to-subtitle-id-at-msecs msecs when-not-found)
 		(subed-jump-to-subtitle-text)))
 
 (subed-define-generic-function in-header-p ()

@@ -77,23 +77,6 @@ Use the format-specific function for MAJOR-MODE."
     (goto-char (point-max))
     (subed-subtitle-id)))
 
-(cl-defmethod subed--subtitle-id-at-msecs (msecs &context (major-mode subed-tsv-mode))
-  "Return the ID of the subtitle at MSECS milliseconds.
-Return nil if there is no subtitle at MSECS.
-Use the format-specific function for MAJOR-MODE."
-  (save-match-data
-    (save-excursion
-      (goto-char (point-min))
-      ;; Move to first subtitle that starts at or after MSECS
-      (catch 'subtitle-id
-        (while (<= (or (subed-subtitle-msecs-start) -1) msecs)
-          ;; If stop time is >= MSECS, we found a match
-          (let ((cur-sub-end (subed-subtitle-msecs-stop)))
-            (when (and cur-sub-end (>= cur-sub-end msecs))
-              (throw 'subtitle-id (subed-subtitle-id))))
-          (unless (subed-forward-subtitle-id)
-            (throw 'subtitle-id nil)))))))
-
 (cl-defmethod subed--subtitle-msecs-start (&context (major-mode subed-tsv-mode) &optional sub-id)
   "Subtitle start time in milliseconds or nil if it can't be found.
 If SUB-ID is not given, use subtitle on point.
