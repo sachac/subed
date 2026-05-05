@@ -314,9 +314,11 @@ The functions are called with BEG and END for the region.")
 (defvar-local subed-subtitle-merged-hook '(subed-remove-duplicate-speaker-tag-after-merging)
   "Functions to call when a subtitle has been merged.")
 
-(defvar-local subed-subtitle-split-hook '(subed-copy-speaker-tag-after-splitting)
+(defvar-local subed-subtitle-split-hook '()
   "Functions to call when a subtitle has been split.
-The function is called with point at the new subtitle's text.")
+The function is called with point at the new subtitle's text.
+For example, if you prefer to have speaker tags on all the
+subtitles, you may want to add `subed-copy-speaker-tag-after-splitting'.")
 
 (declare-function subed-subtitle-msecs-start "subed-common" (&optional id))
 

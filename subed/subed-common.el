@@ -1806,6 +1806,27 @@ specified, set the current subtitle's text."
     (subed-merge-region beg end))
   (subed-set-subtitle-text text))
 
+;;;###autoload
+(defun subed-remove-duplicate-speakers (beg end)
+  "Remove speaker tags if they are the same as the previous line."
+  (interactive (if (region-active-p)
+                   (list (region-beginning)
+                         (region-end))
+                 (list (point-min) (point-max))))
+  (let (last-speaker)
+    (if (derived-mode-p 'subed-mode)
+        (subed-for-each-subtitle beg end nil
+          (subed-jump-to-subtitle-text)
+          (when (looking-at "\\[\\(.+?\\)\\]: ")
+            (if (string= last-speaker (match-string 1))
+                (replace-match "")
+              (setq last-speaker (match-string 1)))))
+      (goto-char beg)
+      (while (re-search-forward "^\\[\\(.+?\\)\\]: " end t)
+        (if (string= last-speaker (match-string 1))
+            (replace-match "")
+          (setq last-speaker (match-string 1)))))))
+
 (defun subed-remove-duplicate-speaker-tag-after-merging ()
   "Remove duplicate speaker tag after merging.
 Can be added to `subed-subtitle-merged-hook'."
@@ -1818,6 +1839,31 @@ Can be added to `subed-subtitle-merged-hook'."
                   (regexp-quote (match-string 1 text))
                   ""
                   (match-string 2 text))))))))
+
+(defun subed-jump-to-previous-speaker ()
+  "Jump to the previous speaker change."
+  (interactive)
+  (when (re-search-backward "^\\[\\(.+?\\)\\]: " nil t)
+    (goto-char (match-beginning 0))))
+
+(defun subed-jump-to-next-speaker ()
+  "Jump to the next speaker change."
+  (interactive)
+  (when (looking-at "^\\[\\(.+?\\)\\]: ") (goto-char (match-end 0)))
+  (when (re-search-forward "^\\[\\(.+?\\)\\]: " nil t)
+    (goto-char (match-beginning 0))))
+
+(defun subed-select-current-speaker-segment ()
+  "Select the subtitles for the current speaker."
+  (interactive)
+  (or (re-search-backward "^\\[\\(.+?\\)\\]: " nil t)
+      (goto-char (point-min)))
+  (push-mark (point))
+  (forward-line)
+  (if (re-search-forward "^\\[\\(.+?\\)\\]: " nil t)
+      (goto-char (match-beginning 0))
+    (goto-char (point-max)))
+  (activate-mark))
 
 ;;; Replay time-adjusted subtitle
 
