@@ -681,7 +681,38 @@ hh:mm:ss chapter title"
 					(split-string (string-trim chapters) "\n"))))
     (subed-for-each-subtitle (point-min) (point-max) nil
       (when (and chapter-list
-                 (>= (subed-subtitle-msecs-start)
+                 (>= (subed-subtitle-msecs-stop)
+                     (car (car chapter-list))))
+        (let ((text (cdr (car chapter-list)))
+              (current-comment (subed-subtitle-comment)))
+          (if current-comment
+              (unless (string-match (regexp-quote text) current-comment)
+                (subed-set-subtitle-comment
+                 (concat (cdr (car chapter-list))
+                         "\n" current-comment)))
+            (subed-set-subtitle-comment text)))
+        (pop chapter-list)))))
+
+;;;###autoload
+(defun subed-vtt-insert-chapter-comments-based-on-clock (chapters)
+  "Adds NOTE comments for the CHAPTERS.
+CHAPTERS should be a string of the form
+
+mm:ss chapter title
+hh:mm:ss chapter title
+
+This uses clock time based on `subed-clock-start'."
+  (interactive "MChapters: ")
+  (let ((chapter-list
+         (seq-keep
+          (lambda (line)
+						(when (string-match "^\\(?:- \\)?<?\\([0-9:]+\\)>? \\(.+\\)" line)
+              (cons (save-match-data (subed-clock-to-msecs (match-string 1 line)))
+                    (match-string 2 line))))
+					(split-string (string-trim chapters) "\n"))))
+    (subed-for-each-subtitle (point-min) (point-max) nil
+      (when (and chapter-list
+                 (>= (subed-subtitle-msecs-stop)
                      (car (car chapter-list))))
         (let ((text (cdr (car chapter-list)))
               (current-comment (subed-subtitle-comment)))

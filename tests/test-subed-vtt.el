@@ -2805,7 +2805,35 @@ Bar.
 
 00:03:03.45 --> 00:03:15.5
 Baz.
-"))))
+")))
+    (describe "when using clock time"
+      (it "inserts the notes."
+        (with-temp-vtt-buffer
+         (subed-append-subtitle-list
+          '((nil 0 300000 "Subtitle A.")
+            (nil 600000 900000 "Subtitle B.")
+            (nil 1200000 1500000 "Subtitle C.")
+            (nil 1800000 2100000 "Subtitle D.")))
+         (subed-set-file-clock-start "10:00:00")
+         (subed-vtt-insert-chapter-comments-based-on-clock
+          "10:12 Part 1
+10:32 Part 2")
+         (expect (buffer-string) :to-equal "00:00:00.000 --> 00:05:00.000
+Subtitle A.
+
+NOTE Part 1
+
+00:10:00.000 --> 00:15:00.000
+Subtitle B.
+
+00:20:00.000 --> 00:25:00.000
+Subtitle C.
+
+NOTE Part 2
+
+00:30:00.000 --> 00:35:00.000
+Subtitle D.
+")))))
   (it "can replace [speaker-name]: with <v speaker-name>..</v>."
     (with-temp-vtt-buffer
      (subed-append-subtitle-list

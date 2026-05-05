@@ -2993,5 +2993,95 @@ Adjusted subtitles will also be written alongside the file."
         ;; clean up current buffer
         (subed-crop-subtitles beg end))))))
 
+;;; Clock time
+
+(defvar-local subed-clock-start nil "Clock time corresponding to the start of this file.")
+
+(defun subed--clock-to-time (s &optional base-date)
+  "Convert S to an Emacs time object.
+If only hh:mm is specified, use the date from BASE-DATE
+or `subed-clock-start'."
+  (if (stringp s)
+      (let ((time (parse-time-string s))
+            (current (decode-time (current-time)))
+            (decoded-default
+             (decode-time
+              (or base-date
+                  subed-clock-start))))
+        (unless (decoded-time-second time)
+          (setf (decoded-time-second time)
+                (or (decoded-time-second decoded-default)
+                    0)))
+        (unless (decoded-time-day time)
+          (setf (decoded-time-day time)
+                (or
+                 (decoded-time-day decoded-default)
+                 (decoded-time-day current))))
+        (unless (decoded-time-month time)
+          (setf (decoded-time-month time)
+                (or (decoded-time-month decoded-default)
+                    (decoded-time-month current))))
+        (unless (decoded-time-year time)
+          (setf (decoded-time-year time)
+                (or (decoded-time-year decoded-default)
+                    (decoded-time-year current))))
+        (unless (decoded-time-zone time)
+          (setf (decoded-time-zone time)
+                (or (decoded-time-zone decoded-default)
+                    (decoded-time-zone current))))
+        (apply #'encode-time time))
+    s))
+
+(defun subed-clock-to-msecs (clock-time)
+  "Return CLOCK-TIME as a msecs offset based on `subed-clock-start'."
+  (* 1000.0
+     (float-time (time-subtract
+                  (subed--clock-to-time clock-time)
+                  subed-clock-start))))
+
+;;;###autoload
+(defun subed-set-file-clock-start (start-time)
+  "Set the clock time corresponding to 0 ms."
+  (interactive "MTime: ")
+  (setq subed-clock-start (subed--clock-to-time start-time)))
+
+;;;###autoload
+(defun subed-set-clock-start-based-on-subtitle (start-time)
+  "Set the clock time based on the current subtitle's start."
+  (interactive "MTime: ")
+  (setq subed-clock-start
+        (seconds-to-time
+         (- (float-time (subed--clock-to-time start-time))
+            (/ (subed-subtitle-msecs-start) 1000.0)))))
+
+;;;###autoload
+(defun subed-jump-to-subtitle-id-at-clock-time (clock-time)
+  "Jump to the subtitle for CLOCK-TIME.
+If no subtitle includes CLOCK-TIME, jump to the first subtitle after it.
+
+`subed-clock-start' must be set.  Use `subed-set-file-clock-start'
+to set the time for the whole file or `subed-set-subtitle-clock-start'
+to set the start of the current subtitle."
+  (interactive "MTime: ")
+  (let ((msecs (* 1000.0
+                  (float-time (time-subtract
+                               (subed--clock-to-time clock-time)
+                               subed-clock-start)))))
+    (subed-jump-to-subtitle-id-at-msecs msecs 'after)))
+
+;;;###autoload
+(defun subed-subtitle-clock-start (&optional tz)
+  "Return clock start time as an Emacs time object.
+When called interactively, copy and display an ISO8601-formatted date
+string.  When called with \\[universal-argument], use UTC."
+  (interactive (list (when current-prefix-arg t)))
+  (let* ((result (seconds-to-time (+ (float-time subed-clock-start)
+                                     (/ (subed-subtitle-msecs-start) 1000.0))))
+         (formatted (format-time-string "%FT%T%z" result tz)))
+    (when (called-interactively-p 'any)
+      (kill-new formatted)
+      (message "%s" formatted))
+    result))
+
 (provide 'subed-common)
 ;;; subed-common.el ends here

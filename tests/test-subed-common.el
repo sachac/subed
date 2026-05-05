@@ -4155,4 +4155,32 @@ Baz.
     (test-subed-extension ".avi" t)
     (test-subed-extension ".ts" t)
     (test-subed-extension ".ogv" t))
-  )
+  (describe "Working with clock time"
+    (it "converts msecs to clock time."
+      (with-temp-srt-buffer
+       (insert mock-srt-data)
+       (subed-set-file-clock-start "2026-01-01T10:00:00Z")
+       (subed-jump-to-subtitle-id 2)
+       (expect (seq-take (subed-subtitle-clock-start) 2)
+               :to-equal (date-to-time "2026-01-01T10:02:02Z"))))
+    (describe "when setting the time start for msecs 0"
+      (it "works with Emacs time objects."
+        (with-temp-srt-buffer
+         (insert mock-srt-data)
+         (subed-set-file-clock-start (date-to-time "2026-01-01T10:00:00Z"))
+         (subed-jump-to-subtitle-id-at-clock-time (date-to-time "2026-01-01T10:02:00Z"))
+         (expect (subed-subtitle-text) :to-equal "Bar.")))
+      (it "works with time strings."
+        (with-temp-srt-buffer
+         (insert mock-srt-data)
+         (subed-set-file-clock-start "2026-01-01T10:00:00Z")
+         (subed-jump-to-subtitle-id-at-clock-time "2026-01-01T10:02:00Z")
+         (expect (subed-subtitle-text) :to-equal "Bar."))))
+    (it "can set the time based on a subtitle start."
+      (with-temp-srt-buffer
+         (insert mock-srt-data)
+         (subed-jump-to-subtitle-id 2)
+         (subed-set-clock-start-based-on-subtitle "2026-01-01T10:02:00Z")
+         (subed-jump-to-subtitle-id-at-clock-time "2026-01-01T10:01:02Z")
+         (expect (subed-subtitle-text) :to-equal "Foo.")))
+    ))
