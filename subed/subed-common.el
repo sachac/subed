@@ -776,6 +776,10 @@ before including them."
               end)
              include-comments)))
 
+(defvar subed-section-comments-as-chapters-functions nil
+  "Functions to call with the the subtitle list.
+Return a filtered subtitle list.")
+
 (defun subed-section-comments-as-chapters ()
   "Copy subtitle comments as chapters for video descriptions."
   (interactive)
@@ -788,7 +792,11 @@ before including them."
 															 (string-trim (elt sub 4))
 															 "\n")
 										 ""))
-								 (subed-subtitle-list)
+                 (seq-reduce
+                  (lambda (prev val)
+                    (funcall val prev))
+                  subed-section-comments-as-chapters-functions
+								  (subed-subtitle-list))
 								 "")))
     (when (called-interactively-p 'any)
       (kill-new result))
