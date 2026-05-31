@@ -776,6 +776,20 @@ before including them."
               end)
              include-comments)))
 
+(defun subed-set-subtitle-texts (text &optional beg end)
+  "Set subtitle text in region to TEXT.
+Assumes one subtitle per line.
+Reports an error if the number of lines does not match."
+  (interactive (list (read-string "Text: ")
+                     (if (region-active-p) (region-beginning) (point-min))
+                     (if (region-active-p) (region-end) (point-max))))
+  (let* ((lines (nreverse (split-string (string-trim text) "\n")))
+         (current (subed-subtitle-list beg end)))
+    (unless (= (length lines) (length current))
+      (error "Text has %d lines and current has %d lines."
+             (length lines) (length current)))
+    (subed-for-each-subtitle beg end t
+      (subed-set-subtitle-text (pop lines)))))
 
 (defun subed-set-subtitle-comment-to-region-text (beg end)
   "Set the subtitle comment to the text from BEG to END."
