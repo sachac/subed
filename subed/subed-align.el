@@ -107,16 +107,8 @@ Modifies SUBTITLES and returns the modified list."
 													 (goto-char end)
 													 (- (/ (subed-subtitle-msecs-stop) 1000.0)
 															ignore-before)))
-         results)
-    (unwind-protect
-        (progn
-          (apply
-           #'call-process
-           (car subed-align-command)
-           nil
-           (get-buffer-create "*subed-aeneas*")
-           t
-           (append (cdr subed-align-command)
+         (command-args
+          (append (cdr subed-align-command)
                    (list (expand-file-name audio-file)
                          temp-input-file
                          (format "is_audio_file_head_length=%.3f|is_audio_file_process_length=%.3f|task_language=%s|os_task_file_format=%s|is_text_type=%s%s"
@@ -127,6 +119,19 @@ Modifies SUBTITLES and returns the modified list."
                                  "subtitles"
                                  (if subed-align-options (concat "|" subed-align-options) ""))
                          temp-file)))
+         results)
+    (with-current-buffer (get-buffer-create "*subed-aeneas*")
+      (goto-char (point-max))
+      (insert (car subed-align-command) " " (mapconcat #'shell-quote-argument command-args " ") "\n"))
+    (unwind-protect
+        (progn
+          (apply
+           #'call-process
+           (car subed-align-command)
+           nil
+           (get-buffer-create "*subed-aeneas*")
+           t
+           command-args)
           ;; parse the subtitles from the resulting output
           (setq results (subed-parse-file temp-file))
           (save-excursion
@@ -152,11 +157,23 @@ Return the new filename."
     (completing-read "Format: "
                      '("AUD" "CSV" "EAF" "JSON" "SMIL" "SRT"
                        "SSV" "SUB" "TEXTGRID" "TSV" "TTML" "TXT" "VTT" "XML"))))
-  (let ((new-file
-         (and (buffer-file-name)
-              (expand-file-name
-               (concat (file-name-sans-extension (buffer-file-name)) "." (downcase format)))))
-        temp-file subtitles)
+  (let* ((new-file
+          (and (buffer-file-name)
+               (expand-file-name
+                (concat (file-name-sans-extension (buffer-file-name)) "." (downcase format)))))
+         temp-file subtitles
+         (command-args
+          (append (cdr subed-align-command)
+                  (list (expand-file-name audio-file)
+                        (or temp-file (expand-file-name text-file))
+                        (format "task_language=%s|os_task_file_format=%s|is_text_type=%s%s"
+                                subed-align-language
+                                (downcase format)
+                                (if temp-file
+                                    "subtitles"
+                                  "plain")
+                                (if subed-align-options (concat "|" subed-align-options) ""))
+                        new-file))))
     (when (or (null (file-exists-p new-file))
               (yes-or-no-p (format "%s exists. Overwrite? " (file-name-nondirectory new-file))))
       (when (derived-mode-p 'subed-mode)
@@ -164,23 +181,16 @@ Return the new filename."
         (setq temp-file (make-temp-file "subed-align" nil ".txt"))
         (with-temp-file temp-file
           (insert (mapconcat (lambda (o) (elt o 3)) subtitles "\n\n"))))
+    (with-current-buffer (get-buffer-create "*subed-aeneas*")
+      (goto-char (point-max))
+      (insert (car subed-align-command) " " (mapconcat #'shell-quote-argument command-args " ") "\n"))
       (apply
        #'call-process
        (car subed-align-command)
        nil
        (get-buffer-create "*subed-aeneas*")
        t
-       (append (cdr subed-align-command)
-               (list (expand-file-name audio-file)
-                     (or temp-file (expand-file-name text-file))
-                     (format "task_language=%s|os_task_file_format=%s|is_text_type=%s%s"
-                             subed-align-language
-                             (downcase format)
-                             (if temp-file
-                                 "subtitles"
-                               "plain")
-                             (if subed-align-options (concat "|" subed-align-options) ""))
-                     new-file)))
+       command-args)
       (when temp-file (delete-file temp-file))
       (with-temp-file new-file
         (insert-file-contents new-file)
