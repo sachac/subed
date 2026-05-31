@@ -400,5 +400,61 @@ Assume that the subtitles are still in the same sequence."
        (subed-set-subtitle-comment (elt sub 4))))
    subtitles))
 
+(declare-function subed-word-data-parse-file "subed-word-data")
+(declare-function subed-word-data-fix-subtitle-timing "subed-word-data")
+(declare-function subed-word-data--load "subed-word-data")
+
+;;;###autoload
+(defun subed-align-word-data (word-data-file text-file format)
+  "Align using word data from WORD-DATA-FILE.
+The word data file can be WhisperX JSON, YouTube VTT, Youtube SRV2, and
+TextGrid files.  Use line breaks from TEXT-FILE to determine subtitle
+boundaries.  Export to FORMAT."
+  (interactive
+   (list (read-file-name "JSON, VTT, srv2, or TextGrid: "
+                         nil
+                         nil
+                         nil
+                         nil
+                         (lambda (f)
+                           (or (file-directory-p f)
+                               (string-match
+                                "\\.\\(json\\|srv2\\|vtt\\|TextGrid\\)\\'"
+                                f))))
+         (buffer-file-name)
+         (completing-read "Format: "
+                          '("AUD" "CSV" "EAF" "JSON" "SMIL" "SRT"
+                            "SSV" "SUB" "TEXTGRID" "TSV" "TTML" "TXT" "VTT" "XML"))))
+  (let* ((new-file
+          (and (buffer-file-name)
+               (expand-file-name
+                (concat (file-name-sans-extension (buffer-file-name)) "." (downcase format)))))
+         (word-data (subed-word-data-parse-file word-data-file))
+         temp-file subtitles)
+    (when (or (null (file-exists-p new-file))
+              (yes-or-no-p (format "%s exists. Overwrite? " (file-name-nondirectory new-file))))
+      (setq subtitles
+            (if (derived-mode-p 'subed-mode)
+                (subed-subtitle-list)
+              (mapcar
+               (lambda (o)
+                 (list nil 0 0 o))
+               (split-string (string-trim (buffer-string)) " *\n+ *"))))
+      (setf (elt (car (last subtitles)) 2)
+            (alist-get 'end
+                       (last word-data)))
+      (with-temp-file new-file
+        (subed-guess-format new-file)
+        (subed-auto-insert)
+        (subed-append-subtitle-list subtitles)
+        (subed-word-data--load word-data)
+        (subed-word-data-fix-subtitle-timing (point-min) (point-max))
+        (when (derived-mode-p 'subed-vtt-mode)
+          (goto-char (point-min))
+          (flush-lines "^[0-9]+$")))
+      (when (called-interactively-p 'any)
+        (find-file new-file))
+      new-file)))
+
 (provide 'subed-align)
 ;;; subed-align.el ends here
