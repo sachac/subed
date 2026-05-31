@@ -749,6 +749,72 @@ Discard previous word data."
        row))
    list))
 
+(defvar subed-word-data-subtitle-match-threshold 0.7
+  "Fraction of subtitle with word data to be considered well-recognized.")
+
+(defvar subed-align-preprocess-functions)
+(defun subed-word-data-match-ratio ()
+  "Return the ratio of characters with good matches in subtitle cue text."
+  (require 'subed-align)
+  (let* ((text (subed-subtitle-text))
+         (properties (object-intervals text)))
+    (/
+     (apply '+
+            (seq-keep
+             (lambda (interval)
+               (if (plist-get (elt interval 2) 'subed-word-data-score)
+                   (- (elt interval 1)
+                      (elt interval 0))))
+             properties))
+     (* 1.0
+        ;; run text through subed-align-preprocess-functions
+        (length
+         (elt
+          (car
+           (seq-reduce
+            (lambda (prev val)
+              (funcall val prev))
+            subed-align-preprocess-functions
+            (list
+             (list nil nil nil text))))
+          3))))))
+
+(defun subed-word-data-next-subtitle-with-poor-matches ()
+  (interactive)
+  "Jump to the next subtitle without lots of word matches."
+  (catch 'found
+    (while (and (not (eobp))
+                (subed-forward-subtitle-text))
+      (when (< (subed-word-data-match-ratio) subed-word-data-subtitle-match-threshold)
+        (throw 'found (point))))))
+
+(defun subed-word-data-next-subtitle-with-good-matches ()
+  (interactive)
+  "Jump to the next subtitle with lots of word matches."
+  (catch 'found
+    (while (and (not (eobp))
+                (subed-forward-subtitle-text))
+      (when (>= (subed-word-data-match-ratio) subed-word-data-subtitle-match-threshold)
+        (throw 'found (point))))))
+
+(defun subed-word-data-previous-subtitle-with-poor-matches ()
+  (interactive)
+  "Jump to the previous subtitle without lots of word matches."
+  (catch 'found
+    (while (and (not (bobp))
+                (subed-backward-subtitle-text))
+      (when (< (subed-word-data-match-ratio) subed-word-data-subtitle-match-threshold)
+        (throw 'found (point))))))
+
+(defun subed-word-data-previous-subtitle-with-good-matches ()
+  (interactive)
+  "Jump to the previous subtitle with lots of word matches."
+  (catch 'found
+    (while (and (not (bobp))
+                (subed-backward-subtitle-text))
+      (when (>= (subed-word-data-match-ratio) subed-word-data-subtitle-match-threshold)
+        (throw 'found (point))))))
+
 
 (provide 'subed-word-data)
 ;;; subed-word-data.el ends here
