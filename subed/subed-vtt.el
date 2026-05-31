@@ -725,6 +725,41 @@ This uses clock time based on `subed-clock-start'."
         (pop chapter-list)))))
 
 ;;;###autoload
+(defun subed-vtt-mpv-skim-subtitles-with-comments (&optional msecs)
+  "Play the first MSECS of each subtitle with a comment from point to end of buffer.
+If MSECS is not specified, use `subed-mpv-skim-msecs'."
+  (interactive (list (and current-prefix-arg
+                          (prefix-numeric-value current-prefix-arg))))
+  (let ((regexp (format "\\(?:^\\|%s\\)%s" subed-vtt--regexp-blank-separator subed-vtt--regexp-note)))
+    (unless (subed-subtitle-comment)
+      (when (looking-at regexp)
+        (forward-line))
+      (re-search-forward regexp nil t))
+    (subed-mpv-unpause)
+    (subed-disable-loop-over-current-subtitle)
+    (catch 'done
+      (while (not (eobp))
+        (subed-mpv-jump-to-current-subtitle)
+        (let ((ch
+               (read-char "p: previous, n: next, any other key to stop." nil (/ (or msecs subed-mpv-skim-msecs) 1000.0))))
+          (pcase ch
+            (?p (re-search-backward regexp nil t)
+                (re-search-backward regexp nil t))
+            (?n (re-search-forward regexp nil t))
+            ('() nil)
+            (_ (throw 'done t))))
+        (or (re-search-forward regexp nil t)
+            (goto-char (point-max)))
+        (when (and
+               (boundp 'subed-waveform-minor-mode)
+               subed-waveform-minor-mode
+               (not subed-waveform-show-all))
+          (subed-waveform-refresh))
+        (recenter)))
+    (re-search-backward regexp nil t))
+	(subed-mpv-pause))
+
+;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.vtt\\'" . subed-vtt-mode))
 
 (provide 'subed-vtt)

@@ -585,5 +585,57 @@ See `subed-mpv-control-map'."
   (interactive)
   (set-transient-map subed-mpv-control-map t))
 
+(defvar subed-mpv-skim-msecs 1000 "Number of msecs to play when skimming.")
+
+;;;###autoload
+(defun subed-mpv-skim-starts (&optonal msecs)
+	(interactive (list current-prefix-arg))
+	(subed-mpv-unpause)
+	(subed-disable-loop-over-current-subtitle)
+	(catch 'done
+		(while (not (eobp))
+			(subed-mpv-jump-to-current-subtitle)
+			(let ((ch
+						 (read-char "(q)uit? " nil (/ (or msecs subed-mpv-skim-msecs) 1000.0))))
+				(when ch
+					(throw 'done t)))
+			(subed-forward-subtitle-text)
+			(when (and
+             (boundp 'subed-waveform-minor-mode)
+             subed-waveform-minor-mode
+						 (not subed-waveform-show-all))
+				(subed-waveform-refresh))
+			(recenter)))
+	(subed-mpv-pause))
+
+;;;###autoload
+(defun subed-mpv-skim-speaker-changes (&optional msecs)
+  "Play the first MSECS of each speaker change from point to end of buffer.
+If MSECS is not specified, use `subed-mpv-skim-msecs'."
+	(interactive (list current-prefix-arg))
+	(subed-mpv-unpause)
+	(subed-disable-loop-over-current-subtitle)
+	(catch 'done
+		(while (not (eobp))
+			(subed-mpv-jump-to-current-subtitle)
+			(let ((ch
+						 (read-char "p: previous, n: next, any other key to stop." nil (/ (or msecs subed-mpv-skim-msecs) 1000.0))))
+				(pcase ch
+          (?p (subed-jump-to-previous-speaker)
+              (subed-jump-to-previous-speaker))
+          (?n (subed-jump-to-next-speaker))
+          ('nil nil)
+          (_ (throw 'done t))))
+      (or (subed-jump-to-next-speaker)
+          (goto-char (point-max)))
+			(when (and
+             (boundp 'subed-waveform-minor-mode)
+             subed-waveform-minor-mode
+						 (not subed-waveform-show-all))
+				(subed-waveform-refresh))
+			(recenter)))
+  (subed-jump-to-previous-speaker)
+	(subed-mpv-pause))
+
 (provide 'subed-mpv)
 ;;; subed-mpv.el ends here
