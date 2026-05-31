@@ -776,6 +776,19 @@ before including them."
               end)
              include-comments)))
 
+
+(defun subed-set-subtitle-comment-to-region-text (beg end)
+  "Set the subtitle comment to the text from BEG to END."
+  (interactive (if (region-active-p)
+                   (list (region-beginning)
+                         (region-end))
+                 (list (subed-subtitle-start-pos)
+                       (subed-subtitle-end-pos))))
+  (save-excursion
+    (goto-char beg)
+    (subed-set-subtitle-comment
+     (subed-subtitle-list-text (subed-subtitle-list beg end)))))
+
 (defvar subed-section-comments-as-chapters-functions nil
   "Functions to call with the the subtitle list.
 Return a filtered subtitle list.")
