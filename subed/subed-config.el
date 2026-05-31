@@ -154,6 +154,11 @@ If set to zero or smaller, playback is paused."
   :type 'integer
   :group 'subed)
 
+(defcustom subed-subtitle-fill-length 50
+  "Number of characters to wrap subtitles at when using `subed-fill-subtitles'."
+  :type 'integer
+  :group 'subed)
+
 (defcustom subed-default-subtitle-length 1000
   "How long to make inserted subtitles in milliseconds."
   :type 'float
