@@ -2855,7 +2855,7 @@ Subtitle D.
       (expect (length chapters) :to-equal 4)
       (expect (car (car (last chapters))) :to-equal "Chapter Title A"))
     (it "preserves other parts of the comment."
-      (expect (elt (cadr (elt chapters 3))) :to-equal "Chapter Title B\n#+SCREENSHOT: test.jpg")
+      (expect (elt (cadr (elt chapters 2)) 4) :to-equal "Chapter Title B\n#+SCREENSHOT: test.jpg")
       ))
   (it "can replace [speaker-name]: with <v speaker-name>..</v>."
     (with-temp-vtt-buffer
