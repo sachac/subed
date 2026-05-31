@@ -1,6 +1,42 @@
 #+OPTIONS: toc:nil
 
 * subed news
+
+** Version 1.5.0 - 2026-05-31 - Sacha Chua
+
+- New commands:
+  - ~subed-fill-subtitles~: You can now wrap subtitles to the length specified by ~subed-subtitle-fill-length~.
+  - ~subed-jump-to-next-long-subtitle~: This checks for long-duration subtitles, such as misrecognized speech. Customize ~subed-validate-subtitle-too-long-msecs~ to change the threshold.
+  - ~subed-mpv-skim-starts~, ~subed-mpv-skim-speaker-changes~, ~subed-vtt-mpv-skim-subtitles-with-comments~: These functions make it easier to check the timing without listening to everything. Set ~subed-mpv-skim-msecs~ to change the duration.
+  - ~subed-set-subtitle-texts~: This might be handy if you used ~subed-copy-region-text~ to copy the region text to a different file for editing and now want to merge your changes back.
+  - Comment-related code:
+    - ~subed-set-subtitle-comment-to-region-text~: If you use NOTE comments in VTT files for chapters (which can be copied with ~subed-section-comments-as-chapters~), you can use this function to set the comment to the text of one or more subtitles.
+    - ~subed-vtt-copy-subtitle-comments~: You can now copy subtitle comments from another file. This assumes that the times are roughly the same, although the cue text might be different. This is handy if you define your chapters as NOTE comments using a faster but less accurate transcript and now want to copy those comments into a more accurate transcript.
+    - ~subed-vtt-move-comment-to-previous-subtitle~, ~subed-vtt-move-comment-to-next-subtitle~: Good for moving comments up or down to correct their chapter placement.
+    - ~subed-vtt-select-section-between-comments~: New command.
+  - ~subed-align-word-data~: New command. If you have word-level timestamps such as a WhisperX JSON, you can use it to determine cue timestamps given text or subtitles.
+  - Working with speaker tags:
+    - ~subed-remove-duplicate-speakers~ removes speaker tags if they're the same as the previous subtitle. ~subed-jump-to-previous-speaker~ and ~subed-jump-to-next-speaker~ navigate by speaker tag, and ~subed-select-current-speaker-segment~ marks a section.
+  - Navigating by clock time: You can now set the file wall-clock start time with ~subed-set-file-clock-start~ or set the current subtitle to start at a specific time with ~subed-set-clock-start-based-on-subtitle~. Then you can navigate by clock time with ~subed-jump-to-subtitle-id-at-clock-time~ or get the clock-time equivalent of the start time with ~subed-subtitle-clock-start~. This is mainly useful for ~subed-vtt-insert-chapter-comments-based-on-clock~, which lets you paste in a timestamped list of notes using wall-clock time and set it as NOTE comments for chapters..
+  - Navigating by word timing data:
+    - ~subed-word-data-next-subtitle-with-poor-matches~,
+      ~subed-word-data-next-subtitle-with-good-matches~,
+      ~subed-word-data-previous-subtitle-with-poor-matches~,
+      ~subed-word-data-previous-subtitle-with-good-matches~: If you use ~subed-word-data-load-from-file~, you can use these functions to navigate to the next or previous subtitles based on how many words have timing information. This can help you identify subtitles that might have been misrecognized or misaligned.
+
+- New functions and functionality:
+  - ~subed-vtt-group-subtitles-by-chapter~ New. Useful for grouping things on export.
+  - subed-align: You can preprocess subtitles before aligning. See ~subed-align-preprocess-functions~. By default, [speaker]: text is removed.
+  - ~subed-section-comments-as-chapters~: Filters comments through  ~subed-section-comments-as-chapters-functions~.
+  - ~subed-align-region~ can run ~subed-align-preprocess-functions~ (which includes ~subed-align-remove-speaker-tags~ by default) to clean up subtitles before aligning.
+
+- Changes:
+  - ~subed-remove-duplicate-speakers~: Region is now optional.
+  - ~subed-align-region~ displays the command in the buffer for easier repetition or debugging.
+  - ~subed-align-preprocess-functions~ handles strings too.
+  - ~subed-mpv-screenshot~ copies the filename only if called interactively.
+  - ~subed-subtitle-id-at-msecs~ can jump to a subtitle after a specified time.
+
 ** Version 1.4.2 - 2026-04-18 - Sacha Chua
 
 - New commands:
