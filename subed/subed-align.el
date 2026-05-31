@@ -51,17 +51,22 @@ will remove silence and other non-speech spans.")
 (defvar subed-align-preprocess-functions '(subed-align-remove-speaker-tags)
   "Functions to run on the list of subtitles before passing to the aligner.
 Each function should take the list of subtitles and return a modified list.
+If given a string, the function should process the string and return a string.
 For example, one function can remove speaker tags.")
 
 (defun subed-align-remove-speaker-tags (subtitles)
   "Remove [speaker]: tags from the start of SUBTITLES text.
 Modifies SUBTITLES and returns the modified list."
-  (mapcar
-   (lambda (o)
-     (when (string-match "^\\[\\(.+?\\)\\]: \\(.+\\)" (elt o 3))
-       (setf (elt o 3) (match-string 1 (elt o 3))))
-     o)
-   subtitles))
+  (if (stringp subtitles)
+      (if (string-match "^\\[\\(.+?\\)\\]: \\(.+\\)" subtitles)
+          (match-string 2 subtitles)
+        subtitles)
+    (mapcar
+     (lambda (o)
+       (when (string-match "^\\[\\(.+?\\)\\]: \\(.+\\)" (elt o 3))
+         (setf (elt o 3) (match-string 2 (elt o 3))))
+       o)
+     subtitles)))
 
 ;;;###autoload
 (defun subed-align-region (audio-file beg end)
