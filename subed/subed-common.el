@@ -820,6 +820,19 @@ Return a filtered subtitle list.")
   "Validate format-specific rules."
   nil)
 
+;;;###autoload
+(defun subed-jump-to-next-long-subtitle ()
+  "Go to the next subtitle over `subed-validate-subtitle-too-long-msecs'."
+  (interactive)
+  (catch 'found
+    (while (not (eobp))
+      (if (subed-forward-subtitle-text)
+          (when (> (- (subed-subtitle-msecs-stop)
+                      (subed-subtitle-msecs-start))
+                   subed-validate-subtitle-too-long-msecs)
+            (throw 'found t))
+        (goto-char (point-max))))))
+
 (subed-define-generic-function regenerate-ids ()
   "Ensure consecutive, unduplicated subtitle IDs in formats that use them."
   nil)

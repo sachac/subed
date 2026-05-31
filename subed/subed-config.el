@@ -194,6 +194,11 @@ action."
   :local t
   :group 'subed)
 
+(defcustom subed-validate-subtitle-too-long-msecs 8000
+  "Duration threshold for `subed-jump-to-next-long-subtitle'."
+  :type 'integer
+  :group 'subed)
+
 (defcustom subed-loop-seconds-before 0
   "Prelude in seconds when looping over subtitle(s)."
   :type 'float
