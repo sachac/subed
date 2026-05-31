@@ -2834,6 +2834,29 @@ NOTE Part 2
 00:30:00.000 --> 00:35:00.000
 Subtitle D.
 ")))))
+  (describe "grouping subtitles by chapters"
+    :var (chapters)
+    (before-all
+      (setq chapters
+            (with-temp-vtt-buffer
+             (subed-append-subtitle-list
+              '((nil 1000 2000 "Cue 1.")
+                (nil 3000 4000 "Cue 2.")
+                (nil 4000 5000 "Cue 3." "Chapter Title A")
+                (nil 6000 7000 "Cue 4.")
+                (nil 8000 9000 "Cue 5." "Chapter Title B\n#+SCREENSHOT: test.jpg")
+                (nil 4000 5000 "Cue 6." "Chapter Title A")))
+             (subed-vtt-group-subtitles-by-chapter))))
+    (it "includes subtitles before the first chapter."
+      (expect (car (car chapters)) :to-be nil)
+      (expect (elt (elt (cdr (car chapters)) 0) 3) :to-equal "Cue 1.")
+      (expect (elt (elt (cdr (car chapters)) 1) 3) :to-equal "Cue 2."))
+    (it "does not reuse chapters."
+      (expect (length chapters) :to-equal 4)
+      (expect (car (car (last chapters))) :to-equal "Chapter Title A"))
+    (it "preserves other parts of the comment."
+      (expect (elt (cadr (elt chapters 3))) :to-equal "Chapter Title B\n#+SCREENSHOT: test.jpg")
+      ))
   (it "can replace [speaker-name]: with <v speaker-name>..</v>."
     (with-temp-vtt-buffer
      (subed-append-subtitle-list

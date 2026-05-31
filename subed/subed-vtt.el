@@ -725,6 +725,21 @@ This uses clock time based on `subed-clock-start'."
         (pop chapter-list)))))
 
 ;;;###autoload
+(defun subed-vtt-copy-subtitle-comments (file)
+  "Copy subtitle comments from FILE.
+Match subtitles based on time."
+  (interactive "FFile to copy from: ")
+  (let ((cues-with-comments
+         (seq-filter (lambda (o) (elt o 4))
+                     (subed-parse-file file))))
+    (subed-for-each-subtitle (point-min) (point-max) nil
+      (when (and cues-with-comments
+                 (>= (subed-subtitle-msecs-stop)
+                     (elt (car cues-with-comments) 1)))
+        (subed-set-subtitle-comment (elt (car cues-with-comments) 4))
+        (pop cues-with-comments)))))
+
+;;;###autoload
 (defun subed-vtt-mpv-skim-subtitles-with-comments (&optional msecs)
   "Play the first MSECS of each subtitle with a comment from point to end of buffer.
 If MSECS is not specified, use `subed-mpv-skim-msecs'."
@@ -758,6 +773,60 @@ If MSECS is not specified, use `subed-mpv-skim-msecs'."
         (recenter)))
     (re-search-backward regexp nil t))
 	(subed-mpv-pause))
+
+(defun subed-vtt-select-section-between-comments ()
+  "Select the subtitles between NOTE comments."
+  (interactive)
+  (save-excursion
+    (or (re-search-backward "^NOTE" nil t)
+        (goto-char (point-min)))
+    (push-mark (point)))
+  (if (re-search-forward "^NOTE" nil t)
+      (goto-char (match-beginning 0))
+    (goto-char (point-max)))
+  (activate-mark))
+
+(defun subed-vtt-group-subtitles-by-chapter (&optional subtitles)
+  "Group SUBTITLES by comments."
+  (let* ((subtitles (or subtitles (subed-subtitle-list)))
+         result)
+    (dolist (o subtitles)
+      (let ((chapter
+             (and (elt o 4)
+                  (elt (car
+                        (seq-reduce
+                         (lambda (prev val)
+                           (funcall val prev))
+                         subed-section-comments-as-chapters-functions
+                         (list (copy-sequence o))))
+                       4))))
+        (if (or chapter (null result))
+            (push
+             (cons (and chapter (string-trim chapter))
+                   (list o))
+             result)
+          (push o (cdr (car result))))))
+    (mapcar (lambda (o) (cons (car o)
+                              (nreverse (cdr o))))
+            (nreverse result))))
+
+;;;###autoload
+(defun subed-vtt-move-comment-to-previous-subtitle ()
+  "Move the comment for this subtitle to the previous one."
+  (interactive)
+  (let ((comment (subed-subtitle-comment)))
+    (subed-set-subtitle-comment nil)
+    (subed-backward-subtitle-text)
+    (subed-set-subtitle-comment comment)))
+
+;;;###autoload
+(defun subed-vtt-move-comment-to-next-subtitle ()
+  "Move the comment for this subtitle to the next one."
+  (interactive)
+  (let ((comment (subed-subtitle-comment)))
+    (subed-set-subtitle-comment nil)
+    (subed-forward-subtitle-text)
+    (subed-set-subtitle-comment comment)))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.vtt\\'" . subed-vtt-mode))
