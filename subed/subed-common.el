@@ -1825,7 +1825,7 @@ specified, set the current subtitle's text."
   (subed-set-subtitle-text text))
 
 ;;;###autoload
-(defun subed-remove-duplicate-speakers (beg end)
+(defun subed-remove-duplicate-speakers (&optional beg end)
   "Remove speaker tags if they are the same as the previous line."
   (interactive (if (region-active-p)
                    (list (region-beginning)
@@ -1833,13 +1833,13 @@ specified, set the current subtitle's text."
                  (list (point-min) (point-max))))
   (let (last-speaker)
     (if (derived-mode-p 'subed-mode)
-        (subed-for-each-subtitle beg end nil
+        (subed-for-each-subtitle (or beg (point-min)) (or end (point-max)) nil
           (subed-jump-to-subtitle-text)
           (when (looking-at "\\[\\(.+?\\)\\]: ")
             (if (string= last-speaker (match-string 1))
                 (replace-match "")
               (setq last-speaker (match-string 1)))))
-      (goto-char beg)
+      (goto-char (or beg (point-min)))
       (while (re-search-forward "^\\[\\(.+?\\)\\]: " end t)
         (if (string= last-speaker (match-string 1))
             (replace-match "")
@@ -2964,7 +2964,7 @@ Adjusted subtitles will also be written alongside the file."
 									  (goto-char end)
 									  (or (subed-subtitle-msecs-stop)
 											  (and
-												 (subed-backward-subtitle-time-start)
+												 (subed-backward-subtitle-start)
 												 (subed-subtitle-msecs-stop)))))
 				 (input (subed-media-file))
          (input-mode major-mode)
