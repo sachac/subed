@@ -466,8 +466,9 @@ Returns the filename."
         (setq file (car (sort (seq-remove #'file-directory-p
                                           (directory-files default-directory 'full "mpv-shot[0-9]+\\.jpg" t))
                               #'file-newer-than-file-p))))))
-  (kill-new file)
-  (message "Copied %s" file)
+  (when (called-interactively-p 'any)
+    (kill-new file)
+    (message "Copied %s" file))
   file)
 
 (defun subed-mpv-screenshot-with-subtitles (&optional file)
