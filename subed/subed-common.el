@@ -2658,26 +2658,108 @@ prefix argument, include comments in TXT output."
 ;;;###autoload
 (defvar subed-wdiff-executable "wdiff" "Command for word-based diffs.")
 
+(defun subed-wdiff--add-text-properties ()
+  "Turn buffer into formatted version of original text."
+  (goto-char (point-min))
+  (while (re-search-forward "\\( *\\)\\(\\[-\\|{\\+\\)\\(.*?\\)\\(-\\]\\|\\+}\\)" nil t)
+    (goto-char (match-beginning 0))
+    (if (string= (match-string 2) "{+") ; addition
+        (progn
+          (replace-match
+           (propertize
+            "\0"                        ; null character
+            'added
+            (match-string 3)))
+          (let ((overlay (make-overlay (point) (1- (point)))))
+            (overlay-put overlay
+                         'after-string
+                          (propertize (match-string 3) 'face 'diff-added))))
+      ;; Is this immediately followed by an addition?
+      (let ((deleted (concat (match-string 1) (match-string 3)))
+            added)
+        (save-excursion
+          (save-match-data
+            (goto-char (match-end 0))
+            (when (looking-at "\\( *\\){\\+\\(.+?\\)\\+}")
+              (setq added (concat (match-string 1) (match-string 2)))
+              (replace-match ""))))
+        (replace-match
+         (if added
+             (propertize
+              deleted
+              'face 'diff-removed
+              'added added)
+           (propertize
+            deleted
+            'face 'diff-removed
+            'deleted t)))
+        (when added
+          (let ((overlay (make-overlay (- (point) (length deleted))
+                                       (point))))
+            (overlay-put overlay
+                         'after-string
+                          (propertize added 'face 'diff-added))
+            (overlay-put overlay 'evaporate t)))))))
+
+(defun subed-wdiff--match-subtitles-with-original-text-and-properties (subtitles)
+  "Add text properties for the start times of SUBTITLES.
+Assumes the text in this buffer is the same as the subtitles."
+  (goto-char (point-min))
+  (while subtitles
+    (if (looking-at
+         (concat "[ \t\0]*"
+                 ;; We might have added null characters in between them
+                 (mapconcat
+                  #'regexp-quote
+                  (split-string
+                   (string-trim
+                    (elt (car subtitles) 3))
+                   " ")
+                  "[ \t\0]+")))
+        (progn
+          (put-text-property
+           (match-beginning 0)
+           (match-end 0)
+           'subed-start
+           (elt (pop subtitles) 1))
+          (goto-char (match-end 0)))
+      (edebug)
+      (message "Could not find %s" (elt (pop subtitles) 3)))))
+
+(defvar-local subed--subtitle-buffer "Buffer with the subtitles.")
 (defun subed-wdiff-subtitle-text-with-file (script-file &optional ignore-regexp)
 	"Use wdiff to compare the captions with SCRIPT-FILE by word.
 The wdiff program must be installed.  Set
 `subed-wdiff-executable' if needed."
 	(interactive (list (read-file-name "Script: ")
                      (when current-prefix-arg "[ ,\n]+")))
-	(let ((subtitle-text (subed-subtitle-list-text (subed-subtitle-list)))
-				(subtitle-text-filename (make-temp-file "subed-wdiff-subtitles" nil ".txt"))
-				(one-line-script-filename (make-temp-file "subed-wdiff-script" nil ".txt"))
-        (ignore-regexp (or ignore-regexp "[ \n]+"))
-				result)
+	(let* ((subtitles (subed-subtitle-list))
+         (subtitle-text (subed-subtitle-list-text subtitles))
+         (subtitle-text-filename (make-temp-file "subed-wdiff-subtitles" nil ".txt"))
+         (one-line-script-filename (make-temp-file "subed-wdiff-script" nil ".txt"))
+         (subtitle-buffer (current-buffer))
+         (ignore-regexp (or ignore-regexp "[ \n]+"))
+         result)
 		(with-temp-file subtitle-text-filename
 			(insert (replace-regexp-in-string
-			         ignore-regexp" "
+			         ignore-regexp " "
 			         subtitle-text)))
 		(with-temp-file one-line-script-filename
 			(if (member (file-name-extension script-file) '("vtt" "srt" "tsv" "ass"))
 					(insert (mapconcat (lambda (o) (concat (elt o 3) " ")) (subed-parse-file script-file)))
 				(insert-file-contents script-file))
-			(goto-char (point-min))
+      ;; Org Mode? Remove all the headings and metadata
+      (goto-char (point-min))
+      (normal-mode)
+      (when (string= "org" (file-name-extension script-file))
+        (org-mode)
+        (goto-char (point-min))
+        (while (re-search-forward "^\\*+ +.+?\n" nil t)
+          (let ((start (match-beginning 0))
+                (end (save-excursion (org-end-of-meta-data t) (point))))
+            (delete-region start end))))
+      (fundamental-mode)
+      (goto-char (point-min))
 			(while (re-search-forward ignore-regexp nil t)
 				(replace-match " ")))
 		(setq result
@@ -2689,14 +2771,58 @@ The wdiff program must be installed.  Set
 		(with-current-buffer (get-buffer-create "*wdiff*")
 			(erase-buffer)
 			(insert result)
-			(goto-char (point-min))
-			(while (re-search-forward "\\(\\[-\\|{\\+\\)\\(.*?\\)\\(-\\]\\|\\+}\\)" nil t)
-				(add-text-properties (match-beginning 0) (match-end 0)
-														 (list 'face (if (string= (match-string 1) "[-")
-																						 'diff-removed
-																					 'diff-added))))
+			(subed-wdiff--add-text-properties)
+			;; (while (re-search-forward "\\(\\[-\\|{\\+\\)\\(.*?\\)\\(-\\]\\|\\+}\\)" nil t)
+			;; 	(add-text-properties (match-beginning 0) (match-end 0)
+			;; 											 (list 'face (if (string= (match-string 1) "[-")
+			;; 																			 'diff-removed
+			;; 																		 'diff-added))))
+      ;; Attempt to match up subtitles with the text
+      (subed-wdiff--match-subtitles-with-original-text-and-properties subtitles)
+      (subed-wdiff-add-line-breaks)
+      (setq-local subed--subtitle-buffer subtitle-buffer)
+      (goto-char (point-min))
 			(display-buffer (current-buffer)))
 		result))
+
+(defun subed-wdiff-add-line-breaks ()
+  "Add line breaks to match subtitles."
+  (goto-char (point-min))
+  (while (not (eobp))
+    (goto-char (next-single-property-change (point) 'subed-start))
+    (if (looking-at " ")
+        (replace-match "\n")
+      (insert "\n"))))
+
+(defun subed-wdiff-calculate-based-on-text-properties (s)
+  "Return the modified string."
+  (with-temp-buffer
+    (insert s)
+    (goto-char (point-min))
+    (let (match)
+      (while (setq match (text-property-search-forward 'added))
+        (goto-char (prop-match-beginning match))
+        (delete-region (prop-match-beginning match)
+                       (prop-match-end match))
+        (insert (propertize (prop-match-value match) 'face 'diff-added)))
+      (goto-char (point-min))
+      (while (setq match (text-property-search-forward 'deleted))
+        (goto-char (prop-match-beginning match))
+        (delete-region (prop-match-beginning match)
+                       (prop-match-end match)))
+      (buffer-string))))
+
+(defun subed-wdiff-jump-to-subtitle-other-window ()
+  "Go to the subtitle at point based on time."
+  (interactive)
+  (unless (get-text-property (point) 'subed-start)
+    (error "No start time saved."))
+  (unless subed--subtitle-buffer
+    (error "No subtitle buffer associated."))
+  (let ((time (get-text-property (point) 'subed-start)))
+    (with-current-buffer subed--subtitle-buffer
+      (switch-to-buffer-other-window (current-buffer))
+      (subed-jump-to-subtitle-id-at-msecs time))))
 
 ;;; Misc
 
