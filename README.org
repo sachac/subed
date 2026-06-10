@@ -194,8 +194,8 @@ If you don't have =make= installed, you can generate the autoloads
 with:
 
 #+begin_src sh :eval no
-emacs --quick --batch --eval "(progn (setq generated-autoload-file (expand-file-name \"subed-autoloads.el\" \"subed\") backup-inhibited t) \
-	(update-directory-autoloads \"./subed\"))"
+emacs --quick --batch --eval "(let ((default-directory (expand-file-name \"subed\"))) (setq generated-autoload-file \"subed-autoloads.el\" backup-inhibited t) \
+	(update-directory-autoloads \".\"))"
 #+end_src
 
 Then you can add
@@ -266,6 +266,17 @@ Here's an example setup if you use [[https://github.com/jwiegley/use-package][us
 	(add-hook 'subed-mode-hook 'subed-enable-loop-over-current-subtitle)
 	;; Show characters per second
 	(add-hook 'subed-mode-hook 'subed-enable-show-cps)
+	)
+#+END_SRC
+
+If you want to use a local development copy, use something like this:
+
+#+BEGIN_SRC emacs-lisp
+(use-package subed
+  :load-path "~/proj/subed/subed"  ; note: use the subed/ subdirectory in the package source
+	:preface
+	(load-library "subed-autoloads")
+	;; ... rest of your config ...
 	)
 #+END_SRC
 

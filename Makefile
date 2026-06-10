@@ -7,6 +7,7 @@ all: clean autoloads test compile
 
 clean:
 	find . -name "*.elc" -delete
+	rm -f subed-autoloads.el
 	rm -f subed/subed-autoloads.el
 	rm -f coverage/.*.json
 
@@ -36,7 +37,7 @@ checkdoc:
 	emacs --quick --batch --eval "(checkdoc-file \"subed/subed-ass.el\")"
 
 autoloads:
-	emacs --batch --eval "(loaddefs-generate \"./subed\" \"subed-autoloads.el\")"
+	cd subed; emacs --batch --eval "(loaddefs-generate \".\" \"subed-autoloads.el\")"
 
 compile:
 	emacs --quick --batch --eval "(progn (add-to-list 'load-path (expand-file-name \"subed\" default-directory)) \
