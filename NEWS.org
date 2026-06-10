@@ -2,6 +2,12 @@
 
 * subed news
 
+** Version 1.5.1 - 2026-06-10 - Sacha Chua
+
+- subed-menu: Correctly define the menu so that it appears.
+- subed-wdiff-buffer-with-file: Handle Org files, use text properties to simplify analysis.
+- Moved ./subed-autoloads.el to ./subed/subed-autoloads.el. If you load subed from a local copy, you may need to update your configuration to load the file from the new path.
+
 ** Version 1.5.0 - 2026-05-31 - Sacha Chua
 
 - New commands:
