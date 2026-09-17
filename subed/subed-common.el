@@ -1888,6 +1888,38 @@ specified, set the current subtitle's text."
   (subed-set-subtitle-text text))
 
 ;;;###autoload
+(defun subed-remove-duplicate-lines (&optional beg end)
+  "Remove lines that are repeated from the previous subtitle.
+This is useful for cleaning up YouTube autosub SRTs and VTTs."
+  (interactive (if (region-active-p)
+                   (list (region-beginning)
+                         (region-end))
+                 (list (point-min) (point-max))))
+  (let (last-seen current after-removal)
+    (subed-for-each-subtitle (or beg (point-min)) (or end (point-max)) nil
+      (setq current
+            (split-string (subed-subtitle-text) "[\n]+"))
+      (setq after-removal
+            (seq-drop-while
+             (lambda (s)
+               (or (string= (string-trim s) "")
+                   (member (replace-regexp-in-string "<.+?>" "" s) last-seen)))
+             current))
+      (if (= (length after-removal) 0)
+          (progn
+            (delete-region (subed-jump-to-subtitle-start-pos)
+                           (subed-forward-subtitle-start-pos))
+            (subed-backward-subtitle-start-pos))
+        (unless (= (length current) (length after-removal))
+          (subed-set-subtitle-text (string-join after-removal "\n"))))
+      (setq last-seen
+            ;; ignore word timestamps and chunks from YouTube VTTs
+            (mapcar
+             (lambda (s)
+               (replace-regexp-in-string "<.+?>" "" s))
+             current)))))
+
+;;;###autoload
 (defun subed-remove-duplicate-speakers (&optional beg end)
   "Remove speaker tags if they are the same as the previous line."
   (interactive (if (region-active-p)
