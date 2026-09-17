@@ -2867,4 +2867,31 @@ Subtitle D.
       (mapcar (lambda (o) (elt o 3)) (subed-subtitle-list))
       :to-equal
       '("<v Alice>This is a test.</v>"
-        "<v Bob>This is a another test.</v>")))))
+        "<v Bob>This is a another test.</v>"))))
+  (describe "remoivng duplicate lines"
+    (it "handles plain text."
+      (with-temp-vtt-buffer
+       (subed-append-subtitle-list
+        '((nil 1000 1999 "This is a test.")
+          (nil 2000 2999 "This is a test.\nThis is another test.")
+          (nil 3000 3999 "This is another test.\nThis is a third test.")))
+       (subed-delete-duplicate-lines)
+       (expect
+        (mapcar (lambda (o) (elt o 3)) (subed-subtitle-list))
+        :to-equal
+        '("This is a test."
+          "This is another test."
+          "This is a third test."))))
+    (it "ignores tags."
+      (with-temp-vtt-buffer
+       (subed-append-subtitle-list
+        '((nil 1000 1999 "<c>This</c> is a test.")
+          (nil 2000 2999 "This <c>is</c> a test.\nThis is another test.")
+          (nil 3000 3999 "This is another test.\nThis is a third test.")))
+       (subed-delete-duplicate-lines)
+       (expect
+        (mapcar (lambda (o) (elt o 3)) (subed-subtitle-list))
+        :to-equal
+        '("<c>This</c> is a test."
+          "This is another test."
+          "This is a third test."))))))

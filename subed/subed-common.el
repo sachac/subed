@@ -1888,8 +1888,8 @@ specified, set the current subtitle's text."
   (subed-set-subtitle-text text))
 
 ;;;###autoload
-(defun subed-remove-duplicate-lines (&optional beg end)
-  "Remove lines that are repeated from the previous subtitle.
+(defun subed-delete-duplicate-lines (&optional beg end)
+  "Delete lines that are repeated from the previous subtitle.
 This is useful for cleaning up YouTube autosub SRTs and VTTs."
   (interactive (if (region-active-p)
                    (list (region-beginning)
@@ -1919,9 +1919,11 @@ This is useful for cleaning up YouTube autosub SRTs and VTTs."
                (replace-regexp-in-string "<.+?>" "" s))
              current)))))
 
+(defalias 'subed-remove-duplicate-speakers 'subed-delete-duplicate-speakers)
+
 ;;;###autoload
-(defun subed-remove-duplicate-speakers (&optional beg end)
-  "Remove speaker tags if they are the same as the previous line."
+(defun subed-delete-duplicate-speakers (&optional beg end)
+  "Delete speaker tags if they are the same as the previous line."
   (interactive (if (region-active-p)
                    (list (region-beginning)
                          (region-end))
@@ -1940,8 +1942,9 @@ This is useful for cleaning up YouTube autosub SRTs and VTTs."
             (replace-match "")
           (setq last-speaker (match-string 1)))))))
 
-(defun subed-remove-duplicate-speaker-tag-after-merging ()
-  "Remove duplicate speaker tag after merging.
+(defalias 'subed-remove-duplicate-speaker-tag-after-merging 'subed-delete-duplicate-speaker-tag-after-merging)
+(defun subed-delete-duplicate-speaker-tag-after-merging ()
+  "Delete duplicate speaker tag after merging.
 Can be added to `subed-subtitle-merged-hook'."
   (save-excursion
     (let ((text (subed-subtitle-text)))

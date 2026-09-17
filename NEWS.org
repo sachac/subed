@@ -2,6 +2,12 @@
 
 * subed news
 
+** Version 1.5.3 - 2026-09-17 - Sacha Chua
+
+- New command: subed-delete-duplicate-lines
+- Renamed subed-remove-duplicate-speakers to subed-delete-duplicate-speakers.
+- Renamed subed-remove-duplicate-speaker-tag-after-merging to subed-delete-duplicate-speaker-tag-after-merging.
+-
 ** Version 1.5.2 - 2026-09-10 - Sacha Chua
 
 - New commands:
