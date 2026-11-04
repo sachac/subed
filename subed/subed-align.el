@@ -161,7 +161,15 @@ Return the new filename."
                (expand-file-name
                 (concat (file-name-sans-extension (buffer-file-name)) "." (downcase format)))))
          temp-file subtitles
-         (command-args
+         command-args)
+    (when (or (null (file-exists-p new-file))
+              (yes-or-no-p (format "%s exists. Overwrite? " (file-name-nondirectory new-file))))
+      (when (derived-mode-p 'subed-mode)
+        (setq subtitles (subed-subtitle-list))
+        (setq temp-file (make-temp-file "subed-align" nil ".txt"))
+        (with-temp-file temp-file
+          (insert (mapconcat (lambda (o) (elt o 3)) subtitles "\n\n")))
+        (setq command-args
           (append (cdr subed-align-command)
                   (list (expand-file-name audio-file)
                         (or temp-file (expand-file-name text-file))
@@ -172,38 +180,31 @@ Return the new filename."
                                     "subtitles"
                                   "plain")
                                 (if subed-align-options (concat "|" subed-align-options) ""))
-                        new-file))))
-    (when (or (null (file-exists-p new-file))
-              (yes-or-no-p (format "%s exists. Overwrite? " (file-name-nondirectory new-file))))
-      (when (derived-mode-p 'subed-mode)
-        (setq subtitles (subed-subtitle-list))
-        (setq temp-file (make-temp-file "subed-align" nil ".txt"))
-        (with-temp-file temp-file
-          (insert (mapconcat (lambda (o) (elt o 3)) subtitles "\n\n"))))
-    (with-current-buffer (get-buffer-create "*subed-aeneas*")
-      (goto-char (point-max))
-      (insert (car subed-align-command) " " (mapconcat #'shell-quote-argument command-args " ") "\n"))
-      (apply
-       #'call-process
-       (car subed-align-command)
-       nil
-       (get-buffer-create "*subed-aeneas*")
-       t
-       command-args)
-      (when temp-file (delete-file temp-file))
-      (with-temp-file new-file
-        (insert-file-contents new-file)
-        (subed-guess-format new-file)
-        (when (derived-mode-p 'subed-mode)
-          (subed-trim-overlaps))
-        (when (derived-mode-p 'subed-vtt-mode)
-          (goto-char (point-min))
-          (flush-lines "^[0-9]+$")
-          ;; reinsert comments
-          (subed-align-reinsert-comments subtitles)))
-      (when (called-interactively-p 'any)
-        (find-file new-file))
-      new-file)))
+                        new-file)))
+        (with-current-buffer (get-buffer-create "*subed-aeneas*")
+          (goto-char (point-max))
+          (insert (car subed-align-command) " " (mapconcat #'shell-quote-argument command-args " ") "\n"))
+        (apply
+         #'call-process
+         (car subed-align-command)
+         nil
+         (get-buffer-create "*subed-aeneas*")
+         t
+         command-args)
+        (when temp-file (delete-file temp-file))
+        (with-temp-file new-file
+          (insert-file-contents new-file)
+          (subed-guess-format new-file)
+          (when (derived-mode-p 'subed-mode)
+            (subed-trim-overlaps))
+          (when (derived-mode-p 'subed-vtt-mode)
+            (goto-char (point-min))
+            (flush-lines "^[0-9]+$")
+            ;; reinsert comments
+            (subed-align-reinsert-comments subtitles)))
+        (when (called-interactively-p 'any)
+          (find-file new-file))
+        new-file))))
 
 ;; TODO Scope it to the region
 (defun subed-align-aeneas-set-word-data (audio-file)
