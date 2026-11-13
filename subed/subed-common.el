@@ -3422,5 +3422,23 @@ string.  When called with \\[universal-argument], use UTC."
       (message "%s" formatted))
     result))
 
+;;;###autoload
+(defun subed-split-subtitle-lines (beg end)
+  "Split multi-line subtitles into their own cues from BEG to END.
+If called without a region, split from point to end of buffer."
+  (interactive (if (region-active-p)
+                   (list (region-beginning) (region-end))
+                 (list (point) (point-max))))
+  (subed-for-each-subtitle beg end t
+    (subed-jump-to-subtitle-text)
+    (let ((start (point))
+          (end (subed-subtitle-end-pos))
+          subed-mpv-playback-position)
+      (save-excursion
+        (goto-char end)
+        (while (re-search-backward "\n" (1+ start) t)
+          (save-excursion
+            (subed-split-subtitle)))))))
+
 (provide 'subed-common)
 ;;; subed-common.el ends here
