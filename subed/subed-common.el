@@ -2744,6 +2744,7 @@ If LIST is nil, use the subtitles in the current buffer."
   (interactive)
   nil)
 
+;;;###autoload
 (defun subed-create-file (filename subtitles &optional ok-if-exists init-func)
   "Create FILENAME and prepopulate it with SUBTITLES.
 If OK-IF-EXISTS is non-nil, overwrite existing files.
@@ -2788,8 +2789,7 @@ prefix argument, include comments in TXT output."
                 (with-temp-file new-filename
                   (insert (subed-subtitle-list-text subtitles include-comments)))
                 (find-file new-filename))
-            (subed-create-file new-filename subtitles t mode-func))
-          (current-buffer))
+            (subed-create-file new-filename subtitles t mode-func)))
       ;; Create a temporary buffer
       (switch-to-buffer (get-buffer-create new-filename))
       (erase-buffer)
@@ -2797,8 +2797,10 @@ prefix argument, include comments in TXT output."
       (if (string= format "TXT")
           (insert (subed-subtitle-list-text subtitles include-comments))
         (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub)))
-              subtitles))
-      (current-buffer))))
+              subtitles)))
+    (when (called-interactively-p 'any)
+      (switch-to-buffer (current-buffer)))
+    (current-buffer)))
 
 ;;; Wdiff
 ;;;###autoload
