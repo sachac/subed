@@ -90,7 +90,7 @@
   :type '(repeat string)
   :group 'subed)
 
-(defcustom subed-audio-extensions '("wav" "ogg" "mp3" "opus" "m4a")
+(defcustom subed-audio-extensions '("wav" "ogg" "mp3" "opus" "m4a" "aac")
   "Audio file name extensions."
   :type '(repeat string)
   :group 'subed)
@@ -201,6 +201,11 @@ action."
 
 (defcustom subed-validate-subtitle-too-long-msecs 8000
   "Duration threshold for `subed-jump-to-next-long-subtitle'."
+  :type 'integer
+  :group 'subed)
+
+(defcustom subed-validate-subtitle-too-long-wait-msecs 700
+  "Duration threshold for `subed-jump-to-next-long-delay'."
   :type 'integer
   :group 'subed)
 
