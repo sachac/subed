@@ -745,6 +745,34 @@ SUBTITLES should be a list with entries of the form (id start stop text
  comment)."
   (mapc (lambda (sub) (apply #'subed-append-subtitle sub)) subtitles))
 
+(defvar subed-subtitle-list-text-transform-functions nil
+  "List of functions to call with the subtitles in order to transform them.
+Each function should return the transformed list of subtitles.")
+
+(defun subed-subtitle-list-include-timestamps-for-chapters-and-speaker-changes (list)
+  "Include time markers for each chapter or speaker change.
+Might be useful for `subed-subtitle-list-text-transform-functions'."
+  (let (last-speaker current-speaker)
+    (mapcar
+     (lambda (cue)
+       ;; add time marker to chapter
+       (if (elt cue 4)
+           (setf (elt cue 4)
+                 (format "%s\n%s"
+                         (subed-msecs-to-timestamp (elt cue 1))
+                         (elt cue 4)))
+         ;; check the next speaker, and if it's different, then add a timestamp.
+         (setq current-speaker (subed-speaker cue))
+         (when (and current-speaker
+                    (not (equal last-speaker current-speaker)))
+           (setf (elt cue 3)
+                 (format "%s %s"
+                         (subed-msecs-to-timestamp (elt cue 1))
+                         (elt cue 3)))
+           (setq last-speaker current-speaker)))
+       cue)
+     (copy-sequence list))))
+
 (defun subed-subtitle-list-text (subtitles &optional include-comments)
   "Return the text in SUBTITLES.
 If INCLUDE-COMMENTS is non-nil, include the comments.
@@ -760,7 +788,10 @@ before including them."
                  "\n\n"
                  (elt sub 3) "\n")
        (concat (elt sub 3) "\n")))
-   subtitles
+   (seq-reduce
+    (lambda (prev val)
+      (funcall val prev))
+    subed-subtitle-list-text-transform-functions subtitles)
    ""))
 
 (defun subed-copy-region-text (&optional beg end include-comments)
