@@ -927,6 +927,24 @@ See `subed-chapter-list'."
             (throw 'found t))
         (goto-char (point-max))))))
 
+;;;###autoload
+(defun subed-jump-to-next-long-delay ()
+  "Go to the next subtitle that has too much of a delay.
+Check if the time since the previous subtitle is greater than
+`subed-validate-delay-too-long-msecs'."
+  (interactive)
+  (catch 'found
+    (let ((last-end (subed-subtitle-msecs-stop)))
+      (while (not (eobp))
+        (if (subed-forward-subtitle-text)
+            (progn
+              (when (and last-end (> (- (subed-subtitle-msecs-start)
+                                        last-end)
+                                     subed-validate-subtitle-too-long-msecs))
+                (throw 'found t))
+              (setq last-end (subed-subtitle-msecs-stop)))
+          (goto-char (point-max)))))))
+
 (subed-define-generic-function regenerate-ids ()
   "Ensure consecutive, unduplicated subtitle IDs in formats that use them."
   nil)
@@ -2011,6 +2029,14 @@ Can be added to `subed-subtitle-merged-hook'."
       (goto-char (match-beginning 0))
     (goto-char (point-max)))
   (activate-mark))
+
+(defun subed-speaker (&optional cue)
+  "Return the speaker for CUE."
+  (let ((s (if cue
+               (elt cue 3)
+             (subed-subtitle-text))))
+    (when (string-match "^\\[\\(.+?\\)\\]: " s)
+      (match-string 1 s))))
 
 (defun subed-group-by-speaker (subtitle-list)
   "Segment subtitle-list by speaker name.
