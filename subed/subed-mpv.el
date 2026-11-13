@@ -31,6 +31,7 @@
 (require 'json)
 
 (declare-function subed-subtitle-id "subed-common" ())
+(declare-function subed-media-file "subed-common" ())
 (declare-function subed-subtitle-msecs-start "subed-common" (&optional id))
 (declare-function subed-subtitle-msecs-stop "subed-common" (&optional id))
 (declare-function subed-msecs-to-timestamp "subed-common" (&optional msecs))

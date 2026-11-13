@@ -76,10 +76,10 @@ Use the format-specific function for MAJOR-MODE."
 
 (cl-defmethod subed--subtitle-id-at-msecs (msecs &context (major-mode subed-srt-mode) &optional when-not-found)
   "Return the ID of the subtitle at MSECS milliseconds.
-Return nil if there is no subtitle at MSECS.
-If there is no subtitle that contains that time and WHEN-NOT-FOUND is `after',
-go to the subtitle after that time.
-Use the format-specific function for MAJOR-MODE."
+Return nil if there is no subtitle at MSECS.  If there is no subtitle
+that contains that time and WHEN-NOT-FOUND is `after', go to the
+subtitle after that time.  Use the format-specific function for
+MAJOR-MODE."
   (save-excursion
     (goto-char (point-min))
     (let* ((secs       (/ msecs 1000))

@@ -313,10 +313,11 @@ See also `subed-subtitle-id-at-msecs'."
 
 (subed-define-generic-function jump-to-subtitle-text-at-msecs (msecs &optional when-not-found)
 	"Move point to the text of the subtitle that is playing at MSECS.
-Return point or nil if point is still on the same subtitle.
-If there is no subtitle that contains that time and WHEN-NOT-FOUND is `after',
-go to the subtitle after that time.
-See also `subed-jump-to-subtitle-id-at-msecs' and `subed-vtt--subtitle-id-at-msecs'."
+Return point or nil if point is still on the same subtitle.  If there is
+no subtitle that contains that time and WHEN-NOT-FOUND is `after', go to
+the subtitle after that time.  See also
+`subed-jump-to-subtitle-id-at-msecs' and
+`subed-vtt--subtitle-id-at-msecs'."
 	(when (subed-jump-to-subtitle-id-at-msecs msecs when-not-found)
 		(subed-jump-to-subtitle-text)))
 
@@ -873,28 +874,31 @@ Return a filtered subtitle list.")
       (kill-new result))
     result))
 
-(defun subed-section-comments-for-ffmpeg (chapters output-file)
+(defun subed-section-comments-for-ffmpeg (chapters &optional output-file)
   "Format CHAPTERS in FFmpeg format for OUTPUT-FILE.
 Merge it with a command like:
 ffmpeg -i input.webm -i chapters.txt -map_metadata 1 -c copy output.webm
 
 CHAPTERS is a list of items such as (nil start-ms stop-ms text).
-See `subed-chapter-list'."
+See `subed-section-comments-list'."
   (interactive
-   (list (subed-chapter-list (subed-subtitle-list))
+   (list (subed-section-comments-list (subed-subtitle-list))
          (read-file-name "Output file for chapters: ")))
-  (write-region
-   (concat ";FFMETADATA1\n\n"
-           (mapconcat
-            (lambda (o)
-              (format
-               "[CHAPTER]\nTIMEBASE=1/1000\nSTART=%s\nEND=%s\ntitle=%s\n"
-               (elt o 1)
-               (elt o 2)
-               (elt o 3)))
-            chapters "\n"))
-   nil
-   output-file))
+  (let ((s (concat ";FFMETADATA1\n\n"
+                   (mapconcat
+                    (lambda (o)
+                      (format
+                       "[CHAPTER]\nTIMEBASE=1/1000\nSTART=%s\nEND=%s\ntitle=%s\n"
+                       (elt o 1)
+                       (elt o 2)
+                       (elt o 3)))
+                    chapters "\n"))))
+    (when output-file
+      (write-region
+       s
+       nil
+       output-file))
+    s))
 
 (subed-define-generic-function sanitize ()
   "Sanitize this file."
@@ -2372,6 +2376,7 @@ and therefore gets ARGS, which is ignored."
 (defvar subed-media-file-functions '(subed-media-file-from-cache subed-guess-media-file)
   "Functions to use for getting the media file.")
 
+;;;###autoload
 (defun subed-media-file ()
   "Return the current media file.
 Uses the functions listed in `subed-media-file-functions'."

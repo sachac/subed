@@ -83,7 +83,8 @@ Use the format-specific function for MAJOR-MODE."
 
 (cl-defmethod subed--msecs-to-timestamp (msecs &context (major-mode subed-vtt-mode) &optional skip-msecs)
   "Convert MSECS to string in the format HH:MM:SS.MS.
-Use the format-specific function for MAJOR-MODE."
+Use the format-specific function for MAJOR-MODE.
+If SKIP-MSECS is non-nil, omit milliseconds."
   (if skip-msecs
       (format-seconds "%02h:%02m:%02s" (/ (floor msecs) 1000))
     (concat (format-seconds "%02h:%02m:%02s" (/ (floor msecs) 1000))
@@ -359,14 +360,15 @@ Use the format-specific function for MAJOR-MODE."
       nil)))
 
 (defun subed-vtt-insert-comment (&optional sub-id)
-  "Insert a comment or move point to the end of the comment."
+  "Insert a comment or move point to the end of the comment.
+Jump to subtitle SUB-ID if specified."
   (subed-jump-to-subtitle-id sub-id)
   (if (re-search-backward
        (concat subed-vtt--regexp-blank-separator
                "\\(NOTE[ \t\n]\\)")
        (or (save-excursion (subed-backward-subtitle-end)) (point-min)) t)
       (goto-char (match-end 0))
-      (insert "NOTE ")
+    (insert "NOTE ")
     (save-excursion (insert "\n\n"))))
 
 (cl-defmethod subed--subtitle-comment (&context (major-mode subed-vtt-mode)

@@ -2915,4 +2915,40 @@ Subtitle D.
         :to-equal
         '("<c>This</c> is a test."
           "This is another test."
-          "This is a third test."))))))
+          "This is a third test.")))))
+  (describe "section comments for ffmpeg"
+    (it "formats comments as chapters"
+      (with-temp-vtt-buffer
+       (insert "WEBVTT
+
+NOTE Section 1
+
+00:00:00.000 --> 00:00:01.000
+Test
+
+00:00:02.000 --> 00:00:03.000
+Test
+
+NOTE Section 2
+
+00:00:04.000 --> 00:00:05.000
+Test
+")
+       (expect
+        (subed-section-comments-for-ffmpeg
+         (subed-section-comments-list (subed-subtitle-list)))
+        :to-equal
+        ";FFMETADATA1
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=0
+END=1000
+title=Section 1
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=4000
+END=5000
+title=Section 2
+")))))
