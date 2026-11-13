@@ -550,6 +550,12 @@ hosting providers."
   (setq subed-mpv-media-file url)
   (subed-mpv--play url))
 
+;;;###autoload
+(defun subed-mpv-reload ()
+  "Reload the current media file."
+  (interactive)
+  (subed-mpv--play (subed-media-file)))
+
 (defvar subed-mpv-play-from-file-hook nil
   "Functions to run after a media file is loaded.
 Called with FILE as argument.")
