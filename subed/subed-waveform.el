@@ -360,7 +360,6 @@ Each function should take one argument, the overlay.")
                :width "100%" :height "100%"
                :preserveAspectRatio "none")
     (overlay-put overlay 'subed-waveform t)
-    (overlay-put overlay 'after-string "\n")
     (overlay-put overlay 'waveform-start (plist-get params :start))
     (overlay-put overlay 'waveform-stop (plist-get params :stop))
     (overlay-put overlay 'before-string
@@ -581,6 +580,7 @@ Controlled by `subed-waveform-show-all`."
   "Turn on `subed-waveform-minor-mode' and show the waveform for the current subtitle.."
   (interactive)
   (setq subed-waveform-show-all nil)
+  (subed-waveform-remove)
   (unless subed-waveform-minor-mode
     (subed-waveform-minor-mode 1))
   (subed-waveform-refresh-current-subtitle))
