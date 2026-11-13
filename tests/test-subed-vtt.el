@@ -2350,7 +2350,10 @@ Test
   (describe "Converting msecs to timestamp"
     (it "uses the right format"
       (with-temp-vtt-buffer
-       (expect (subed-msecs-to-timestamp 1401) :to-equal "00:00:01.401"))))
+       (expect (subed-msecs-to-timestamp 1401) :to-equal "00:00:01.401")))
+    (it "can skip msec"
+      (with-temp-vtt-buffer
+       (expect (subed-msecs-to-timestamp 1401 t) :to-equal "00:00:01"))))
   (describe "Getting the list of subtitles"
     (it "handles arrows and the lack of blank lines between cues."
       (with-temp-vtt-buffer
