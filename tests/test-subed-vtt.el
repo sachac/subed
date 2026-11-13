@@ -2429,6 +2429,24 @@ and have more text as needed.
 00:01:00.000 --> 00:00:02.000
 This is another test here.
 "))
+    (describe "using comment-dwim"
+      (it "adds one if it doesn't exist yet."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (goto-char (point-min))
+         (subed-forward-subtitle-end)
+         (comment-dwim nil)
+         (expect (looking-at "\n\n00:00:00\\.000 --> 00:00:01\\.000") :to-be t)
+         (expect (looking-back "^NOTE " (line-beginning-position)) :to-be t)))
+      (it "goes to an existing comment."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-comments-data)
+         (goto-char (point-min))
+         (subed-forward-subtitle-end)
+         (subed-forward-subtitle-end)
+         (comment-dwim nil)
+         (expect (looking-at "A comment can go here") :to-be t))))
+
     (it "ignores the comment when jumping to the end of the subtitle"
       (with-temp-vtt-buffer
        (insert mock-vtt-comments-data)

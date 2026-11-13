@@ -345,16 +345,29 @@ Make sure COMMENT ends with a blank line."
 If SUB-ID is not given, use subtitle on point.
 Return point, or nil if no comment could be found.
 Use the format-specific function for MAJOR-MODE."
-  (let ((pos (point)))
+  (let ((pos (point))
+        (end (save-excursion (subed-backward-subtitle-end))))
     (if (and (subed-jump-to-subtitle-id sub-id)
              (re-search-backward
               (concat subed-vtt--regexp-blank-separator
                       "\\(NOTE[ \t\n]\\)")
-              (or (save-excursion (subed-backward-subtitle-end)) (point-min)) t))
+              (or (and end (< end (point)) end)
+                  (point-min)) t))
         (progn (goto-char (match-beginning 1))
                (point))
       (goto-char pos)
       nil)))
+
+(defun subed-vtt-insert-comment (&optional sub-id)
+  "Insert a comment or move point to the end of the comment."
+  (subed-jump-to-subtitle-id sub-id)
+  (if (re-search-backward
+       (concat subed-vtt--regexp-blank-separator
+               "\\(NOTE[ \t\n]\\)")
+       (or (save-excursion (subed-backward-subtitle-end)) (point-min)) t)
+      (goto-char (match-end 0))
+      (insert "NOTE ")
+    (save-excursion (insert "\n\n"))))
 
 (cl-defmethod subed--subtitle-comment (&context (major-mode subed-vtt-mode)
                                                 &optional sub-id)
@@ -576,6 +589,11 @@ Use the format-specific function for MAJOR-MODE."
               (syntax-propertize-rules
                ("^\n" (0 ">"))
                ("^\\(N\\)\\(O\\)TE\\_>" (1 "w 1") (2 "w 2"))))
+  (setq-local comment-insert-comment-function #'subed-vtt-insert-comment)
+  (setq-local comment-start "NOTE ")
+  (setq-local comment-start-skip "^NOTE[ \n]")
+  (setq-local comment-end-skip "\\(\n\n+\\)")
+  (setq-local comment-use-syntax nil)
   ;; Support for fill-paragraph (M-q)
   (let ((timestamps-regexp (concat subed--regexp-timestamp
                                    " *--> *"
@@ -673,6 +691,26 @@ labels and input files until a blank label is specified."
     results))
 
 ;;;###autoload
+(defun subed-vtt-forward-subtitle-with-comment ()
+  "Move to the next subtitle with a comment."
+  (interactive)
+  (while (and (subed-forward-subtitle-text)
+              (not (subed-subtitle-comment))
+              (not (eobp)))
+    ;; continue
+    ))
+
+;;;###autoload
+(defun subed-vtt-backward-subtitle-with-comment ()
+  "Move to the previous subtitle with a comment."
+  (interactive)
+  (while (and (subed-backward-subtitle-text)
+              (not (subed-subtitle-comment))
+              (not (bobp)))
+    ;; continue
+    ))
+
+;;;###autoload
 (defun subed-vtt-insert-chapter-comments (chapters)
   "Adds NOTE comments for the CHAPTERS.
 CHAPTERS should be a string of the form
@@ -683,7 +721,7 @@ hh:mm:ss chapter title"
   (let ((chapter-list
          (seq-keep
           (lambda (line)
-						(when (string-match "\\([0-9:]+\\) \\(.+\\)" line)
+						(when (string-match "\\([0-9:\\.]+\\) \\(.+\\)" line)
               (cons (save-match-data (subed-timestamp-to-msecs (match-string 1 line)))
                     (match-string 2 line))))
 					(split-string (string-trim chapters) "\n"))))
