@@ -404,7 +404,7 @@ This only works for VTTs."
                          (region-end))
                  (list (point-min) (point-max))))
   (goto-char (or end (point-max)))
-  (while (re-search-backward "<[0-9]+:[0-9]+:[0-9]+\\.[0-9]+>" beg t)
+  (while (re-search-backward "<[0-9]+:[0-9]+:[0-9]+\\.[0-9]+>\\|</?c.*?>" beg t)
     (replace-match "")))
 
 (defun subed-word-data-refresh-region (beg end)
