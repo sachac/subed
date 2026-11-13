@@ -320,7 +320,7 @@ Use WIDTH and HEIGHT if specified."
          (height (or height (save-excursion
                               ;; don't count the current waveform towards the
                               ;; line height
-                              (forward-line -1)
+                              (forward-line -2)
                               (* 2 (line-pixel-height))))))
     (list
      :file
@@ -338,9 +338,12 @@ Use WIDTH and HEIGHT if specified."
 (defvar subed-waveform-make-overlay-hook nil "Functions to run after preparing the overlay.
 Each function should take one argument, the overlay.")
 
-(defun subed-waveform--make-overlay (&optional width height)
+(defun subed-waveform--make-overlay (&optional width height overlay)
   "Make an overlay at point for the current subtitle."
-  (let* ((overlay (make-overlay (point) (point)))
+  (let* ((overlay (if (and (overlayp overlay)
+                           (overlay-buffer overlay))
+                      overlay
+                    (make-overlay (1- (point)) (point))))
          (params (subed-waveform--image-parameters width height))
          (image (subed-waveform--from-file
                  (plist-get params :file)
@@ -351,6 +354,7 @@ Each function should take one argument, the overlay.")
          (svg (svg-create
                (plist-get params :width)
                (plist-get params :height))))
+    (move-overlay overlay (1- (point)) (point))
     (svg-embed svg image "image/png" t
                :x 0 :y 0
                :width "100%" :height "100%"
@@ -360,17 +364,18 @@ Each function should take one argument, the overlay.")
     (overlay-put overlay 'waveform-start (plist-get params :start))
     (overlay-put overlay 'waveform-stop (plist-get params :stop))
     (overlay-put overlay 'before-string
-                 (propertize
-                  " "
-                  'display (svg-image svg)
-                  'svg svg
-                  'pointer 'arrow
-                  'keymap subed-waveform-svg-map
-                  'waveform-start (plist-get params :start)
-                  'waveform-stop (plist-get params :stop)
-                  'waveform-pixels-per-second (/ (plist-get params :width)
-                                                 (* 0.001 (- (plist-get params :stop)
-                                                             (plist-get params :start))))))
+                 (concat "\n"
+                         (propertize
+                          " "
+                          'display (svg-image svg)
+                          'svg svg
+                          'pointer 'arrow
+                          'keymap subed-waveform-svg-map
+                          'waveform-start (plist-get params :start)
+                          'waveform-stop (plist-get params :stop)
+                          'waveform-pixels-per-second (/ (plist-get params :width)
+                                                         (* 0.001 (- (plist-get params :stop)
+                                                                     (plist-get params :start)))))))
     (unless subed-waveform-show-all
       (setq subed-waveform--overlay overlay)
       (setq subed-waveform--svg svg))
@@ -386,7 +391,7 @@ POSITION should be a percentage as a string.
 If POSITION is nil, remove the bar."
   (let ((svg (if subed-waveform-show-all
                  (get-text-property
-                  0 'svg
+                  1 'svg
                   (overlay-get (or overlay (subed-waveform--get-current-overlay)) 'before-string))
                subed-waveform--svg)))
     (svg-remove svg
@@ -407,7 +412,7 @@ If POSITION is nil, remove the bar."
           (when (subed-jump-to-subtitle-text)
             (seq-find (lambda (o) (overlay-get o 'subed-waveform))
                       (overlays-in
-                       (point)
+                       (1- (point))
                        (or (subed-jump-to-subtitle-end) (point)))))
         subed-waveform--overlay))))
 
@@ -485,15 +490,16 @@ times per second."
     (let ((s (overlay-get overlay 'before-string)))
       (overlay-put
        overlay 'before-string
-       (propertize
-        " "
-        'display (svg-image (if subed-waveform-show-all (get-text-property 0 'svg s) subed-waveform--svg))
-        'svg (if subed-waveform-show-all (get-text-property 0 'svg s) subed-waveform--svg)
-        'pointer 'arrow
-        'waveform-start (get-text-property 0 'waveform-start s)
-        'waveform-stop (get-text-property 0 'waveform-stop s)
-        'waveform-pixels-per-second (get-text-property 0 'waveform-pixels-per-second s)
-        'keymap subed-waveform-svg-map)))))
+       (concat "\n"
+               (propertize
+                " "
+                'display (svg-image (if subed-waveform-show-all (get-text-property 1 'svg s) subed-waveform--svg))
+                'svg (if subed-waveform-show-all (get-text-property 1 'svg s) subed-waveform--svg)
+                'pointer 'arrow
+                'waveform-start (get-text-property 1 'waveform-start s)
+                'waveform-stop (get-text-property 1 'waveform-stop s)
+                'waveform-pixels-per-second (get-text-property 1 'waveform-pixels-per-second s)
+                'keymap subed-waveform-svg-map))))))
 
 (defvar subed-waveform--update-timer nil)
 (defun subed-waveform--after-time-adjusted (&rest _)
@@ -502,7 +508,7 @@ times per second."
     (when (timerp subed-waveform--update-timer)
       (cancel-timer subed-waveform--update-timer))
     (setq subed-waveform--update-timer
-          (run-with-idle-timer 0 nil 'subed-waveform-put-svg))))
+          (run-with-idle-timer 0.1 nil 'subed-waveform-put-svg))))
 
 (defalias 'subed-waveform-refresh-current-subtitle #'subed-waveform-put-svg)
 (defun subed-waveform-put-svg (&rest _)
@@ -512,16 +518,17 @@ This function ignores arguments and can be used in hooks."
   (interactive)
   (save-excursion
     (when subed-waveform-minor-mode
-      (unless subed-waveform-show-all
-        (let ((min (or (subed-jump-to-subtitle-comment) (subed-jump-to-subtitle-id))))
-          (when min
-            (remove-overlays min (subed-jump-to-subtitle-end) 'subed-waveform t))))
+      ;; (unless subed-waveform-show-all
+      ;;   (let ((min (or (subed-jump-to-subtitle-comment) (subed-jump-to-subtitle-id))))
+      ;;     (when min
+      ;;       (remove-overlays min (subed-jump-to-subtitle-end) 'subed-waveform t))))
       (when (subed-jump-to-subtitle-text)
         (let ((overlay (subed-waveform--get-current-overlay)))
-          (when overlay (delete-overlay overlay))
-          (setq overlay (subed-waveform--make-overlay
-                         subed-waveform-image-width
-                         subed-waveform-image-height)))))))
+          ;; (when overlay (delete-overlay overlay))
+          (subed-waveform--make-overlay
+           subed-waveform-image-width
+           subed-waveform-image-height
+           overlay))))))
 
 (defun subed-waveform-add-to-all (&optional beg end)
   "Update subtitles from BEG to END."
@@ -566,7 +573,8 @@ Controlled by `subed-waveform-show-all`."
   (interactive)
   (setq subed-waveform-show-all t)
   (unless subed-waveform-minor-mode
-    (subed-waveform-minor-mode 1)))
+    (subed-waveform-minor-mode 1))
+  (subed-waveform-add-to-all))
 
 ;;;###autoload
 (defun subed-waveform-show-current ()
@@ -574,7 +582,8 @@ Controlled by `subed-waveform-show-all`."
   (interactive)
   (setq subed-waveform-show-all nil)
   (unless subed-waveform-minor-mode
-    (subed-waveform-minor-mode 1)))
+    (subed-waveform-minor-mode 1))
+  (subed-waveform-refresh-current-subtitle))
 
 ;;; Adjusting based on the mouse
 
@@ -585,16 +594,14 @@ Controlled by `subed-waveform-show-all`."
   `(with-selected-window (caadr ,event)
      (save-excursion
        (goto-char (elt (elt event 1) 1))
-       ,@body
-       (goto-char (elt (elt event 1) 1))
-       (subed-waveform-put-svg))))
+       ,@body)))
 
 (defun subed-waveform--mouse-event-to-ms (event &optional x)
   "Return the millisecond position of EVENT."
   (let* ((obj (car (elt (cadr event) 4)))
-         (start (get-text-property 0 'waveform-start obj))
-         (stop (get-text-property 0 'waveform-stop obj))
-         (resolution (get-text-property 0 'waveform-resolution obj))
+         (start (get-text-property 1 'waveform-start obj))
+         (stop (get-text-property 1 'waveform-stop obj))
+         (resolution (get-text-property 1 'waveform-resolution obj))
          (x (or x (car (elt (cadr event) 8))))
          (width (car (elt (cadr event) 9))))
     (* subed-waveform-timestamp-resolution
@@ -658,12 +665,12 @@ Copy it to the start time of the next subtitle, leaving a gap of
   (interactive "e")
   (subed-waveform--with-event-subtitle event
     (let ((obj (car (elt (cadr event) 4))))
-			(when (get-text-property 0 'waveform-pixels-per-second obj)
+			(when (get-text-property 1 'waveform-pixels-per-second obj)
 				(let* ((x1 (car (elt (elt event 2) 2)))
 							 (x2 (car (elt (elt event 1) 2)))
 							 (msecs
 								(floor (* 1000 (/ (- x1 x2) ; pixels moved
-                                  (get-text-property 0 'waveform-pixels-per-second obj)))))
+                                  (get-text-property 1 'waveform-pixels-per-second obj)))))
                (subed-milliseconds-adjust
                 subed-milliseconds-adjust)) ; don't save this change
 					(subed-adjust-subtitle-time-start msecs))))))
@@ -676,7 +683,7 @@ by `subed-milliseconds-adjust' milliseconds."
   (interactive "e")
   (subed-waveform--with-event-subtitle event
 		(let* ((obj (car (elt (cadr event) 4)))
-					 (pixels-per-second (get-text-property 0 'waveform-pixels-per-second obj)))
+					 (pixels-per-second (get-text-property 1 'waveform-pixels-per-second obj)))
 			(goto-char (elt (elt event 1) 1))
 			(when pixels-per-second
 				(let* ((x1 (car (elt (elt event 2) 2)))
@@ -740,7 +747,7 @@ you can use it in `subed-split-subtitle' and other commands."
     (let* ((ms (subed-waveform--mouse-event-to-ms event))
 					 (ts (subed-msecs-to-timestamp ms))
            (obj (car (elt (cadr event) 4)))
-           (stop (get-text-property 0 'waveform-stop obj)))
+           (stop (get-text-property 1 'waveform-stop obj)))
 			(subed-mpv-jump ms)
       (kill-new ts)
 			(message "%s" ts)
