@@ -121,6 +121,13 @@ an example."
           (function :tag "Function to call with the width and height"))
   :group 'subed-waveform)
 
+(defcustom subed-waveform-ffmpeg-grid-width-ms 100 "Number of milliseconds per vertical grid line.
+Nil means do not draw a grid."
+  :type '(choice
+          (number :tag "Number of milliseconds per grid")
+          (const nil :tag "Do not draw a grid"))
+  :group 'subed-waveform)
+
 (defcustom subed-waveform-bar-params
   '((:start . (:id "start" :stroke-color "darkgreen" :stroke-width "3"))
     (:stop . (:id "stop" :stroke-color "darkred" :stroke-width "3"))
@@ -130,9 +137,9 @@ The keys in it are `:start', `:stop' and `:current'.  The values are
 SVG parameters of the displayed bars.  Every bar must have a unique
 `:id' parameter."
   :type '(alist :key-type (choice (const :tag "Start" :start)
-          (const :tag "Stop" :stop)
-          (const :tag "Current" :current))
-    :value-type (plist :key-type symbol :value-type string))
+                                  (const :tag "Stop" :stop)
+                                  (const :tag "Current" :current))
+                :value-type (plist :key-type symbol :value-type string))
   :group 'subed-waveform)
 
 (defcustom subed-waveform-preview-msecs-before 2000
@@ -266,25 +273,38 @@ WIDTH and HEIGHT are given in pixels."
   "Returns a string representing the image data in PNG format.
 FILENAME is the input file, FROM and TO are time positions, WIDTH
 and HEIGHT are dimensions in pixels."
-  (let* ((args
+  (let* ((grid-width (if subed-waveform-ffmpeg-grid-width-ms
+                         (* subed-waveform-ffmpeg-grid-width-ms
+                            (/
+                             (* 1.0 width)
+                             (- to from)))))
+         (args
           (append
            (list "-accurate_seek"
-                 "-ss" (format "%s" from)
-                 "-to" (format "%s" to))
+                 "-ss" (subed-waveform--msecs-to-ffmpeg from)
+                 "-to" (subed-waveform--msecs-to-ffmpeg to))
            (list "-i" (expand-file-name filename))
            (list
             "-loglevel"
             "0"
             "-filter_complex"
-            (format "volume=%s,showwavespic=s=%dx%d%s"
+            (format "[0:a]volume=%s,showwavespic=s=%dx%d%s%s"
                     subed-waveform-volume
                     width height
                     (cond
                      ((functionp subed-waveform-ffmpeg-filter-args)
-                      (funcall subed-waveform-ffmpeg-filter-args width height))
+                      (funcall subed-waveform-ffmpeg-filter-args from to width height))
                      ((stringp subed-waveform-ffmpeg-filter-args)
                       subed-waveform-ffmpeg-filter-args)
-                     (t "")))
+                     (t ""))
+                    (if grid-width
+                        (format
+                         "[wave];color=c=black:s=538x46[bg]; [bg][wave]overlay=format=auto[canvas];[canvas]drawgrid=x=%d:width=%d:height=ih/4:thickness=1:color=white@0.25"
+                         (* (- 1000 (% from 1000))
+                            (/ grid-width
+                               subed-waveform-ffmpeg-grid-width-ms))
+                         grid-width)
+                      ""))
             "-frames:v" "1"
             "-c:v" "png"
             "-f" "image2" "-"))))
@@ -348,8 +368,8 @@ Each function should take one argument, the overlay.")
          (params (subed-waveform--image-parameters width height))
          (image (subed-waveform--from-file
                  (plist-get params :file)
-                 (subed-waveform--msecs-to-ffmpeg (plist-get params :start))
-                 (subed-waveform--msecs-to-ffmpeg (plist-get params :stop))
+                 (plist-get params :start)
+                 (plist-get params :stop)
                  (plist-get params :width)
                  (plist-get params :height)))
          (svg (svg-create
