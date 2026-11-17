@@ -299,7 +299,8 @@ and HEIGHT are dimensions in pixels."
                      (t ""))
                     (if grid-width
                         (format
-                         "[wave];color=c=black:s=538x46[bg]; [bg][wave]overlay=format=auto[canvas];[canvas]drawgrid=x=%d:width=%d:height=ih/4:thickness=1:color=white@0.25"
+                         "[wave];color=c=black:s=%dx%d[bg]; [bg][wave]overlay=format=auto[canvas];[canvas]drawgrid=x=%d:width=%d:height=ih/4:thickness=1:color=white@0.25"
+                         width height
                          (* (- 1000 (% from 1000))
                             (/ grid-width
                                subed-waveform-ffmpeg-grid-width-ms))
