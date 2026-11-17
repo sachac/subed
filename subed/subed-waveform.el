@@ -179,8 +179,8 @@ If nil, the width for waveforms is computed in
 If it is nil, the height for waveforms is computed in
 `subed-waveform--image-parameters'.")
 
-(defvar subed-waveform--overlay nil "Overlay if only a single waveform is displayed.")
-(defvar subed-waveform--svg nil "SVG if only a single waveform is displayed.")
+(defvar-local subed-waveform--overlay nil "Overlay if only a single waveform is displayed.")
+(defvar-local subed-waveform--svg nil "SVG if only a single waveform is displayed.")
 
 (defun subed-waveform-remove ()
   "Remove waveform overlays."
@@ -341,7 +341,8 @@ Each function should take one argument, the overlay.")
 (defun subed-waveform--make-overlay (&optional width height overlay)
   "Make an overlay at point for the current subtitle."
   (let* ((overlay (if (and (overlayp overlay)
-                           (overlay-buffer overlay))
+                           (overlay-buffer overlay)
+                           (eq (overlay-buffer overlay) (current-buffer)))
                       overlay
                     (make-overlay (1- (point)) (point))))
          (params (subed-waveform--image-parameters width height))
