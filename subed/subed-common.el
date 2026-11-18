@@ -3148,13 +3148,15 @@ Example:
       (* 1000 (string-to-number
                (alist-get 'duration (alist-get 'format json)))))
      ;; If the file has more than one stream and only one audio
-     ;; stream, return the duration of the audio stream.
-     ((and (> (alist-get 'nb_streams (alist-get 'format json)) 1)
-           (eq (length (seq-filter
-                        (lambda (stream)
-                          (equal (alist-get 'codec_type stream) "audio"))
-                        (alist-get 'streams json)))
-               1))
+     ;; stream, return the duration of the audio stream.  TODO: Some
+     ;; media files might have multiple audio streams (e.g. multiple
+     ;; languages). Someday, it would be nice to check when the media
+     ;; file has multiple audio streams and prompt the user for the audio
+     ;; stream. The audio stream selected by the user must be stored
+     ;; in a buffer-local variable so that ffmpeg knows the audio
+     ;; stream from which the waveforms are created.  For now, just
+     ;; use the first one.
+     ((> (alist-get 'nb_streams (alist-get 'format json)) 1)
       (cond
        ((or
          (string-match "\\.mkv\\'" filename)
@@ -3176,14 +3178,7 @@ Example:
              (seq-find
               (lambda (stream)
                 (equal (alist-get 'codec_type stream) "audio"))
-              (alist-get 'streams json))))))))
-     ;; TODO: Some media files might have multiple audio streams
-     ;; (e.g. multiple languages). When the media file has multiple
-     ;; audio streams, prompt the user for the audio stream. The audio
-     ;; stream selected by the user must be stored in a buffer-local
-     ;; variable so that ffmpeg knows the audio stream from which the
-     ;; waveforms are created.
-     )))
+              (alist-get 'streams json)))))))))))
 
 (defun subed-clear-file-duration-ms-cache (&rest _)
   "Clear `subed-file-duration-ms-cache'."
@@ -3257,7 +3252,7 @@ use one day as the duration instead."
    0
    (condition-case nil
        (and (subed-media-file)
-            (subed-file-duration-ms (subed-media-file)))
+            (subed-file-duration-ms (subed-media-file) t))
      (error (* 24 60 60 1000)))))
 
 (defun subed-crop-subtitles (beg end)
