@@ -944,7 +944,7 @@ Check if the time since the previous subtitle is greater than
             (progn
               (when (and last-end (> (- (subed-subtitle-msecs-start)
                                         last-end)
-                                     subed-validate-subtitle-too-long-msecs))
+                                     subed-validate-delay-too-long-msecs))
                 (throw 'found t))
               (setq last-end (subed-subtitle-msecs-stop)))
           (goto-char (point-max)))))))

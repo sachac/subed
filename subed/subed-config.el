@@ -204,7 +204,7 @@ action."
   :type 'integer
   :group 'subed)
 
-(defcustom subed-validate-subtitle-too-long-wait-msecs 700
+(defcustom subed-validate-delay-too-long-msecs 700
   "Duration threshold for `subed-jump-to-next-long-delay'."
   :type 'integer
   :group 'subed)
