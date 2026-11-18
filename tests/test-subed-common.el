@@ -3547,6 +3547,48 @@ This is another.
             (subed-srt-mode)
             (expect subed--subtitle-format :to-equal "srt")
             (expect 'subed-trim-overlap-check :to-have-been-called))))))
+  (describe "Setting the subtitle ends to the next starts"
+    (it "does nothing in an empty buffer."
+      (with-temp-srt-buffer
+       (subed-set-subtitles-to-end-at-next-start)
+			 (expect (buffer-string) :to-equal "")))
+    (it "does nothing if there's only one subtitle."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n")
+       (subed-set-subtitles-to-end-at-next-start)
+			 (expect (buffer-string) :to-equal "1\n00:00:01,000 --> 00:00:02,000\nA\n\n")))
+    (it "sets the end timestamps."
+      (with-temp-srt-buffer
+       (let ((subed-subtitle-spacing 1))
+         (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+                 "2\n00:00:02,500 --> 00:00:06,000\nA\n\n"
+                 "3\n00:00:08,000 --> 00:00:09,500\nA\n\n")
+         (subed-set-subtitles-to-end-at-next-start)
+         (expect (buffer-string) :to-equal
+                 (concat "1\n00:00:01,000 --> 00:00:02,499\nA\n\n"
+                         "2\n00:00:02,500 --> 00:00:07,999\nA\n\n"
+                         "3\n00:00:08,000 --> 00:00:09,500\nA\n\n")))))
+    (it "works on a region."
+      (with-temp-srt-buffer
+       (let ((subed-subtitle-spacing 1))
+         (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+                 "2\n00:00:02,500 --> 00:00:06,000\nA\n\n")
+         (save-excursion
+           (insert "3\n00:00:08,000 --> 00:00:09,500\nA\n\n"))
+         (subed-set-subtitles-to-end-at-next-start (point-min) (1- (point)))
+         (expect (buffer-string) :to-equal
+                 (concat "1\n00:00:01,000 --> 00:00:02,499\nA\n\n"
+                         "2\n00:00:02,500 --> 00:00:06,000\nA\n\n"
+                         "3\n00:00:08,000 --> 00:00:09,500\nA\n\n")))))
+    (it "errors instead of creating negatively-timed subtitles."
+      (with-temp-srt-buffer
+       (insert "1\n00:00:01,000 --> 00:00:02,000\nA\n\n"
+               "2\n00:00:04,000 --> 00:00:06,000\nA\n\n"
+               "3\n00:00:03,000 --> 00:00:04,500\nA\n\n"
+               "4\n00:00:01,000 --> 00:00:06,000\nA\n\n")
+       (let ((subed-subtitle-spacing 1))
+         (expect (subed-set-subtitles-to-end-at-next-start)
+                 :to-throw 'error)))))
   (describe "Getting a list of subtitles"
     (it "returns nil in an empty buffer."
       (with-temp-srt-buffer

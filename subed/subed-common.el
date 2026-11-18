@@ -137,7 +137,7 @@ Before BODY is run, point is placed on the subtitle's ID."
                  (while t
                    ;; The subtitle includes every character up to the next subtitle's ID (or eob)
                    (let ((sub-end (save-excursion (subed-jump-to-subtitle-end))))
-                     (when (< sub-end begm)
+                     (when (and sub-end (< sub-end begm))
                        (throw 'first-subtitle-reached t)))
                    (progn ,@body)
                    (unless (subed-backward-subtitle-id)
@@ -2692,6 +2692,26 @@ Return the new start time."
          nil
          ignore-negative-duration
          t)))))
+
+;;;###autoload
+(defun subed-set-subtitles-to-end-at-next-start (&optional beg end)
+  "Set subtitles to end just before the next subtitle's start.
+See `subed-subtitle-spacing'."
+  (interactive (when (region-active-p)
+                 (list (region-beginning)
+                       (region-end))))
+  (setq beg (or beg (point-min)))
+  (setq end (or end (point-max)))
+  (let (next-start)
+    (subed-for-each-subtitle beg end t
+      (when next-start
+        (when (< (- next-start subed-subtitle-spacing)
+                 (subed-subtitle-msecs-start))
+          (user-error
+           "Negative duration at %s."
+           (subed-msecs-to-timestamp (subed-subtitle-msecs-start))))
+        (subed-set-subtitle-time-stop (- next-start subed-subtitle-spacing)))
+      (setq next-start (subed-subtitle-msecs-start)))))
 
 ;;; Sorting and sanitizing
 
