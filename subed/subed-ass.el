@@ -51,15 +51,18 @@
   "Find HH:MM:SS.MS pattern in TIME-STRING and convert it to milliseconds.
 Return nil if TIME-STRING doesn't match the pattern.
 Use the format-specific function for MAJOR-MODE."
-  (when (string-match subed--regexp-timestamp time-string)
-    (let ((hours (string-to-number (or (match-string 2 time-string) "0")))
-          (mins  (string-to-number (match-string 3 time-string)))
-          (secs  (string-to-number (match-string 4 time-string)))
-          (msecs (if (match-string 6 time-string) (string-to-number (subed--right-pad (match-string 6 time-string) 3 ?0)) 0)))
-      (+ (* (truncate hours) 3600000)
-         (* (truncate mins) 60000)
-         (* (truncate secs) 1000)
-         (truncate msecs)))))
+  (if (numberp time-string)
+      time-string
+    (if (string-match subed--regexp-timestamp time-string)
+        (let ((hours (string-to-number (or (match-string 2 time-string) "0")))
+              (mins (string-to-number (match-string 3 time-string)))
+              (secs (string-to-number (match-string 4 time-string)))
+              (msecs (if (match-string 6 time-string) (string-to-number (subed--right-pad (match-string 6 time-string) 3 ?0)) 0)))
+          (+ (* (truncate hours) 3600000)
+             (* (truncate mins) 60000)
+             (* (truncate secs) 1000)
+             (truncate msecs)))
+      (string-to-number time-string))))
 
 (cl-defmethod subed--msecs-to-timestamp (msecs &context (major-mode subed-ass-mode))
   "Convert MSECS to string in the format H:MM:SS.CS.

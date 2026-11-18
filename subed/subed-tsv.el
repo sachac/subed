@@ -51,9 +51,11 @@
   "Find SS.MS pattern in TIME-STRING and convert it to milliseconds.
 Return nil if TIME-STRING doesn't match the pattern.
 Use the format-specific function for MAJOR-MODE."
-  (save-match-data
-    (when (string-match subed-tsv--regexp-timestamp time-string)
-      (* 1000 (string-to-number (match-string 0 time-string))))))
+  (if (numberp time-string)
+      time-string
+    (save-match-data
+      (when (string-match subed-tsv--regexp-timestamp time-string)
+        (* 1000 (string-to-number (match-string 0 time-string)))))))
 
 (cl-defmethod subed--msecs-to-timestamp (msecs &context (major-mode subed-tsv-mode))
   "Convert MSECS to string in the format H:MM:SS.CS.
