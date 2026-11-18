@@ -4226,5 +4226,43 @@ Baz.
          (subed-jump-to-subtitle-id 2)
          (subed-set-clock-start-based-on-subtitle "2026-01-01T10:02:00Z")
          (subed-jump-to-subtitle-id-at-clock-time "2026-01-01T10:01:02Z")
-         (expect (subed-subtitle-text) :to-equal "Foo.")))
-    ))
+         (expect (subed-subtitle-text) :to-equal "Foo."))))
+  (describe "Jumping to"
+    (describe "the next long delay"
+      (it "finds a subtitle with a long delay."
+        (let ((subed-validate-delay-too-long-msecs 1000))
+          (with-temp-srt-buffer
+           (insert "1\n00:00:01,000 --> 00:00:01,999\nA\n\n"
+                   "2\n00:00:02,000 --> 00:00:02,999\nB\n\n"
+                   "3\n00:00:05,000 --> 00:00:07,000\nC\n\n")
+           (goto-char (point-min))
+           (subed-jump-to-next-long-delay)
+           (expect (subed-subtitle-text) :to-equal "C"))))
+      (it "goes to the end if everything is okay."
+        (let ((subed-validate-delay-too-long-msecs 1000))
+          (with-temp-srt-buffer
+           (insert "1\n00:00:01,000 --> 00:00:01,999\nA\n\n"
+                   "2\n00:00:02,000 --> 00:00:02,999\nB\n\n"
+                   "3\n00:00:03,000 --> 00:00:07,000\nC\n\n")
+           (goto-char (point-min))
+           (subed-jump-to-next-long-delay)
+           (expect (point) :to-equal (point-max))))))
+    (describe "the next long subtitle"
+      (it "finds a subtitle with a long duration."
+        (let ((subed-validate-subtitle-too-long-msecs 1000))
+          (with-temp-srt-buffer
+           (insert "1\n00:00:01,000 --> 00:00:01,999\nA\n\n"
+                   "2\n00:00:02,000 --> 00:00:03,999\nB\n\n"
+                   "3\n00:00:05,000 --> 00:00:05,999\nC\n\n")
+           (goto-char (point-min))
+           (subed-jump-to-next-long-subtitle)
+           (expect (subed-subtitle-text) :to-equal "B"))))
+      (it "goes to the end if everything is okay."
+        (let ((subed-validate-delay-too-long-msecs 1000))
+          (with-temp-srt-buffer
+           (insert "1\n00:00:01,000 --> 00:00:01,999\nA\n\n"
+                   "2\n00:00:02,000 --> 00:00:02,999\nB\n\n"
+                   "3\n00:00:03,000 --> 00:00:03,999\nC\n\n")
+           (goto-char (point-min))
+           (subed-jump-to-next-long-subtitle)
+           (expect (point) :to-equal (point-max))))))))
