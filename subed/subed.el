@@ -1,6 +1,6 @@
 ;;; subed.el --- A major mode for editing subtitles  -*- lexical-binding: t; -*-
 
-;; Version: 1.5.4
+;; Version: 1.5.5
 ;; Maintainer: Sacha Chua <sacha@sachachua.com>
 ;; Author: Random User
 ;; Keywords: convenience, files, hypermedia, multimedia

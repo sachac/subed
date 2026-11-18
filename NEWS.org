@@ -2,6 +2,26 @@
 
 * subed news
 
+** Version 1.5.5 - 2026-11-18 - Sacha Chua
+
+- New commands:
+  - =subed-jump-to-next-long-subtitle= lets you jump to the next subtitle that is longer than =subed-validate-subtitle-too-long-msecs=. This can help you find segments where your speech recognition might have misrecognized things and ended up with a very long subtitle with some missing text.
+  - =subed-jump-to-next-long-delay= lets you jump to the next subtitle that has more than =subed-validate-delay-too-long-msecs= delay before it. This can help find segments where your speech recognition might have missed something.
+  - =subed-set-subtitles-to-end-at-next-start= should make it easier to fill in the gaps of subtitles if you are using something like [[https://github.com/sachac/subed-record][subed-record]] in order to edit video based on cues.
+  - =subed-split-subtitle-lines=: Split multi-line subtitles into their own cues. This uses word timing data if available, or it tries to guess it based on the relative position in this subtitle. This is helpful if you started from a script with paragraphs, as with subed-record.
+  - =subed-mpv-reload= can help reload your media file.
+- New options:
+  - =subed-subtitle-list-text-transform-functions= lets you modify the text to include timestamps or for chapters and speaker changes.
+  - subed-waveform.el now draws waveforms with a grid (100ms by default). You can turn this off or customize it by setting =subed-waveform-ffmpeg-grid-width-ms=.
+    - Breaking change: If you've customized =subed-waveform-ffmpeg-filter-args= to a function, your function now needs to accept start and end time in addition to width and height.
+- subed-vtt.el now supports =comment-dwim=.
+- Bugfixes and minor improvements:
+  - Fix jumping to a subtitle by timestamp. (issue #90)
+  - Waveforms should now be displayed a little bit more smoothly, with less flickering. Waveform should now get deleted whenever you delete subtitles.
+  - =subed-convert= now opens the file afterwards.
+  - =subed-word-data-remove-word-timestamps= can remove VTT =<c>..</c>= tags, which tend to clutter YouTube output.
+  - subed-align can now handle VTT to VTT realignment better.
+
 ** Version 1.5.4 - 2026-09-17 - Sacha Chua
 
 - Bump version again to see if that fixes the tags.
